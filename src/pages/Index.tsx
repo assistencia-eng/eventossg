@@ -7,8 +7,21 @@ import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
 import EventDetailModal from "@/components/EventDetailModal";
 import ImportEvents from "@/components/ImportEvents";
-import { MapPin, Loader2, Upload } from "lucide-react";
+import AddEventForm from "@/components/AddEventForm";
+import { MapPin, Loader2, Upload, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const Index = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -18,7 +31,11 @@ const Index = () => {
   const [sortBy, setSortBy] = useState<"date" | "distance">("date");
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState<EventData[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<EventData | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("upcoming");
   const eventsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,6 +62,7 @@ const Index = () => {
           latitude: e.latitude,
           longitude: e.longitude,
           imagem: e.imagem ?? undefined,
+          hasExactLocation: e.endereco !== "Não informado" && e.endereco !== "",
         }))
       );
     }
@@ -56,6 +74,11 @@ const Index = () => {
 
   const allEvents = useMemo(() => [...mockEvents, ...dbEvents], [dbEvents]);
 
+  const cities = useMemo(() => {
+    const set = new Set(allEvents.map((e) => e.cidade));
+    return Array.from(set).sort();
+  }, [allEvents]);
+
   const toggleCategory = useCallback((cat: EventCategory) => {
     setSelectedCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
@@ -65,11 +88,18 @@ const Index = () => {
   const eventsWithDistance = useMemo(() => {
     return allEvents.map((event) => ({
       event,
-      distance: userLocation
-        ? calculateDistance(userLocation.latitude, userLocation.longitude, event.latitude, event.longitude)
-        : null,
+      distance:
+        userLocation && event.hasExactLocation !== false
+          ? calculateDistance(userLocation.latitude, userLocation.longitude, event.latitude, event.longitude)
+          : null,
     }));
   }, [userLocation, allEvents]);
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
 
   const filteredEvents = useMemo(() => {
     let results = [...eventsWithDistance];
@@ -78,8 +108,15 @@ const Index = () => {
       results = results.filter(({ event }) => selectedCategories.includes(event.categoria));
     }
 
+    if (selectedCity) {
+      results = results.filter(({ event }) => event.cidade === selectedCity);
+    }
+
     if (distanceKm !== null && userLocation) {
-      results = results.filter(({ distance }) => distance !== null && distance <= distanceKm);
+      results = results.filter(({ distance, event }) => {
+        if (event.hasExactLocation === false) return true;
+        return distance !== null && distance <= distanceKm;
+      });
     }
 
     if (sortBy === "distance" && userLocation) {
@@ -89,18 +126,49 @@ const Index = () => {
     }
 
     return results;
-  }, [eventsWithDistance, selectedCategories, distanceKm, sortBy, userLocation]);
+  }, [eventsWithDistance, selectedCategories, distanceKm, sortBy, userLocation, selectedCity]);
+
+  const upcomingEvents = useMemo(
+    () => filteredEvents.filter(({ event }) => new Date(event.data) >= today),
+    [filteredEvents, today]
+  );
+
+  const pastEvents = useMemo(
+    () => filteredEvents.filter(({ event }) => new Date(event.data) < today),
+    [filteredEvents, today]
+  );
+
+  const displayedEvents = activeTab === "upcoming" ? upcomingEvents : pastEvents;
 
   const selectedDistance = selectedEvent
     ? eventsWithDistance.find((e) => e.event.id === selectedEvent.id)?.distance
     : null;
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    const isMock = mockEvents.some((e) => e.id === deleteTarget.id);
+    if (isMock) {
+      toast.error("Eventos de demonstração não podem ser excluídos.");
+      setDeleteTarget(null);
+      return;
+    }
+
+    const { error } = await supabase.from("events").delete().eq("id", deleteTarget.id);
+    if (error) {
+      toast.error("Erro ao excluir evento.");
+    } else {
+      toast.success("Evento excluído com sucesso!");
+      fetchDbEvents();
+    }
+    setDeleteTarget(null);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <HeroSection onScrollToEvents={() => eventsRef.current?.scrollIntoView({ behavior: "smooth" })} />
 
       <div ref={eventsRef} className="container mx-auto px-4 -mt-8 relative z-10 pb-16">
-        {/* Location status + Import button */}
+        {/* Location status + action buttons */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {locationLoading ? (
@@ -120,15 +188,16 @@ const Index = () => {
               </>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setImportOpen(true)}
-            className="shrink-0"
-          >
-            <Upload className="w-4 h-4 mr-1.5" />
-            Importar
-          </Button>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              Novo
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-1.5" />
+              Importar
+            </Button>
+          </div>
         </div>
 
         <FilterBar
@@ -139,28 +208,65 @@ const Index = () => {
           sortBy={sortBy}
           onSortChange={setSortBy}
           hasLocation={!!userLocation}
-          totalResults={filteredEvents.length}
+          totalResults={displayedEvents.length}
+          cities={cities}
+          selectedCity={selectedCity}
+          onCityChange={setSelectedCity}
         />
 
-        {/* Events grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
-          {filteredEvents.map(({ event, distance }, i) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              distance={distance}
-              onSelect={setSelectedEvent}
-              index={i}
-            />
-          ))}
-        </div>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="upcoming" className="flex-1">
+              Atuais e Futuros ({upcomingEvents.length})
+            </TabsTrigger>
+            <TabsTrigger value="past" className="flex-1">
+              Passados ({pastEvents.length})
+            </TabsTrigger>
+          </TabsList>
 
-        {filteredEvents.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-xl font-serif text-muted-foreground">Nenhum evento encontrado</p>
-            <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros de interesse ou distância.</p>
-          </div>
-        )}
+          <TabsContent value="upcoming">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+              {upcomingEvents.map(({ event, distance }, i) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  distance={distance}
+                  onSelect={setSelectedEvent}
+                  onDelete={setDeleteTarget}
+                  index={i}
+                />
+              ))}
+            </div>
+            {upcomingEvents.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-xl font-serif text-muted-foreground">Nenhum evento futuro encontrado</p>
+                <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="past">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+              {pastEvents.map(({ event, distance }, i) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  distance={distance}
+                  onSelect={setSelectedEvent}
+                  onDelete={setDeleteTarget}
+                  index={i}
+                />
+              ))}
+            </div>
+            {pastEvents.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-xl font-serif text-muted-foreground">Nenhum evento passado encontrado</p>
+                <p className="text-sm text-muted-foreground mt-2">Eventos passados aparecerão aqui.</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <EventDetailModal
@@ -175,6 +281,30 @@ const Index = () => {
         onClose={() => setImportOpen(false)}
         onImported={fetchDbEvents}
       />
+
+      <AddEventForm
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdded={fetchDbEvents}
+      />
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir evento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{deleteTarget?.nome}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
