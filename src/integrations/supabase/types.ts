@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          atracoes: string[]
+          categoria: Database["public"]["Enums"]["event_category"]
+          cidade: string
+          created_at: string
+          data: string
+          descricao: string
+          endereco: string
+          id: string
+          imagem: string | null
+          latitude: number
+          local: string
+          longitude: number
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          atracoes?: string[]
+          categoria?: Database["public"]["Enums"]["event_category"]
+          cidade?: string
+          created_at?: string
+          data: string
+          descricao?: string
+          endereco?: string
+          id?: string
+          imagem?: string | null
+          latitude?: number
+          local?: string
+          longitude?: number
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          atracoes?: string[]
+          categoria?: Database["public"]["Enums"]["event_category"]
+          cidade?: string
+          created_at?: string
+          data?: string
+          descricao?: string
+          endereco?: string
+          id?: string
+          imagem?: string | null
+          latitude?: number
+          local?: string
+          longitude?: number
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +73,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      event_category: "musica" | "esporte" | "teatro" | "alimentacao"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +200,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      event_category: ["musica", "esporte", "teatro", "alimentacao"],
+    },
   },
 } as const
