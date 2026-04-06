@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { mockEvents, EventData, EventCategory } from "@/data/events";
+import { EventData, EventCategory } from "@/data/events";
 import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocation";
 import { supabase } from "@/integrations/supabase/client";
 import HeroSection from "@/components/HeroSection";
@@ -8,7 +8,7 @@ import EventCard from "@/components/EventCard";
 import EventDetailModal from "@/components/EventDetailModal";
 import ImportEvents from "@/components/ImportEvents";
 import AddEventForm from "@/components/AddEventForm";
-import { MapPin, Loader2, Upload, Plus } from "lucide-react";
+import { MapPin, Loader2, Upload, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -36,6 +36,8 @@ const Index = () => {
   const [deleteTarget, setDeleteTarget] = useState<EventData | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const eventsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ const Index = () => {
     fetchDbEvents();
   }, [fetchDbEvents]);
 
-  const allEvents = useMemo(() => [...mockEvents, ...dbEvents], [dbEvents]);
+  const allEvents = useMemo(() => dbEvents, [dbEvents]);
 
   const cities = useMemo(() => {
     const set = new Set(allEvents.map((e) => e.cidade));
@@ -89,7 +91,7 @@ const Index = () => {
     return allEvents.map((event) => ({
       event,
       distance:
-        userLocation && event.hasExactLocation !== false
+        userLocation && event.hasExactLocation === true
           ? calculateDistance(userLocation.latitude, userLocation.longitude, event.latitude, event.longitude)
           : null,
     }));
@@ -114,7 +116,7 @@ const Index = () => {
 
     if (distanceKm !== null && userLocation) {
       results = results.filter(({ distance, event }) => {
-        if (event.hasExactLocation === false) return true;
+        if (event.hasExactLocation !== true) return true;
         return distance !== null && distance <= distanceKm;
       });
     }
@@ -144,15 +146,17 @@ const Index = () => {
     ? eventsWithDistance.find((e) => e.event.id === selectedEvent.id)?.distance
     : null;
 
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
-    const isMock = mockEvents.some((e) => e.id === deleteTarget.id);
-    if (isMock) {
-      toast.error("Eventos de demonstração não podem ser excluídos.");
-      setDeleteTarget(null);
-      return;
-    }
-
     const { error } = await supabase.from("events").delete().eq("id", deleteTarget.id);
     if (error) {
       toast.error("Erro ao excluir evento.");
@@ -163,13 +167,28 @@ const Index = () => {
     setDeleteTarget(null);
   };
 
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    const { error } = await supabase.from("events").delete().in("id", ids);
+    if (error) {
+      toast.error("Erro ao excluir eventos.");
+    } else {
+      toast.success(`${ids.length} evento(s) excluído(s) com sucesso!`);
+      setSelectedIds(new Set());
+      fetchDbEvents();
+    }
+    setBulkDeleteOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <HeroSection onScrollToEvents={() => eventsRef.current?.scrollIntoView({ behavior: "smooth" })} />
 
       <div ref={eventsRef} className="container mx-auto px-4 -mt-8 relative z-10 pb-16">
         {/* Location status + action buttons */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             {locationLoading ? (
               <>
@@ -189,6 +208,12 @@ const Index = () => {
             )}
           </div>
           <div className="flex gap-2 shrink-0">
+            {selectedIds.size > 0 && (
+              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                Excluir ({selectedIds.size})
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
               <Plus className="w-4 h-4 mr-1.5" />
               Novo
@@ -235,6 +260,8 @@ const Index = () => {
                   onSelect={setSelectedEvent}
                   onDelete={setDeleteTarget}
                   index={i}
+                  selected={selectedIds.has(event.id)}
+                  onToggleSelect={toggleSelect}
                 />
               ))}
             </div>
@@ -256,6 +283,8 @@ const Index = () => {
                   onSelect={setSelectedEvent}
                   onDelete={setDeleteTarget}
                   index={i}
+                  selected={selectedIds.has(event.id)}
+                  onToggleSelect={toggleSelect}
                 />
               ))}
             </div>
@@ -288,7 +317,7 @@ const Index = () => {
         onAdded={fetchDbEvents}
       />
 
-      {/* Delete confirmation */}
+      {/* Single delete confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -301,6 +330,24 @@ const Index = () => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk delete confirmation */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir {selectedIds.size} evento(s)</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir {selectedIds.size} evento(s) selecionado(s)? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir todos
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
