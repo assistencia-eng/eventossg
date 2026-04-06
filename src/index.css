@@ -48,6 +48,9 @@
     --category-esporte: 140 50% 45%;
     --category-teatro: 35 85% 50%;
     --category-alimentacao: 15 80% 55%;
+    --category-palestras: 210 60% 50%;
+    --category-feiras: 45 70% 50%;
+    --category-empreendedorismo: 260 50% 55%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -120,6 +123,36 @@
   }
   .category-chip-alimentacao.active {
     background-color: hsl(var(--category-alimentacao));
+    color: white;
+  }
+
+  .category-chip-palestras {
+    background-color: hsl(var(--category-palestras) / 0.12);
+    color: hsl(var(--category-palestras));
+    border: 1px solid hsl(var(--category-palestras) / 0.25);
+  }
+  .category-chip-palestras.active {
+    background-color: hsl(var(--category-palestras));
+    color: white;
+  }
+
+  .category-chip-feiras {
+    background-color: hsl(var(--category-feiras) / 0.12);
+    color: hsl(var(--category-feiras));
+    border: 1px solid hsl(var(--category-feiras) / 0.25);
+  }
+  .category-chip-feiras.active {
+    background-color: hsl(var(--category-feiras));
+    color: white;
+  }
+
+  .category-chip-empreendedorismo {
+    background-color: hsl(var(--category-empreendedorismo) / 0.12);
+    color: hsl(var(--category-empreendedorismo));
+    border: 1px solid hsl(var(--category-empreendedorismo) / 0.25);
+  }
+  .category-chip-empreendedorismo.active {
+    background-color: hsl(var(--category-empreendedorismo));
     color: white;
   }
 

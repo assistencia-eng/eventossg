@@ -1,4 +1,6 @@
 import { EventCategory, categoryLabels, categoryIcons } from "@/data/events";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface FilterBarProps {
   selectedCategories: EventCategory[];
@@ -9,6 +11,9 @@ interface FilterBarProps {
   onSortChange: (sort: "date" | "distance") => void;
   hasLocation: boolean;
   totalResults: number;
+  cities: string[];
+  selectedCity: string | null;
+  onCityChange: (city: string | null) => void;
 }
 
 const distanceOptions = [
@@ -20,7 +25,9 @@ const distanceOptions = [
   { value: 100, label: "100 km" },
 ];
 
-const categories: EventCategory[] = ["musica", "esporte", "teatro", "alimentacao"];
+const categories: EventCategory[] = [
+  "musica", "esporte", "teatro", "alimentacao", "palestras", "feiras", "empreendedorismo"
+];
 
 const FilterBar = ({
   selectedCategories,
@@ -31,6 +38,9 @@ const FilterBar = ({
   onSortChange,
   hasLocation,
   totalResults,
+  cities,
+  selectedCity,
+  onCityChange,
 }: FilterBarProps) => {
   return (
     <div className="glass-card rounded-2xl p-5 md:p-6 space-y-5">
@@ -53,6 +63,38 @@ const FilterBar = ({
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* City filter */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Cidade
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => onCityChange(null)}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer
+              ${selectedCity === null
+                ? "bg-primary text-primary-foreground shadow-md"
+                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              }`}
+          >
+            Todas
+          </button>
+          {cities.map((city) => (
+            <button
+              key={city}
+              onClick={() => onCityChange(city)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer
+                ${selectedCity === city
+                  ? "bg-primary text-primary-foreground shadow-md"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                }`}
+            >
+              {city}
+            </button>
+          ))}
         </div>
       </div>
 

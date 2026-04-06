@@ -1,4 +1,4 @@
-export type EventCategory = "musica" | "esporte" | "teatro" | "alimentacao";
+export type EventCategory = "musica" | "esporte" | "teatro" | "alimentacao" | "palestras" | "feiras" | "empreendedorismo";
 
 export interface EventData {
   id: string;
@@ -13,6 +13,7 @@ export interface EventData {
   latitude: number;
   longitude: number;
   imagem?: string;
+  hasExactLocation?: boolean;
 }
 
 export const categoryLabels: Record<EventCategory, string> = {
@@ -20,6 +21,9 @@ export const categoryLabels: Record<EventCategory, string> = {
   esporte: "Esporte",
   teatro: "Teatro",
   alimentacao: "Alimentação",
+  palestras: "Palestras",
+  feiras: "Feiras",
+  empreendedorismo: "Empreendedorismo",
 };
 
 export const categoryIcons: Record<EventCategory, string> = {
@@ -27,6 +31,22 @@ export const categoryIcons: Record<EventCategory, string> = {
   esporte: "⚽",
   teatro: "🎭",
   alimentacao: "🍷",
+  palestras: "🎤",
+  feiras: "🏪",
+  empreendedorismo: "💼",
+};
+
+// Default city coordinates for approximate location
+export const cityCoordinates: Record<string, { lat: number; lng: number }> = {
+  "Gramado": { lat: -29.3731, lng: -50.8760 },
+  "Canela": { lat: -29.3645, lng: -50.8116 },
+  "Bento Gonçalves": { lat: -29.1699, lng: -51.5187 },
+  "Caxias do Sul": { lat: -29.1685, lng: -51.1794 },
+  "Garibaldi": { lat: -29.2544, lng: -51.5336 },
+  "Carlos Barbosa": { lat: -29.2970, lng: -51.5040 },
+  "Flores da Cunha": { lat: -29.0289, lng: -51.1833 },
+  "Nova Petrópolis": { lat: -29.3726, lng: -51.1144 },
+  "São Marcos": { lat: -28.9696, lng: -51.0686 },
 };
 
 export const mockEvents: EventData[] = [
@@ -42,6 +62,7 @@ export const mockEvents: EventData[] = [
     categoria: "teatro",
     latitude: -29.3731,
     longitude: -50.8760,
+    hasExactLocation: true,
   },
   {
     id: "2",
@@ -55,6 +76,7 @@ export const mockEvents: EventData[] = [
     categoria: "alimentacao",
     latitude: -29.1685,
     longitude: -51.1794,
+    hasExactLocation: true,
   },
   {
     id: "3",
@@ -68,6 +90,7 @@ export const mockEvents: EventData[] = [
     categoria: "teatro",
     latitude: -29.3750,
     longitude: -50.8755,
+    hasExactLocation: true,
   },
   {
     id: "4",
@@ -81,6 +104,7 @@ export const mockEvents: EventData[] = [
     categoria: "esporte",
     latitude: -29.3800,
     longitude: -50.8700,
+    hasExactLocation: true,
   },
   {
     id: "5",
@@ -94,6 +118,7 @@ export const mockEvents: EventData[] = [
     categoria: "musica",
     latitude: -29.1699,
     longitude: -51.5187,
+    hasExactLocation: true,
   },
   {
     id: "6",
@@ -107,6 +132,7 @@ export const mockEvents: EventData[] = [
     categoria: "alimentacao",
     latitude: -29.1700,
     longitude: -51.5190,
+    hasExactLocation: true,
   },
   {
     id: "7",
@@ -120,6 +146,7 @@ export const mockEvents: EventData[] = [
     categoria: "teatro",
     latitude: -29.3645,
     longitude: -50.8116,
+    hasExactLocation: true,
   },
   {
     id: "8",
@@ -133,6 +160,7 @@ export const mockEvents: EventData[] = [
     categoria: "esporte",
     latitude: -29.3100,
     longitude: -50.8500,
+    hasExactLocation: true,
   },
   {
     id: "9",
@@ -146,6 +174,7 @@ export const mockEvents: EventData[] = [
     categoria: "alimentacao",
     latitude: -29.1715,
     longitude: -51.5150,
+    hasExactLocation: true,
   },
   {
     id: "10",
@@ -159,6 +188,7 @@ export const mockEvents: EventData[] = [
     categoria: "musica",
     latitude: -29.2544,
     longitude: -51.5336,
+    hasExactLocation: true,
   },
   {
     id: "11",
@@ -172,6 +202,7 @@ export const mockEvents: EventData[] = [
     categoria: "alimentacao",
     latitude: -29.3780,
     longitude: -50.8730,
+    hasExactLocation: true,
   },
   {
     id: "12",
@@ -185,5 +216,48 @@ export const mockEvents: EventData[] = [
     categoria: "musica",
     latitude: -29.3850,
     longitude: -50.8680,
+    hasExactLocation: true,
+  },
+  {
+    id: "13",
+    nome: "Summit Empreendedor da Serra",
+    local: "Centro de Eventos",
+    cidade: "Caxias do Sul",
+    endereco: "Não informado",
+    data: "2026-08-15",
+    descricao: "Evento de empreendedorismo com palestras, workshops e networking para empreendedores da região.",
+    atracoes: ["Palestras inspiradoras", "Workshops práticos", "Rodada de negócios", "Pitch de startups"],
+    categoria: "empreendedorismo",
+    latitude: -29.1685,
+    longitude: -51.1794,
+    hasExactLocation: false,
+  },
+  {
+    id: "14",
+    nome: "Feira Colonial de Nova Petrópolis",
+    local: "Praça das Flores",
+    cidade: "Nova Petrópolis",
+    endereco: "Não informado",
+    data: "2026-09-20",
+    descricao: "Feira com produtos coloniais, artesanato e gastronomia típica da colonização alemã.",
+    atracoes: ["Produtos coloniais", "Artesanato local", "Gastronomia alemã", "Apresentações culturais"],
+    categoria: "feiras",
+    latitude: -29.3726,
+    longitude: -51.1144,
+    hasExactLocation: false,
+  },
+  {
+    id: "15",
+    nome: "TEDx Serra Gaúcha",
+    local: "Teatro Municipal",
+    cidade: "Gramado",
+    endereco: "Não informado",
+    data: "2026-10-25",
+    descricao: "Palestras inspiradoras sobre inovação, tecnologia e cultura na Serra Gaúcha.",
+    atracoes: ["Palestras TED", "Networking", "Coffee break temático", "Exposição de projetos"],
+    categoria: "palestras",
+    latitude: -29.3731,
+    longitude: -50.8760,
+    hasExactLocation: false,
   },
 ];
