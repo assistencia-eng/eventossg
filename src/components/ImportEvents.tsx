@@ -58,7 +58,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setDragOver(false);
     const dropped = Array.from(e.dataTransfer.files).filter(isFileSupported);
     if (dropped.length === 0) {
-      toast.error("Nenhum arquivo suportado. Use CSV, JSON, TXT, XLSX ou PDF.");
+      toast.error("Nenhum arquivo suportado. Use CSV, JSON, TXT, XLSX, PDF ou ICS.");
       return;
     }
     setFiles((prev) => [...prev, ...dropped]);
@@ -191,13 +191,13 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
               <Upload className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-sm font-medium">Arraste arquivos aqui</p>
               <p className="text-xs text-muted-foreground mt-1">
-                CSV, JSON, TXT, XLSX, PDF
+                CSV, JSON, TXT, XLSX, PDF, ICS
               </p>
               <label className="mt-3 inline-block">
                 <input
                   type="file"
                   multiple
-                  accept=".csv,.json,.txt,.xlsx,.xls,.pdf"
+                  accept=".csv,.json,.txt,.xlsx,.xls,.pdf,.ics"
                   className="hidden"
                   onChange={handleFileSelect}
                 />

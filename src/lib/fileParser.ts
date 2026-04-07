@@ -1,7 +1,42 @@
 import * as XLSX from "xlsx";
 
+function parseICS(text: string): string {
+  const events: string[] = [];
+  const blocks = text.split("BEGIN:VEVENT");
+  
+  for (let i = 1; i < blocks.length; i++) {
+    const block = blocks[i].split("END:VEVENT")[0];
+    const get = (key: string) => {
+      const match = block.match(new RegExp(`${key}[^:]*:(.+)`, "m"));
+      return match ? match[1].trim().replace(/\\n/g, " ").replace(/\\,/g, ",") : "";
+    };
+    
+    const dtStart = get("DTSTART");
+    let date = "";
+    if (dtStart.length >= 8) {
+      date = `${dtStart.slice(0, 4)}-${dtStart.slice(4, 6)}-${dtStart.slice(6, 8)}`;
+    }
+    
+    events.push(
+      `Evento: ${get("SUMMARY")}\n` +
+      `Data: ${date}\n` +
+      `Local: ${get("LOCATION")}\n` +
+      `Descrição: ${get("DESCRIPTION")}\n`
+    );
+  }
+  
+  return events.length > 0
+    ? `[Arquivo ICS - ${events.length} evento(s) encontrado(s)]\n\n${events.join("\n---\n\n")}`
+    : text;
+}
+
 export async function extractTextFromFile(file: File): Promise<string> {
   const ext = file.name.split(".").pop()?.toLowerCase();
+
+  if (ext === "ics") {
+    const text = await file.text();
+    return parseICS(text);
+  }
 
   if (ext === "csv" || ext === "txt") {
     return file.text();
@@ -30,11 +65,8 @@ export async function extractTextFromFile(file: File): Promise<string> {
   }
 
   if (ext === "pdf") {
-    // For PDF, we send raw text extraction attempt
     const text = await file.text();
-    // PDFs are binary - we'll send a message about it
     if (text.startsWith("%PDF")) {
-      // Return base64 for the AI to attempt parsing
       const buffer = await file.arrayBuffer();
       const bytes = new Uint8Array(buffer);
       let binary = "";
@@ -48,7 +80,6 @@ export async function extractTextFromFile(file: File): Promise<string> {
     return text;
   }
 
-  // For images and other formats, return a note
   if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
     return `[Imagem: ${file.name} - OCR não disponível no momento. Por favor, descreva os eventos manualmente.]`;
   }
@@ -57,7 +88,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
 }
 
 export function getSupportedExtensions(): string[] {
-  return ["csv", "json", "txt", "xlsx", "xls", "pdf", "png", "jpg", "jpeg"];
+  return ["csv", "json", "txt", "xlsx", "xls", "pdf", "png", "jpg", "jpeg", "ics"];
 }
 
 export function isFileSupported(file: File): boolean {
