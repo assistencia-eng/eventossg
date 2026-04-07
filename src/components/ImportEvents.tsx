@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil } from "lucide-react";
+import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,7 @@ import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { extractTextFromFile, isFileSupported } from "@/lib/fileParser";
 import { categoryLabels, categoryIcons, type EventCategory } from "@/data/events";
+import { geocodeBatch } from "@/lib/geocode";
 
 interface ExtractedEvent {
   nome: string;
@@ -30,7 +31,7 @@ interface ImportEventsProps {
   onImported: () => void;
 }
 
-type ImportStep = "upload" | "processing" | "preview" | "saving";
+type ImportStep = "upload" | "processing" | "preview" | "geocoding" | "saving";
 
 const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [step, setStep] = useState<ImportStep>("upload");
@@ -39,6 +40,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 });
 
   const reset = () => {
     setStep("upload");
@@ -127,11 +129,19 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
   const confirmImport = async () => {
     if (extractedEvents.length === 0) return;
-    setStep("saving");
+    setStep("geocoding");
 
     try {
+      // Geocode all events
+      const geoResults = await geocodeBatch(
+        extractedEvents.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
+        (current, total) => setGeocodeProgress({ current, total })
+      );
+
+      setStep("saving");
+
       const { error: insertError } = await supabase.from("events").insert(
-        extractedEvents.map((ev) => ({
+        extractedEvents.map((ev, i) => ({
           nome: ev.nome,
           local: ev.local,
           cidade: ev.cidade,
@@ -140,8 +150,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           descricao: ev.descricao,
           atracoes: ev.atracoes,
           categoria: ev.categoria,
-          latitude: ev.latitude,
-          longitude: ev.longitude,
+          latitude: geoResults[i].latitude,
+          longitude: geoResults[i].longitude,
         }))
       );
 
@@ -165,12 +175,14 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             {step === "upload" && "Importar Eventos"}
             {step === "processing" && "Processando..."}
             {step === "preview" && `Pré-visualização (${extractedEvents.length} eventos)`}
+            {step === "geocoding" && "Localizando endereços..."}
             {step === "saving" && "Salvando..."}
           </DialogTitle>
           <DialogDescription>
             {step === "upload" && "Envie arquivos para extrair eventos automaticamente com IA."}
             {step === "processing" && "Analisando seus arquivos com inteligência artificial..."}
             {step === "preview" && "Revise e edite os eventos antes de confirmar a importação."}
+            {step === "geocoding" && `Buscando coordenadas... (${geocodeProgress.current}/${geocodeProgress.total})`}
             {step === "saving" && "Salvando eventos no banco de dados..."}
           </DialogDescription>
         </DialogHeader>
@@ -379,6 +391,16 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                 Confirmar importação ({extractedEvents.length})
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* GEOCODING STEP */}
+        {step === "geocoding" && (
+          <div className="flex flex-col items-center py-12 gap-4">
+            <MapPin className="w-10 h-10 animate-pulse text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Localizando endereços... ({geocodeProgress.current}/{geocodeProgress.total})
+            </p>
           </div>
         )}
 

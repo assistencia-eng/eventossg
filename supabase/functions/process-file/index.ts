@@ -36,8 +36,7 @@ Para cada evento, retorne um objeto JSON com os seguintes campos:
 - descricao: descrição do evento
 - atracoes: array de strings com as atrações
 - categoria: uma de "musica", "esporte", "teatro", "alimentacao" (classifique com base no contexto)
-- latitude: latitude aproximada (se não souber, use -29.37 para Serra Gaúcha)
-- longitude: longitude aproximada (se não souber, use -50.87 para Serra Gaúcha)
+- NÃO inclua latitude ou longitude, esses campos serão calculados automaticamente via geocodificação
 
 Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
 Tente inferir a categoria com base no contexto do evento.
@@ -110,8 +109,8 @@ IMPORTANTE: Responda APENAS com um JSON válido no formato:
       categoria: ["musica", "esporte", "teatro", "alimentacao"].includes(e.categoria as string)
         ? e.categoria
         : "musica",
-      latitude: typeof e.latitude === "number" ? e.latitude : -29.3731,
-      longitude: typeof e.longitude === "number" ? e.longitude : -50.876,
+      latitude: -29.3731,
+      longitude: -50.876,
     }));
 
     return new Response(JSON.stringify({ events }), {

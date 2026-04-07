@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { categoryLabels, categoryIcons, cityCoordinates, type EventCategory } from "@/data/events";
-import { Loader2, Plus, ImagePlus } from "lucide-react";
+import { categoryLabels, categoryIcons, type EventCategory } from "@/data/events";
+import { geocodeAddress } from "@/lib/geocode";
+import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
 
 interface AddEventFormProps {
   open: boolean;
@@ -20,6 +21,7 @@ const categories = Object.keys(categoryLabels) as EventCategory[];
 
 const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   const [saving, setSaving] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -77,8 +79,13 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         imagemUrl = urlData.publicUrl;
       }
 
-      const coords = cityCoordinates[form.cidade] || { lat: -29.3731, lng: -50.8760 };
-      const hasExactAddress = form.endereco.trim() && form.endereco.trim() !== "Não informado";
+      // Geocode the address
+      setGeocoding(true);
+      const geo = await geocodeAddress(
+        form.endereco.trim() || "Não informado",
+        form.cidade.trim()
+      );
+      setGeocoding(false);
 
       const { error: insertError } = await supabase.from("events").insert({
         nome: form.nome.trim(),
@@ -89,8 +96,8 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         endereco: form.endereco.trim() || "Não informado",
         descricao: form.descricao.trim() || "Não informado",
         atracoes: form.atracoes ? form.atracoes.split(",").map((s) => s.trim()).filter(Boolean) : [],
-        latitude: coords.lat,
-        longitude: coords.lng,
+        latitude: geo.latitude,
+        longitude: geo.longitude,
         imagem: imagemUrl,
       });
 
@@ -183,9 +190,14 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
             </label>
           </div>
 
-          <Button type="submit" disabled={saving} className="w-full">
-            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-            Adicionar Evento
+          <Button type="submit" disabled={saving || geocoding} className="w-full">
+            {geocoding ? (
+              <><MapPin className="w-4 h-4 mr-2 animate-pulse" /> Localizando endereço...</>
+            ) : saving ? (
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
+            ) : (
+              <><Plus className="w-4 h-4 mr-2" /> Adicionar Evento</>
+            )}
           </Button>
         </form>
       </DialogContent>
