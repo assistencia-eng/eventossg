@@ -1,32 +1,25 @@
 import { EventCategory, categoryLabels, categoryIcons } from "@/data/events";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, addMonths, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface FilterBarProps {
   selectedCategories: EventCategory[];
   onToggleCategory: (cat: EventCategory) => void;
-  distanceKm: number | null;
-  onDistanceChange: (km: number | null) => void;
-  sortBy: "date" | "distance";
-  onSortChange: (sort: "date" | "distance") => void;
+  distanceKm: number;
+  onDistanceChange: (km: number) => void;
   hasLocation: boolean;
   totalResults: number;
-  cities: string[];
-  selectedCity: string | null;
-  onCityChange: (city: string | null) => void;
+  searchCity: string;
+  onSearchCityChange: (val: string) => void;
+  filterMonth: Date;
+  onFilterMonthChange: (d: Date) => void;
 }
 
-const distanceOptions = [
-  { value: null, label: "Todas" },
-  { value: 5, label: "5 km" },
-  { value: 10, label: "10 km" },
-  { value: 25, label: "25 km" },
-  { value: 50, label: "50 km" },
-  { value: 100, label: "100 km" },
-];
-
 const categories: EventCategory[] = [
-  "musica", "esporte", "teatro", "alimentacao", "palestras", "feiras", "empreendedorismo"
+  "musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"
 ];
 
 const FilterBar = ({
@@ -34,16 +27,30 @@ const FilterBar = ({
   onToggleCategory,
   distanceKm,
   onDistanceChange,
-  sortBy,
-  onSortChange,
   hasLocation,
   totalResults,
-  cities,
-  selectedCity,
-  onCityChange,
+  searchCity,
+  onSearchCityChange,
+  filterMonth,
+  onFilterMonthChange,
 }: FilterBarProps) => {
+  const distanceLabel = distanceKm >= 150 ? "150+ km" : `${distanceKm} km`;
+
   return (
     <div className="glass-card rounded-2xl p-5 md:p-6 space-y-5">
+      {/* City search */}
+      <div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por cidade..."
+            value={searchCity}
+            onChange={(e) => onSearchCityChange(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
       {/* Categories */}
       <div>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
@@ -66,87 +73,56 @@ const FilterBar = ({
         </div>
       </div>
 
-      {/* City filter */}
+      {/* Distance slider */}
       <div>
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Cidade
+          Distância: <span className="text-foreground">{distanceLabel}</span>
+          {!hasLocation && <span className="text-xs font-normal normal-case ml-1">(ative a localização)</span>}
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <Slider
+          value={[distanceKm]}
+          onValueChange={([v]) => onDistanceChange(v)}
+          min={1}
+          max={155}
+          step={1}
+          disabled={!hasLocation}
+          className="w-full"
+        />
+        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>1 km</span>
+          <span>150+ km</span>
+        </div>
+      </div>
+
+      {/* Month filter */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Período
+        </h3>
+        <div className="flex items-center justify-center gap-3">
           <button
-            onClick={() => onCityChange(null)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer
-              ${selectedCity === null
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
+            onClick={() => onFilterMonthChange(subMonths(filterMonth, 1))}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
           >
-            Todas
+            <ChevronLeft className="w-4 h-4" />
           </button>
-          {cities.map((city) => (
-            <button
-              key={city}
-              onClick={() => onCityChange(city)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer
-                ${selectedCity === city
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-            >
-              {city}
-            </button>
-          ))}
+          <span className="text-sm font-medium min-w-[140px] text-center capitalize">
+            {format(filterMonth, "MMMM yyyy", { locale: ptBR })}
+          </span>
+          <button
+            onClick={() => onFilterMonthChange(addMonths(filterMonth, 1))}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Distance */}
-      <div>
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Distância {!hasLocation && <span className="text-xs font-normal normal-case">(ative a localização)</span>}
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {distanceOptions.map((opt) => (
-            <button
-              key={opt.label}
-              disabled={!hasLocation && opt.value !== null}
-              onClick={() => onDistanceChange(opt.value)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-                ${distanceKm === opt.value
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }
-                ${!hasLocation && opt.value !== null ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
-              `}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Sort + Results count */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
+      {/* Results count */}
+      <div className="pt-2 border-t border-border">
         <span className="text-sm text-muted-foreground">
           <strong className="text-foreground">{totalResults}</strong> evento{totalResults !== 1 && "s"} encontrado{totalResults !== 1 && "s"}
         </span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => onSortChange("date")}
-            className={`px-3 py-1 rounded-md text-sm transition-colors ${
-              sortBy === "date" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Por data
-          </button>
-          <button
-            onClick={() => onSortChange("distance")}
-            disabled={!hasLocation}
-            className={`px-3 py-1 rounded-md text-sm transition-colors ${
-              sortBy === "distance" ? "bg-foreground text-background" : "bg-muted text-muted-foreground hover:bg-muted/80"
-            } ${!hasLocation ? "opacity-40 cursor-not-allowed" : ""}`}
-          >
-            Por proximidade
-          </button>
-        </div>
       </div>
     </div>
   );

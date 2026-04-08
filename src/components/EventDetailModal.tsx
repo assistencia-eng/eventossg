@@ -1,37 +1,42 @@
 import { EventData, categoryLabels, categoryIcons } from "@/data/events";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, MapPin, Star } from "lucide-react";
+import { Calendar, Star } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import ShareButton from "@/components/ShareButton";
 
 interface EventDetailModalProps {
   event: EventData | null;
   open: boolean;
   onClose: () => void;
-  distance?: number | null;
 }
 
-const EventDetailModal = ({ event, open, onClose, distance }: EventDetailModalProps) => {
+const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null;
+  const cats = event.categorias?.length ? event.categorias : [event.categoria];
+  const mainCat = cats[0];
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl">
-        {/* Cover image */}
         {event.imagem && (
           <div className="w-full h-48 overflow-hidden">
             <img src={event.imagem} alt={event.nome} className="w-full h-full object-cover" />
           </div>
         )}
 
-        {/* Category bar */}
-        <div className={`h-2 category-chip-${event.categoria} active w-full rounded-none border-0`} />
+        <div className={`h-2 category-chip-${mainCat} active w-full rounded-none border-0`} />
 
         <div className="p-6 space-y-5">
           <DialogHeader className="space-y-2">
-            <div className={`category-chip category-chip-${event.categoria} text-xs inline-flex w-fit`}>
-              {categoryIcons[event.categoria]} {categoryLabels[event.categoria]}
+            <div className="flex flex-wrap gap-1.5">
+              {cats.map((cat) => (
+                <span key={cat} className={`category-chip category-chip-${cat} text-xs inline-flex`}>
+                  {categoryIcons[cat]} {categoryLabels[cat]}
+                </span>
+              ))}
             </div>
             <DialogTitle className="text-2xl font-serif font-bold leading-snug">
               {event.nome}
@@ -39,34 +44,42 @@ const EventDetailModal = ({ event, open, onClose, distance }: EventDetailModalPr
             <DialogDescription className="sr-only">Detalhes do evento {event.nome}</DialogDescription>
           </DialogHeader>
 
-          {/* Info */}
           <div className="space-y-2 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary" />
-              <span className="capitalize font-medium">{formattedDate}</span>
+              <span className="capitalize font-medium">
+                {formattedDate}
+                {formattedEndDate && <><br />até {formattedEndDate}</>}
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-accent" />
-              <span>{event.local}, {event.endereco} — {event.cidade}</span>
+              <span>
+                {event.local !== "Não informado" && `${event.local}, `}
+                {event.endereco !== "Não informado" && `${event.endereco} — `}
+                {event.cidade}
+              </span>
             </div>
-            {distance != null && event.hasExactLocation !== false ? (
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-accent/10 text-accent rounded-full text-xs font-medium">
-                📍 {distance.toFixed(1)} km de distância
-              </div>
-            ) : event.hasExactLocation === false ? (
-              <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs font-medium">
-                📍 Localização aproximada — {event.cidade}
-              </div>
-            ) : null}
           </div>
 
-          {/* Description */}
+          {/* Subcategories */}
+          {event.subcategorias && event.subcategorias.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-foreground mb-2 text-sm">Subcategorias</h4>
+              <div className="flex flex-wrap gap-1.5">
+                {event.subcategorias.map((sub) => (
+                  <span key={sub} className="px-2.5 py-1 rounded-full text-xs bg-secondary text-secondary-foreground border border-border">
+                    {sub}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div>
             <h4 className="font-semibold text-foreground mb-1">Sobre o evento</h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{event.descricao}</p>
           </div>
 
-          {/* Atrações */}
           {event.atracoes.length > 0 && (
             <div>
               <h4 className="font-semibold text-foreground mb-2">Atrações</h4>
@@ -81,18 +94,12 @@ const EventDetailModal = ({ event, open, onClose, distance }: EventDetailModalPr
             </div>
           )}
 
-          {/* Map placeholder */}
-          <div className="rounded-xl bg-muted p-4 text-center text-sm text-muted-foreground border border-border">
-            <MapPin className="w-6 h-6 mx-auto mb-1 text-accent" />
-            {event.hasExactLocation !== false ? (
-              <>
-                Integração com mapa em breve
-                <br />
-                <span className="text-xs">Lat: {event.latitude.toFixed(4)}, Lng: {event.longitude.toFixed(4)}</span>
-              </>
-            ) : (
-              <span className="text-xs">Localização aproximada — coordenadas da cidade</span>
-            )}
+          {/* Share */}
+          <div className="pt-2 border-t border-border">
+            <ShareButton
+              title={event.nome}
+              text={`${formattedDate} — ${event.cidade}`}
+            />
           </div>
         </div>
       </DialogContent>
