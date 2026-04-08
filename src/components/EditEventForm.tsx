@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,19 +7,20 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { categoryLabels, categoryIcons, subcategoryOptions, type EventCategory } from "@/data/events";
+import { categoryLabels, categoryIcons, subcategoryOptions, type EventCategory, type EventData } from "@/data/events";
 import { geocodeAddress } from "@/lib/geocode";
-import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
+import { Loader2, Save, MapPin, ImagePlus } from "lucide-react";
 
-interface AddEventFormProps {
+interface EditEventFormProps {
+  event: EventData | null;
   open: boolean;
   onClose: () => void;
-  onAdded: () => void;
+  onUpdated: () => void;
 }
 
 const allCategories = Object.keys(categoryLabels) as EventCategory[];
 
-const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
+const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -38,13 +39,25 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
     is_featured: false,
   });
 
-  const resetForm = () => {
-    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false });
-    setImageFile(null);
-    setImagePreview(null);
-  };
-
-  const handleClose = () => { resetForm(); onClose(); };
+  useEffect(() => {
+    if (event) {
+      setForm({
+        nome: event.nome,
+        categorias: event.categorias?.length ? event.categorias : [event.categoria],
+        subcategorias: event.subcategorias || [],
+        data: event.data,
+        data_fim: event.data_fim || "",
+        cidade: event.cidade,
+        local: event.local === "Não informado" ? "" : event.local,
+        endereco: event.endereco === "Não informado" ? "" : event.endereco,
+        descricao: event.descricao === "Não informado" ? "" : event.descricao,
+        atracoes: event.atracoes.join(", "),
+        is_featured: event.is_featured || false,
+      });
+      setImagePreview(event.imagem || null);
+      setImageFile(null);
+    }
+  }, [event]);
 
   const toggleCategory = (cat: EventCategory) => {
     setForm((prev) => ({
@@ -76,14 +89,14 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nome.trim() || !form.data || form.categorias.length === 0 || !form.cidade.trim()) {
-      toast.error("Preencha: título, data, categoria e cidade.");
+    if (!event || !form.nome.trim() || !form.data || form.categorias.length === 0 || !form.cidade.trim()) {
+      toast.error("Preencha os campos obrigatórios.");
       return;
     }
 
     setSaving(true);
     try {
-      let imagemUrl: string | null = null;
+      let imagemUrl = event.imagem || null;
 
       if (imageFile) {
         const ext = imageFile.name.split(".").pop();
@@ -98,7 +111,7 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
       const geo = await geocodeAddress(form.endereco.trim() || "Não informado", form.cidade.trim());
       setGeocoding(false);
 
-      const { error: insertError } = await supabase.from("events").insert({
+      const { error: updateError } = await supabase.from("events").update({
         nome: form.nome.trim(),
         categoria: form.categorias[0],
         categorias: form.categorias,
@@ -114,13 +127,13 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         longitude: geo.longitude,
         imagem: imagemUrl,
         is_featured: form.is_featured,
-      });
+      }).eq("id", event.id);
 
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
 
-      toast.success("Evento adicionado!");
-      onAdded();
-      handleClose();
+      toast.success("Evento atualizado!");
+      onUpdated();
+      onClose();
     } catch (err) {
       console.error(err);
       toast.error("Erro ao salvar.");
@@ -129,18 +142,20 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
     }
   };
 
+  if (!event) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl">Adicionar Evento</DialogTitle>
-          <DialogDescription>Preencha os dados para criar um novo evento.</DialogDescription>
+          <DialogTitle className="font-serif text-xl">Editar Evento</DialogTitle>
+          <DialogDescription>Atualize os dados do evento.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Título *</Label>
-            <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Nome do evento" required maxLength={200} />
+            <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required maxLength={200} />
           </div>
 
           {/* Categories multi-select */}
@@ -198,31 +213,32 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Cidade *</Label>
-              <Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} placeholder="Ex: Gramado" required maxLength={100} />
+              <Input value={form.cidade} onChange={(e) => setForm({ ...form, cidade: e.target.value })} required maxLength={100} />
             </div>
             <div className="space-y-2">
               <Label>Local</Label>
-              <Input value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })} placeholder="Ex: Palácio dos Festivais" maxLength={200} />
+              <Input value={form.local} onChange={(e) => setForm({ ...form, local: e.target.value })} maxLength={200} />
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Endereço</Label>
-            <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} placeholder="Ex: Av. Borges de Medeiros, 2500" maxLength={300} />
+            <Input value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} maxLength={300} />
           </div>
 
           <div className="space-y-2">
             <Label>Descrição</Label>
-            <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} placeholder="Descrição do evento" rows={3} maxLength={1000} />
+            <Textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} rows={3} maxLength={1000} />
           </div>
 
           <div className="space-y-2">
             <Label>Atrações (separadas por vírgula)</Label>
-            <Input value={form.atracoes} onChange={(e) => setForm({ ...form, atracoes: e.target.value })} placeholder="Ex: Show ao vivo, Degustação" maxLength={500} />
+            <Input value={form.atracoes} onChange={(e) => setForm({ ...form, atracoes: e.target.value })} maxLength={500} />
           </div>
 
+          {/* Image */}
           <div className="space-y-2">
-            <Label>Imagem de capa (opcional)</Label>
+            <Label>Imagem de capa</Label>
             <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
               <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
               {imagePreview ? (
@@ -236,22 +252,23 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
             </label>
           </div>
 
+          {/* Featured checkbox */}
           <div className="flex items-center gap-2">
             <Checkbox
-              id="is_featured_add"
+              id="is_featured"
               checked={form.is_featured}
               onCheckedChange={(checked) => setForm({ ...form, is_featured: !!checked })}
             />
-            <Label htmlFor="is_featured_add" className="cursor-pointer">Evento principal (destaque no outdoor)</Label>
+            <Label htmlFor="is_featured" className="cursor-pointer">Evento principal (destaque no outdoor)</Label>
           </div>
 
           <Button type="submit" disabled={saving || geocoding} className="w-full">
             {geocoding ? (
-              <><MapPin className="w-4 h-4 mr-2 animate-pulse" /> Localizando endereço...</>
+              <><MapPin className="w-4 h-4 mr-2 animate-pulse" /> Localizando...</>
             ) : saving ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</>
             ) : (
-              <><Plus className="w-4 h-4 mr-2" /> Adicionar Evento</>
+              <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>
             )}
           </Button>
         </form>
@@ -260,4 +277,4 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   );
 };
 
-export default AddEventForm;
+export default EditEventForm;

@@ -1,4 +1,4 @@
-export type EventCategory = "musica" | "esporte" | "teatro" | "alimentacao" | "palestras" | "feiras" | "empreendedorismo";
+export type EventCategory = "musica" | "esporte" | "alimentacao" | "entretenimento" | "palestras" | "feiras" | "festas";
 
 export interface EventData {
   id: string;
@@ -7,36 +7,50 @@ export interface EventData {
   cidade: string;
   endereco: string;
   data: string;
+  data_fim?: string | null;
   descricao: string;
   atracoes: string[];
   categoria: EventCategory;
+  categorias: EventCategory[];
+  subcategorias: string[];
   latitude: number;
   longitude: number;
   imagem?: string;
   hasExactLocation?: boolean;
+  is_featured?: boolean;
+  outdoor_duration?: number;
 }
 
 export const categoryLabels: Record<EventCategory, string> = {
   musica: "Música",
   esporte: "Esporte",
-  teatro: "Teatro",
   alimentacao: "Alimentação",
+  entretenimento: "Entretenimento",
   palestras: "Palestras",
   feiras: "Feiras",
-  empreendedorismo: "Empreendedorismo",
+  festas: "Festas",
 };
 
 export const categoryIcons: Record<EventCategory, string> = {
   musica: "🎵",
   esporte: "⚽",
-  teatro: "🎭",
   alimentacao: "🍷",
+  entretenimento: "🎭",
   palestras: "🎤",
   feiras: "🏪",
-  empreendedorismo: "💼",
+  festas: "🎉",
 };
 
-// Default city coordinates for approximate location
+export const subcategoryOptions: Record<EventCategory, string[]> = {
+  musica: ["rock", "sertanejo", "pagode", "eletrônica", "funk", "hip-hop", "reggae", "jazz", "tradicionalista", "gaúcha", "MPB"],
+  esporte: ["futebol", "corrida", "vôlei", "basquete", "padel", "tênis", "beach tennis", "futevôlei", "arte marcial", "natação", "fitness", "academia"],
+  alimentacao: ["bebidas", "vinho", "fast food", "churrasco", "vegano", "sushi", "doces", "naturais"],
+  entretenimento: ["teatro", "musical", "drama", "comédia", "apresentação cultural", "premiações", "encontros"],
+  palestras: ["empreendedorismo", "tecnologia", "saúde", "gestão", "cultural", "esporte"],
+  feiras: ["empreendedorismo", "tecnologia", "automação", "alimentação"],
+  festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
+};
+
 export const cityCoordinates: Record<string, { lat: number; lng: number }> = {
   "Gramado": { lat: -29.3731, lng: -50.8760 },
   "Canela": { lat: -29.3645, lng: -50.8116 },
@@ -48,216 +62,3 @@ export const cityCoordinates: Record<string, { lat: number; lng: number }> = {
   "Nova Petrópolis": { lat: -29.3726, lng: -51.1144 },
   "São Marcos": { lat: -28.9696, lng: -51.0686 },
 };
-
-export const mockEvents: EventData[] = [
-  {
-    id: "1",
-    nome: "Festival de Inverno de Gramado",
-    local: "Palácio dos Festivais",
-    cidade: "Gramado",
-    endereco: "Av. Borges de Medeiros, 2500",
-    data: "2026-07-15",
-    descricao: "O maior festival de cinema da América Latina com exibições, shows e premiações em uma atmosfera mágica de inverno.",
-    atracoes: ["Exibições de filmes", "Shows musicais", "Premiações", "Meet & greet com artistas"],
-    categoria: "teatro",
-    latitude: -29.3731,
-    longitude: -50.8760,
-    hasExactLocation: true,
-  },
-  {
-    id: "2",
-    nome: "Festa da Uva",
-    local: "Parque de Eventos",
-    cidade: "Caxias do Sul",
-    endereco: "Rua Ludovico Cavinato, 1431",
-    data: "2026-06-20",
-    descricao: "Celebração da cultura italiana e da colheita da uva, com degustações, danças folclóricas e gastronomia típica.",
-    atracoes: ["Degustação de vinhos", "Danças folclóricas", "Desfile de carros alegóricos", "Gastronomia italiana"],
-    categoria: "alimentacao",
-    latitude: -29.1685,
-    longitude: -51.1794,
-    hasExactLocation: true,
-  },
-  {
-    id: "3",
-    nome: "Natal Luz",
-    local: "Centro de Gramado",
-    cidade: "Gramado",
-    endereco: "Praça Major Nicoletti",
-    data: "2026-12-01",
-    descricao: "O espetáculo natalino mais famoso do Brasil, com shows de luzes, desfiles e apresentações encantadoras.",
-    atracoes: ["Show de luzes no lago", "Desfile de Natal", "Grande Parada de Natal", "Tannenbaumfest"],
-    categoria: "teatro",
-    latitude: -29.3750,
-    longitude: -50.8755,
-    hasExactLocation: true,
-  },
-  {
-    id: "4",
-    nome: "Maratona das Hortênsias",
-    local: "Largada no Centro",
-    cidade: "Gramado",
-    endereco: "Av. das Hortênsias, 1",
-    data: "2026-05-10",
-    descricao: "Corrida de rua pelos cenários deslumbrantes da Serra Gaúcha, passando por vinhedos e paisagens naturais.",
-    atracoes: ["Maratona 42km", "Meia maratona 21km", "Corrida 10km", "Corrida kids"],
-    categoria: "esporte",
-    latitude: -29.3800,
-    longitude: -50.8700,
-    hasExactLocation: true,
-  },
-  {
-    id: "5",
-    nome: "Jazz & Blues Festival",
-    local: "Vinícola Miolo",
-    cidade: "Bento Gonçalves",
-    endereco: "Vale dos Vinhedos, RS 444 km 21",
-    data: "2026-08-22",
-    descricao: "Festival de jazz e blues em uma das mais belas vinícolas do Brasil, com degustação harmonizada.",
-    atracoes: ["Banda Nova Orleans Jazz", "Duo Blues Brothers", "Jam session aberta", "Degustação de vinhos premium"],
-    categoria: "musica",
-    latitude: -29.1699,
-    longitude: -51.5187,
-    hasExactLocation: true,
-  },
-  {
-    id: "6",
-    nome: "Festival Gastronômico da Serra",
-    local: "Roteiro Gastronômico",
-    cidade: "Bento Gonçalves",
-    endereco: "Vale dos Vinhedos",
-    data: "2026-09-05",
-    descricao: "Experiência culinária com chefs renomados, harmonizações exclusivas e o melhor da gastronomia serrana.",
-    atracoes: ["Jantares temáticos", "Aulas de culinária", "Harmonização vinho e queijos", "Food trucks artesanais"],
-    categoria: "alimentacao",
-    latitude: -29.1700,
-    longitude: -51.5190,
-    hasExactLocation: true,
-  },
-  {
-    id: "7",
-    nome: "Sonho de Natal em Canela",
-    local: "Catedral de Pedra",
-    cidade: "Canela",
-    endereco: "Praça da Matriz",
-    data: "2026-11-15",
-    descricao: "Espetáculo de projeção mapeada na Catedral de Pedra, criando uma experiência visual e sonora inesquecível.",
-    atracoes: ["Projeção mapeada 3D", "Coral natalino", "Orquestra de câmara", "Queima de fogos"],
-    categoria: "teatro",
-    latitude: -29.3645,
-    longitude: -50.8116,
-    hasExactLocation: true,
-  },
-  {
-    id: "8",
-    nome: "Mountain Bike Serra Challenge",
-    local: "Parque do Caracol",
-    cidade: "Canela",
-    endereco: "Estrada do Caracol, km 0",
-    data: "2026-04-18",
-    descricao: "Competição de mountain bike por trilhas naturais com vistas espetaculares da Serra Gaúcha.",
-    atracoes: ["Competição cross-country", "Trilha downhill", "Passeio ciclístico familiar", "Feira de equipamentos"],
-    categoria: "esporte",
-    latitude: -29.3100,
-    longitude: -50.8500,
-    hasExactLocation: true,
-  },
-  {
-    id: "9",
-    nome: "Vindima - Colheita da Uva",
-    local: "Vinícola Aurora",
-    cidade: "Bento Gonçalves",
-    endereco: "Rua Olavo Bilac, 500",
-    data: "2026-02-14",
-    descricao: "Participe da colheita da uva e pise as uvas como antigamente. Experiência autêntica da cultura vinícola gaúcha.",
-    atracoes: ["Colheita manual de uvas", "Pisa da uva tradicional", "Almoço típico colonial", "Tour pelas caves"],
-    categoria: "alimentacao",
-    latitude: -29.1715,
-    longitude: -51.5150,
-    hasExactLocation: true,
-  },
-  {
-    id: "10",
-    nome: "Festival de Música Clássica",
-    local: "Igreja Matriz",
-    cidade: "Garibaldi",
-    endereco: "Praça Ernesto Travi, Centro",
-    data: "2026-10-10",
-    descricao: "Concertos de música clássica em igrejas históricas da Serra, com orquestras e solistas de renome internacional.",
-    atracoes: ["Orquestra Sinfônica de Porto Alegre", "Recital de piano solo", "Quarteto de cordas", "Concerto de encerramento"],
-    categoria: "musica",
-    latitude: -29.2544,
-    longitude: -51.5336,
-    hasExactLocation: true,
-  },
-  {
-    id: "11",
-    nome: "Chocofest",
-    local: "Centro de Convenções",
-    cidade: "Gramado",
-    endereco: "Av. Borges de Medeiros, 3100",
-    data: "2026-04-05",
-    descricao: "Festival do chocolate com oficinas, esculturas gigantes de chocolate e muito sabor. Diversão para toda a família!",
-    atracoes: ["Oficina de chocolates", "Caça aos ovos de Páscoa", "Esculturas de chocolate", "Desfile temático"],
-    categoria: "alimentacao",
-    latitude: -29.3780,
-    longitude: -50.8730,
-    hasExactLocation: true,
-  },
-  {
-    id: "12",
-    nome: "Sertanejo na Serra",
-    local: "Arena Gramado",
-    cidade: "Gramado",
-    endereco: "Rodovia RS 115, km 35",
-    data: "2026-06-28",
-    descricao: "Grande show sertanejo com artistas nacionais em uma noite inesquecível na Serra Gaúcha.",
-    atracoes: ["Dupla sertaneja principal", "Show de abertura", "Praça de alimentação", "Área VIP"],
-    categoria: "musica",
-    latitude: -29.3850,
-    longitude: -50.8680,
-    hasExactLocation: true,
-  },
-  {
-    id: "13",
-    nome: "Summit Empreendedor da Serra",
-    local: "Centro de Eventos",
-    cidade: "Caxias do Sul",
-    endereco: "Não informado",
-    data: "2026-08-15",
-    descricao: "Evento de empreendedorismo com palestras, workshops e networking para empreendedores da região.",
-    atracoes: ["Palestras inspiradoras", "Workshops práticos", "Rodada de negócios", "Pitch de startups"],
-    categoria: "empreendedorismo",
-    latitude: -29.1685,
-    longitude: -51.1794,
-    hasExactLocation: false,
-  },
-  {
-    id: "14",
-    nome: "Feira Colonial de Nova Petrópolis",
-    local: "Praça das Flores",
-    cidade: "Nova Petrópolis",
-    endereco: "Não informado",
-    data: "2026-09-20",
-    descricao: "Feira com produtos coloniais, artesanato e gastronomia típica da colonização alemã.",
-    atracoes: ["Produtos coloniais", "Artesanato local", "Gastronomia alemã", "Apresentações culturais"],
-    categoria: "feiras",
-    latitude: -29.3726,
-    longitude: -51.1144,
-    hasExactLocation: false,
-  },
-  {
-    id: "15",
-    nome: "TEDx Serra Gaúcha",
-    local: "Teatro Municipal",
-    cidade: "Gramado",
-    endereco: "Não informado",
-    data: "2026-10-25",
-    descricao: "Palestras inspiradoras sobre inovação, tecnologia e cultura na Serra Gaúcha.",
-    atracoes: ["Palestras TED", "Networking", "Coffee break temático", "Exposição de projetos"],
-    categoria: "palestras",
-    latitude: -29.3731,
-    longitude: -50.8760,
-    hasExactLocation: false,
-  },
-];
