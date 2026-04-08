@@ -18,49 +18,64 @@ export type Database = {
         Row: {
           atracoes: string[]
           categoria: Database["public"]["Enums"]["event_category"]
+          categorias: string[]
           cidade: string
           created_at: string
           data: string
+          data_fim: string | null
           descricao: string
           endereco: string
           id: string
           imagem: string | null
+          is_featured: boolean
           latitude: number
           local: string
           longitude: number
           nome: string
+          outdoor_duration: number
+          subcategorias: string[]
           updated_at: string
         }
         Insert: {
           atracoes?: string[]
           categoria?: Database["public"]["Enums"]["event_category"]
+          categorias?: string[]
           cidade?: string
           created_at?: string
           data: string
+          data_fim?: string | null
           descricao?: string
           endereco?: string
           id?: string
           imagem?: string | null
+          is_featured?: boolean
           latitude?: number
           local?: string
           longitude?: number
           nome: string
+          outdoor_duration?: number
+          subcategorias?: string[]
           updated_at?: string
         }
         Update: {
           atracoes?: string[]
           categoria?: Database["public"]["Enums"]["event_category"]
+          categorias?: string[]
           cidade?: string
           created_at?: string
           data?: string
+          data_fim?: string | null
           descricao?: string
           endereco?: string
           id?: string
           imagem?: string | null
+          is_featured?: boolean
           latitude?: number
           local?: string
           longitude?: number
           nome?: string
+          outdoor_duration?: number
+          subcategorias?: string[]
           updated_at?: string
         }
         Relationships: []
@@ -81,6 +96,8 @@ export type Database = {
         | "palestras"
         | "feiras"
         | "empreendedorismo"
+        | "entretenimento"
+        | "festas"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -216,6 +233,8 @@ export const Constants = {
         "palestras",
         "feiras",
         "empreendedorismo",
+        "entretenimento",
+        "festas",
       ],
     },
   },
