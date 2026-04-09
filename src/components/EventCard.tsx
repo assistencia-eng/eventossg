@@ -69,7 +69,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             {onDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(event); }}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 title="Excluir evento"
               >
                 <Trash2 className="w-4 h-4" />
