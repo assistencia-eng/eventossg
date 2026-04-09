@@ -1,5 +1,5 @@
 import { EventData, categoryLabels, categoryIcons } from "@/data/events";
-import { Calendar, ChevronRight, Trash2, Pencil } from "lucide-react";
+import { Calendar, ChevronRight, Trash2, Pencil, Star } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,9 +12,11 @@ interface EventCardProps {
   index: number;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }
 
-const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggleSelect }: EventCardProps) => {
+const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggleSelect, isFavorite, onToggleFavorite }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
@@ -42,6 +44,19 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            {onToggleFavorite && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFavorite(event.id); }}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                  isFavorite
+                    ? "text-amber-500 hover:text-amber-600"
+                    : "text-muted-foreground hover:text-amber-500 opacity-0 group-hover:opacity-100"
+                } ${isFavorite ? "opacity-100" : ""}`}
+                title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
+              >
+                <Star className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} />
+              </button>
+            )}
             {onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(event); }}

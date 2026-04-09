@@ -10,7 +10,9 @@ import ImportEvents from "@/components/ImportEvents";
 import AddEventForm from "@/components/AddEventForm";
 import EditEventForm from "@/components/EditEventForm";
 import OutdoorSettings from "@/components/OutdoorSettings";
-import { Loader2, Upload, Plus, Trash2, Settings } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
+import ProfilePage from "@/components/ProfilePage";
+import { Loader2, Upload, Plus, Trash2, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -19,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { useFavorites } from "@/hooks/useFavorites";
+import { useUserInterests } from "@/hooks/useUserInterests";
 
 const Index = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -38,7 +42,11 @@ const Index = () => {
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [searchCity, setSearchCity] = useState("");
   const [filterMonth, setFilterMonth] = useState(new Date());
+  const [activeNav, setActiveNav] = useState<"events" | "profile">("events");
   const eventsRef = useRef<HTMLDivElement>(null);
+
+  const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
+  const { interests, toggleCategory: toggleInterestCategory, toggleSubcategory } = useUserInterests();
 
   useEffect(() => {
     getUserLocation()
@@ -78,8 +86,12 @@ const Index = () => {
   useEffect(() => { fetchDbEvents(); }, [fetchDbEvents]);
 
   const allEvents = useMemo(() => dbEvents, [dbEvents]);
-
   const featuredEvents = useMemo(() => allEvents.filter((e) => e.is_featured), [allEvents]);
+
+  const availableCities = useMemo(() => {
+    const cities = new Set(allEvents.map((e) => e.cidade));
+    return [...cities].sort();
+  }, [allEvents]);
 
   const toggleCategory = useCallback((cat: EventCategory) => {
     setSelectedCategories((prev) =>
@@ -109,7 +121,6 @@ const Index = () => {
   const filteredEvents = useMemo(() => {
     let results = [...eventsWithDistance];
 
-    // Category filter
     if (selectedCategories.length > 0) {
       results = results.filter(({ event }) =>
         event.categorias?.some((c) => selectedCategories.includes(c)) ||
@@ -117,13 +128,11 @@ const Index = () => {
       );
     }
 
-    // City search
     if (searchCity.trim()) {
       const q = searchCity.trim().toLowerCase();
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
     }
 
-    // Distance filter (only if < 155)
     if (distanceKm < 155 && userLocation) {
       results = results.filter(({ distance, event }) => {
         if (event.hasExactLocation !== true) return true;
@@ -131,16 +140,13 @@ const Index = () => {
       });
     }
 
-    // Month filter
     results = results.filter(({ event }) => {
       const eventStart = parseISO(event.data);
       const eventEnd = event.data_fim ? parseISO(event.data_fim) : eventStart;
       return eventEnd >= monthStart && eventStart <= monthEnd;
     });
 
-    // Sort by date
     results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
-
     return results;
   }, [eventsWithDistance, selectedCategories, distanceKm, userLocation, searchCity, monthStart, monthEnd]);
 
@@ -160,7 +166,25 @@ const Index = () => {
     [filteredEvents, today]
   );
 
-  const displayedEvents = activeTab === "upcoming" ? upcomingEvents : pastEvents;
+  // "Para você" events based on user interests
+  const forYouEvents = useMemo(() => {
+    if (interests.categories.length === 0 && interests.subcategories.length === 0) return [];
+    return allEvents.filter((event) => {
+      const end = event.data_fim ? new Date(event.data_fim) : new Date(event.data);
+      if (end < today) return false;
+      const matchesCat = event.categorias?.some((c) => interests.categories.includes(c)) ||
+        interests.categories.includes(event.categoria);
+      const matchesSub = event.subcategorias?.some((s) => interests.subcategories.includes(s));
+      return matchesCat || matchesSub;
+    }).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+  }, [allEvents, interests, today]);
+
+  const displayedEvents = activeTab === "upcoming" ? upcomingEvents : activeTab === "past" ? pastEvents : [];
+
+  const favoriteEvents = useMemo(
+    () => allEvents.filter((e) => favoriteIds.has(e.id)),
+    [allEvents, favoriteIds]
+  );
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -197,105 +221,142 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} />
+    <div className="min-h-screen bg-background pb-20">
+      {activeNav === "events" ? (
+        <>
+          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} />
 
-      <div ref={eventsRef} className="container mx-auto px-4 py-6 pb-16">
-        {/* Action buttons */}
-        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {locationLoading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Obtendo localização...</>
-            ) : userLocation ? (
-              <span className="text-xs">📍 Localização ativa</span>
-            ) : (
-              <span className="text-xs">📍 Localização indisponível</span>
-            )}
-          </div>
-          <div className="flex gap-2 shrink-0 flex-wrap">
-            {selectedIds.size > 0 && (
-              <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
-                <Trash2 className="w-4 h-4 mr-1.5" /> Excluir ({selectedIds.size})
-              </Button>
-            )}
-            {allEvents.length > 0 && (
-              <Button variant="outline" size="sm" onClick={() => setDeleteAllOpen(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => setOutdoorSettingsOpen(true)}>
-              <Settings className="w-4 h-4 mr-1.5" /> Outdoor
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-              <Plus className="w-4 h-4 mr-1.5" /> Novo
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-              <Upload className="w-4 h-4 mr-1.5" /> Importar
-            </Button>
-          </div>
-        </div>
-
-        <FilterBar
-          selectedCategories={selectedCategories}
-          onToggleCategory={toggleCategory}
-          distanceKm={distanceKm}
-          onDistanceChange={setDistanceKm}
-          hasLocation={!!userLocation}
-          totalResults={displayedEvents.length}
-          searchCity={searchCity}
-          onSearchCityChange={setSearchCity}
-          filterMonth={filterMonth}
-          onFilterMonthChange={setFilterMonth}
-        />
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="upcoming" className="flex-1">
-              Atuais e Futuros ({upcomingEvents.length})
-            </TabsTrigger>
-            <TabsTrigger value="past" className="flex-1">
-              Passados ({pastEvents.length})
-            </TabsTrigger>
-          </TabsList>
-
-          {[
-            { key: "upcoming", events: upcomingEvents, emptyMsg: "Nenhum evento futuro encontrado" },
-            { key: "past", events: pastEvents, emptyMsg: "Nenhum evento passado encontrado" },
-          ].map(({ key, events, emptyMsg }) => (
-            <TabsContent key={key} value={key}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-                {events.map(({ event }, i) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    onSelect={setSelectedEvent}
-                    onDelete={setDeleteTarget}
-                    onEdit={setEditEvent}
-                    index={i}
-                    selected={selectedIds.has(event.id)}
-                    onToggleSelect={toggleSelect}
-                  />
-                ))}
+          <div ref={eventsRef} className="container mx-auto px-4 py-6">
+            {/* Action buttons */}
+            <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {locationLoading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Obtendo localização...</>
+                ) : userLocation ? (
+                  <span className="text-xs">📍 Localização ativa</span>
+                ) : (
+                  <span className="text-xs">📍 Localização indisponível</span>
+                )}
               </div>
-              {events.length === 0 && (
-                <div className="text-center py-20">
-                  <p className="text-xl font-serif text-muted-foreground">{emptyMsg}</p>
-                  <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
+              <div className="flex gap-2 shrink-0 flex-wrap">
+                {selectedIds.size > 0 && (
+                  <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Excluir ({selectedIds.size})
+                  </Button>
+                )}
+                {allEvents.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setDeleteAllOpen(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setOutdoorSettingsOpen(true)}>
+                  <Settings className="w-4 h-4 mr-1.5" /> Outdoor
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus className="w-4 h-4 mr-1.5" /> Novo
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                  <Upload className="w-4 h-4 mr-1.5" /> Importar
+                </Button>
+              </div>
+            </div>
+
+            <FilterBar
+              selectedCategories={selectedCategories}
+              onToggleCategory={toggleCategory}
+              distanceKm={distanceKm}
+              onDistanceChange={setDistanceKm}
+              hasLocation={!!userLocation}
+              totalResults={displayedEvents.length}
+              searchCity={searchCity}
+              onSearchCityChange={setSearchCity}
+              filterMonth={filterMonth}
+              onFilterMonthChange={setFilterMonth}
+              availableCities={availableCities}
+            />
+
+            {/* "Para você" section */}
+            {forYouEvents.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-serif font-semibold">Para você</h2>
                 </div>
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {forYouEvents.slice(0, 3).map((event, i) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onSelect={setSelectedEvent}
+                      index={i}
+                      isFavorite={isFavorite(event.id)}
+                      onToggleFavorite={toggleFavorite}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+              <TabsList className="w-full justify-start">
+                <TabsTrigger value="upcoming" className="flex-1">
+                  Próximos ({upcomingEvents.length})
+                </TabsTrigger>
+                <TabsTrigger value="past" className="flex-1">
+                  Passados ({pastEvents.length})
+                </TabsTrigger>
+              </TabsList>
+
+              {[
+                { key: "upcoming", events: upcomingEvents, emptyMsg: "Nenhum evento futuro encontrado" },
+                { key: "past", events: pastEvents, emptyMsg: "Nenhum evento passado encontrado" },
+              ].map(({ key, events, emptyMsg }) => (
+                <TabsContent key={key} value={key}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
+                    {events.map(({ event }, i) => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onSelect={setSelectedEvent}
+                        onDelete={setDeleteTarget}
+                        onEdit={setEditEvent}
+                        index={i}
+                        selected={selectedIds.has(event.id)}
+                        onToggleSelect={toggleSelect}
+                        isFavorite={isFavorite(event.id)}
+                        onToggleFavorite={toggleFavorite}
+                      />
+                    ))}
+                  </div>
+                  {events.length === 0 && (
+                    <div className="text-center py-20">
+                      <p className="text-xl font-serif text-muted-foreground">{emptyMsg}</p>
+                      <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          </div>
+        </>
+      ) : (
+        <ProfilePage
+          interests={interests}
+          onToggleCategory={toggleInterestCategory}
+          onToggleSubcategory={toggleSubcategory}
+          favoriteEvents={favoriteEvents}
+          onSelectEvent={setSelectedEvent}
+          onToggleFavorite={toggleFavorite}
+          isFavorite={isFavorite}
+        />
+      )}
+
+      <BottomNav active={activeNav} onChange={setActiveNav} />
 
       <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} />
-
       <EditEventForm event={editEvent} open={!!editEvent} onClose={() => setEditEvent(null)} onUpdated={fetchDbEvents} />
-
       <ImportEvents open={importOpen} onClose={() => setImportOpen(false)} onImported={fetchDbEvents} />
-
       <AddEventForm open={addOpen} onClose={() => setAddOpen(false)} onAdded={fetchDbEvents} />
-
       <OutdoorSettings open={outdoorSettingsOpen} onClose={() => setOutdoorSettingsOpen(false)} events={allEvents} onUpdated={fetchDbEvents} />
 
       {/* Single delete */}
