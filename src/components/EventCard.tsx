@@ -50,8 +50,8 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                   isFavorite
                     ? "text-amber-500 hover:text-amber-600"
-                    : "text-muted-foreground hover:text-amber-500 opacity-0 group-hover:opacity-100"
-                } ${isFavorite ? "opacity-100" : ""}`}
+                    : "text-muted-foreground hover:text-amber-500"
+                }`}
                 title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
               >
                 <Star className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} />
