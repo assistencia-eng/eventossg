@@ -60,7 +60,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             {onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(event); }}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors opacity-0 group-hover:opacity-100"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                 title="Editar evento"
               >
                 <Pencil className="w-4 h-4" />
