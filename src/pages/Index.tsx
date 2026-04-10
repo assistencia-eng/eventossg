@@ -293,27 +293,29 @@ const Index = () => {
                   <span className="text-xs">📍 Localização indisponível</span>
                 )}
               </div>
-              <div className="flex gap-2 shrink-0 flex-wrap">
-                {selectedIds.size > 0 && (
-                  <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
-                    <Trash2 className="w-4 h-4 mr-1.5" /> Excluir ({selectedIds.size})
+              {isAdmin && (
+                <div className="flex gap-2 shrink-0 flex-wrap">
+                  {selectedIds.size > 0 && (
+                    <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                      <Trash2 className="w-4 h-4 mr-1.5" /> Excluir ({selectedIds.size})
+                    </Button>
+                  )}
+                  {allEvents.length > 0 && (
+                    <Button variant="outline" size="sm" onClick={() => setDeleteAllOpen(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                      <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => setOutdoorSettingsOpen(true)}>
+                    <Settings className="w-4 h-4 mr-1.5" /> Outdoor
                   </Button>
-                )}
-                {allEvents.length > 0 && (
-                  <Button variant="outline" size="sm" onClick={() => setDeleteAllOpen(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                    <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
+                  <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                    <Plus className="w-4 h-4 mr-1.5" /> Novo
                   </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={() => setOutdoorSettingsOpen(true)}>
-                  <Settings className="w-4 h-4 mr-1.5" /> Outdoor
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-                  <Plus className="w-4 h-4 mr-1.5" /> Novo
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                  <Upload className="w-4 h-4 mr-1.5" /> Importar
-                </Button>
-              </div>
+                  <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+                    <Upload className="w-4 h-4 mr-1.5" /> Importar
+                  </Button>
+                </div>
+              )}
             </div>
 
             <FilterBar
