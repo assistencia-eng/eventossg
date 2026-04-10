@@ -29,7 +29,7 @@ import { useUserInterests } from "@/hooks/useUserInterests";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const { user, profile, loading: authLoading, signOut } = useAuth();
+  const { user, profile, loading: authLoading, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
