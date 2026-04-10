@@ -14,8 +14,9 @@ import OutdoorSettings from "@/components/OutdoorSettings";
 import BottomNav from "@/components/BottomNav";
 import ProfilePage from "@/components/ProfilePage";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
-import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn } from "lucide-react";
+import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -48,7 +49,9 @@ const Index = () => {
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
   const [searchCity, setSearchCity] = useState("");
   const [filterMonth, setFilterMonth] = useState(new Date());
-  const [activeNav, setActiveNav] = useState<"events" | "profile">("events");
+  const [allDates, setAllDates] = useState(true);
+  const [searchName, setSearchName] = useState("");
+  const [activeNav, setActiveNav] = useState<"events" | "profile" | "search">("events");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const eventsRef = useRef<HTMLDivElement>(null);
 
@@ -74,6 +77,7 @@ const Index = () => {
           endereco: e.endereco,
           data: e.data,
           data_fim: e.data_fim,
+          horario: (e as any).horario ?? null,
           descricao: e.descricao,
           atracoes: e.atracoes,
           categoria: e.categoria as EventCategory,
@@ -85,6 +89,8 @@ const Index = () => {
           hasExactLocation: e.endereco !== "Não informado" && e.endereco !== "",
           is_featured: e.is_featured,
           outdoor_duration: e.outdoor_duration,
+          is_recurring: (e as any).is_recurring ?? false,
+          recurring_days: (e as any).recurring_days ?? [],
         }))
       );
     }
@@ -114,7 +120,7 @@ const Index = () => {
     await toggleFavorite(id);
   }, [user, toggleFavorite]);
 
-  const handleNavChange = useCallback((tab: "events" | "profile") => {
+  const handleNavChange = useCallback((tab: "events" | "profile" | "search") => {
     if (tab === "profile" && !user) {
       navigate("/auth");
       return;
@@ -156,6 +162,11 @@ const Index = () => {
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
     }
 
+    if (searchName.trim()) {
+      const q = searchName.trim().toLowerCase();
+      results = results.filter(({ event }) => event.nome.toLowerCase().includes(q));
+    }
+
     if (distanceKm < 155 && userLocation) {
       results = results.filter(({ distance, event }) => {
         if (event.hasExactLocation !== true) return true;
@@ -163,15 +174,18 @@ const Index = () => {
       });
     }
 
-    results = results.filter(({ event }) => {
-      const eventStart = parseISO(event.data);
-      const eventEnd = event.data_fim ? parseISO(event.data_fim) : eventStart;
-      return eventEnd >= monthStart && eventStart <= monthEnd;
-    });
+    // Only apply month filter if "all dates" is off
+    if (!allDates) {
+      results = results.filter(({ event }) => {
+        const eventStart = parseISO(event.data);
+        const eventEnd = event.data_fim ? parseISO(event.data_fim) : eventStart;
+        return eventEnd >= monthStart && eventStart <= monthEnd;
+      });
+    }
 
     results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
     return results;
-  }, [eventsWithDistance, selectedCategories, distanceKm, userLocation, searchCity, monthStart, monthEnd]);
+  }, [eventsWithDistance, selectedCategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
 
   const upcomingEvents = useMemo(
     () => filteredEvents.filter(({ event }) => {
@@ -245,6 +259,13 @@ const Index = () => {
   const userInitials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() || "?";
+
+  // Search view filtered events
+  const searchResults = useMemo(() => {
+    if (!searchName.trim()) return allEvents;
+    const q = searchName.trim().toLowerCase();
+    return allEvents.filter((e) => e.nome.toLowerCase().includes(q));
+  }, [allEvents, searchName]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -330,6 +351,10 @@ const Index = () => {
               filterMonth={filterMonth}
               onFilterMonthChange={setFilterMonth}
               availableCities={availableCities}
+              allDates={allDates}
+              onAllDatesChange={setAllDates}
+              searchName={searchName}
+              onSearchNameChange={setSearchName}
             />
 
             {user && forYouEvents.length > 0 && (
@@ -397,6 +422,44 @@ const Index = () => {
             </Tabs>
           </div>
         </>
+      ) : activeNav === "search" ? (
+        <div className="container mx-auto px-4 py-6">
+          <h2 className="text-xl font-serif font-bold mb-4">Buscar eventos</h2>
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome do evento..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              className="pl-9 h-12"
+              autoFocus
+            />
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            <strong className="text-foreground">{searchResults.length}</strong> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {searchResults.map((event, i) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                onSelect={setSelectedEvent}
+                onDelete={setDeleteTarget}
+                onEdit={setEditEvent}
+                index={i}
+                isFavorite={isFavorite(event.id)}
+                onToggleFavorite={handleToggleFavorite}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+          {searchResults.length === 0 && searchName.trim() && (
+            <div className="text-center py-20">
+              <p className="text-xl font-serif text-muted-foreground">Nenhum evento encontrado</p>
+              <p className="text-sm text-muted-foreground mt-2">Tente outro termo de busca.</p>
+            </div>
+          )}
+        </div>
       ) : (
         <ProfilePage
           interests={interests}
