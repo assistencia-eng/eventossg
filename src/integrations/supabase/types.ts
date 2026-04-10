@@ -43,14 +43,17 @@ export type Database = {
           data_fim: string | null
           descricao: string
           endereco: string
+          horario: string | null
           id: string
           imagem: string | null
           is_featured: boolean
+          is_recurring: boolean
           latitude: number
           local: string
           longitude: number
           nome: string
           outdoor_duration: number
+          recurring_days: string[]
           subcategorias: string[]
           updated_at: string
         }
@@ -64,14 +67,17 @@ export type Database = {
           data_fim?: string | null
           descricao?: string
           endereco?: string
+          horario?: string | null
           id?: string
           imagem?: string | null
           is_featured?: boolean
+          is_recurring?: boolean
           latitude?: number
           local?: string
           longitude?: number
           nome: string
           outdoor_duration?: number
+          recurring_days?: string[]
           subcategorias?: string[]
           updated_at?: string
         }
@@ -85,14 +91,17 @@ export type Database = {
           data_fim?: string | null
           descricao?: string
           endereco?: string
+          horario?: string | null
           id?: string
           imagem?: string | null
           is_featured?: boolean
+          is_recurring?: boolean
           latitude?: number
           local?: string
           longitude?: number
           nome?: string
           outdoor_duration?: number
+          recurring_days?: string[]
           subcategorias?: string[]
           updated_at?: string
         }
