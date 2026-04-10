@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { EventCategory } from "@/data/events";
-
-const STORAGE_KEY = "user-interests";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserInterests {
   categories: EventCategory[];
@@ -9,36 +9,79 @@ interface UserInterests {
 }
 
 export const useUserInterests = () => {
-  const [interests, setInterests] = useState<UserInterests>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : { categories: [], subcategories: [] };
-    } catch {
-      return { categories: [], subcategories: [] };
-    }
-  });
+  const { user, profile } = useAuth();
+  const [interests, setInterests] = useState<UserInterests>({ categories: [], subcategories: [] });
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(interests));
-  }, [interests]);
+    if (profile?.interests && profile.interests.length > 0) {
+      try {
+        // interests is stored as a JSON string array: ["categories:cat1,cat2", "subcategories:sub1,sub2"]
+        const parsed = parseInterests(profile.interests);
+        setInterests(parsed);
+      } catch {
+        setInterests({ categories: [], subcategories: [] });
+      }
+    } else {
+      setInterests({ categories: [], subcategories: [] });
+    }
+  }, [profile]);
+
+  const persist = useCallback(async (newInterests: UserInterests) => {
+    if (!user) return;
+    const serialized = serializeInterests(newInterests);
+    await supabase
+      .from("profiles")
+      .update({ interests: serialized })
+      .eq("user_id", user.id);
+  }, [user]);
 
   const toggleCategory = useCallback((cat: EventCategory) => {
-    setInterests((prev) => ({
-      ...prev,
-      categories: prev.categories.includes(cat)
-        ? prev.categories.filter((c) => c !== cat)
-        : [...prev.categories, cat],
-    }));
-  }, []);
+    setInterests((prev) => {
+      const updated = {
+        ...prev,
+        categories: prev.categories.includes(cat)
+          ? prev.categories.filter((c) => c !== cat)
+          : [...prev.categories, cat],
+      };
+      persist(updated);
+      return updated;
+    });
+  }, [persist]);
 
   const toggleSubcategory = useCallback((sub: string) => {
-    setInterests((prev) => ({
-      ...prev,
-      subcategories: prev.subcategories.includes(sub)
-        ? prev.subcategories.filter((s) => s !== sub)
-        : [...prev.subcategories, sub],
-    }));
-  }, []);
+    setInterests((prev) => {
+      const updated = {
+        ...prev,
+        subcategories: prev.subcategories.includes(sub)
+          ? prev.subcategories.filter((s) => s !== sub)
+          : [...prev.subcategories, sub],
+      };
+      persist(updated);
+      return updated;
+    });
+  }, [persist]);
 
   return { interests, toggleCategory, toggleSubcategory };
 };
+
+function serializeInterests(i: UserInterests): string[] {
+  return [
+    `categories:${i.categories.join(",")}`,
+    `subcategories:${i.subcategories.join(",")}`,
+  ];
+}
+
+function parseInterests(arr: string[]): UserInterests {
+  let categories: EventCategory[] = [];
+  let subcategories: string[] = [];
+  for (const item of arr) {
+    if (item.startsWith("categories:")) {
+      const val = item.replace("categories:", "");
+      categories = val ? val.split(",") as EventCategory[] : [];
+    } else if (item.startsWith("subcategories:")) {
+      const val = item.replace("subcategories:", "");
+      subcategories = val ? val.split(",") : [];
+    }
+  }
+  return { categories, subcategories };
+}
