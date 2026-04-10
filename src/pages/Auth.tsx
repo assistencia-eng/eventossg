@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Loader2, Mail, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -37,10 +36,10 @@ const Auth = () => {
       });
       if (result.error) {
         toast.error("Erro ao entrar com Google");
+        setLoading(false);
         return;
       }
       if (result.redirected) return;
-      // Session set automatically, AuthContext will pick it up
       toast.success("Login realizado com sucesso!");
       navigate("/", { replace: true });
     } catch {
@@ -57,13 +56,18 @@ const Auth = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos" : error.message);
-    } else {
-      toast.success("Login realizado com sucesso!");
-      navigate("/", { replace: true });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message === "Invalid login credentials" ? "E-mail ou senha incorretos" : error.message);
+      } else {
+        toast.success("Login realizado com sucesso!");
+        navigate("/", { replace: true });
+      }
+    } catch {
+      toast.error("Erro inesperado ao fazer login");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,20 +86,25 @@ const Auth = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-        emailRedirectTo: window.location.origin,
-      },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Conta criada! Verifique seu e-mail para confirmar.");
-      setMode("login");
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Conta criada! Verifique seu e-mail para confirmar.");
+        setMode("login");
+      }
+    } catch {
+      toast.error("Erro inesperado ao criar conta");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -106,15 +115,20 @@ const Auth = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
-      setMode("login");
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("E-mail de recuperação enviado! Verifique sua caixa de entrada.");
+        setMode("login");
+      }
+    } catch {
+      toast.error("Erro inesperado");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -184,7 +198,7 @@ const Auth = () => {
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
-                    className="pl-10"
+                    className="pl-10 h-12"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
@@ -197,20 +211,21 @@ const Auth = () => {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    className="h-12"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-3 text-muted-foreground"
+                    className="absolute right-3 top-3.5 text-muted-foreground"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full h-11" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Entrar"}
+              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Entrar"}
               </Button>
               <div className="flex justify-between text-sm">
                 <button type="button" className="text-primary hover:underline" onClick={() => setMode("signup")}>
@@ -227,51 +242,26 @@ const Auth = () => {
             <form onSubmit={handleSignup} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome completo</Label>
-                <Input
-                  id="name"
-                  placeholder="Seu nome"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
+                <Input id="name" placeholder="Seu nome" className="h-12" value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email-signup">E-mail</Label>
-                <Input
-                  id="email-signup"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <Input id="email-signup" type="email" placeholder="seu@email.com" className="h-12" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password-signup">Senha</Label>
-                <Input
-                  id="password-signup"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Mínimo 6 caracteres"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <Input id="password-signup" type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" className="h-12" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Confirmar senha</Label>
-                <Input
-                  id="confirm-password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Repita a senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
+                <Input id="confirm-password" type={showPassword ? "text" : "password"} placeholder="Repita a senha" className="h-12" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full h-11" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Criar conta"}
+              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Criar conta"}
               </Button>
               <p className="text-sm text-center text-muted-foreground">
                 Já tem uma conta?{" "}
-                <button type="button" className="text-primary hover:underline" onClick={() => setMode("login")}>
-                  Entrar
-                </button>
+                <button type="button" className="text-primary hover:underline" onClick={() => setMode("login")}>Entrar</button>
               </p>
             </form>
           )}
@@ -280,22 +270,14 @@ const Auth = () => {
             <form onSubmit={handleForgotPassword} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email-forgot">E-mail</Label>
-                <Input
-                  id="email-forgot"
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
+                <Input id="email-forgot" type="email" placeholder="seu@email.com" className="h-12" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
-              <Button type="submit" className="w-full h-11" disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar link de recuperação"}
+              <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enviar link de recuperação"}
               </Button>
               <p className="text-sm text-center text-muted-foreground">
                 Lembrou a senha?{" "}
-                <button type="button" className="text-primary hover:underline" onClick={() => setMode("login")}>
-                  Voltar ao login
-                </button>
+                <button type="button" className="text-primary hover:underline" onClick={() => setMode("login")}>Voltar ao login</button>
               </p>
             </form>
           )}

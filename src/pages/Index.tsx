@@ -347,6 +347,7 @@ const Index = () => {
                       index={i}
                       isFavorite={isFavorite(event.id)}
                       onToggleFavorite={handleToggleFavorite}
+                      isAdmin={isAdmin}
                     />
                   ))}
                 </div>
