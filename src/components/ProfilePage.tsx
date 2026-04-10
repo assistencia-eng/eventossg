@@ -9,8 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Pencil, Check, X } from "lucide-react";
+import { Pencil, Check, X, Bell } from "lucide-react";
 
 interface ProfilePageProps {
   interests: { categories: EventCategory[]; subcategories: string[] };
@@ -56,6 +57,20 @@ const ProfilePage = ({
     setEditing(false);
   };
 
+  const handleToggleNotificacoes = async (checked: boolean) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ receber_notificacoes: checked })
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("Erro ao atualizar notificações");
+    } else {
+      toast.success(checked ? "Notificações ativadas" : "Notificações desativadas");
+      await refreshProfile();
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 pb-24 space-y-8">
       {/* Profile header */}
@@ -89,6 +104,9 @@ const ProfilePage = ({
             </div>
           )}
           <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+          {profile?.cidade && (
+            <p className="text-xs text-muted-foreground">📍 {profile.cidade}</p>
+          )}
           {isAdmin && (
             <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
               Administrador
@@ -151,6 +169,28 @@ const ProfilePage = ({
             </div>
           </div>
         )}
+      </section>
+
+      {/* Notifications */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-serif font-semibold flex items-center gap-2">
+          <Bell className="w-5 h-5" /> Notificações
+        </h2>
+        <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
+          <div className="space-y-0.5">
+            <Label htmlFor="push-toggle" className="text-sm font-medium cursor-pointer">
+              Receber notificações push
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Eventos dos meus interesses, da minha cidade e dos meus favoritos
+            </p>
+          </div>
+          <Switch
+            id="push-toggle"
+            checked={profile?.receber_notificacoes ?? true}
+            onCheckedChange={handleToggleNotificacoes}
+          />
+        </div>
       </section>
 
       {/* Favorites */}
