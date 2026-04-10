@@ -303,7 +303,7 @@ const Index = () => {
         <>
           <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} />
 
-          <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-900 bg-gray-700">
+          <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-900 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {locationLoading ? (
