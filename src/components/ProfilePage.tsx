@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import EventCard from "@/components/EventCard";
 import AdminManagement from "@/components/AdminManagement";
+import CategoryManagement from "@/components/CategoryManagement";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -177,7 +178,8 @@ const ProfilePage = ({
         )}
       </section>
 
-      {/* Admin Management - only for admins */}
+      {/* Admin sections */}
+      {isAdmin && <CategoryManagement />}
       {isAdmin && <AdminManagement />}
     </div>
   );
