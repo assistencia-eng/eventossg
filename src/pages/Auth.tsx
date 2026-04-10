@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Mail, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 
@@ -22,12 +22,32 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [cidadesDisponiveis, setCidadesDisponiveis] = useState<string[]>([]);
+  const [showCidadeSuggestions, setShowCidadeSuggestions] = useState(false);
+
+  useEffect(() => {
+    const fetchCidades = async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("cidade");
+      if (data) {
+        const unique = [...new Set(data.map((e) => e.cidade))].filter(Boolean).sort();
+        setCidadesDisponiveis(unique);
+      }
+    };
+    fetchCidades();
+  }, []);
 
   useEffect(() => {
     if (!authLoading && session) {
       navigate("/", { replace: true });
     }
   }, [session, authLoading, navigate]);
+
+  const filteredCidades = cidadesDisponiveis.filter((c) =>
+    c.toLowerCase().includes(cidade.toLowerCase())
+  );
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -74,8 +94,8 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName || !email || !password || !confirmPassword) {
-      toast.error("Preencha todos os campos");
+    if (!fullName || !email || !password || !confirmPassword || !cidade) {
+      toast.error("Preencha todos os campos, incluindo a cidade");
       return;
     }
     if (password !== confirmPassword) {
@@ -88,7 +108,7 @@ const Auth = () => {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -99,6 +119,13 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        // Save cidade to profile after signup
+        if (signUpData.user) {
+          await supabase
+            .from("profiles")
+            .update({ cidade })
+            .eq("user_id", signUpData.user.id);
+        }
         toast.success("Conta criada! Verifique seu e-mail para confirmar.");
         setMode("login");
       }
@@ -249,6 +276,43 @@ const Auth = () => {
               <div className="space-y-2">
                 <Label htmlFor="name">Nome completo</Label>
                 <Input id="name" placeholder="Seu nome" className="h-12" value={fullName} onChange={(e) => setFullName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cidade-signup">Cidade</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="cidade-signup"
+                    placeholder="Selecione sua cidade"
+                    className="pl-10 h-12"
+                    value={cidade}
+                    onChange={(e) => {
+                      setCidade(e.target.value);
+                      setShowCidadeSuggestions(true);
+                    }}
+                    onFocus={() => setShowCidadeSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowCidadeSuggestions(false), 200)}
+                    autoComplete="off"
+                  />
+                  {showCidadeSuggestions && filteredCidades.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-40 overflow-y-auto">
+                      {filteredCidades.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            setCidade(c);
+                            setShowCidadeSuggestions(false);
+                          }}
+                        >
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email-signup">E-mail</Label>

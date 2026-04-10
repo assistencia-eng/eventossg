@@ -10,6 +10,8 @@ interface Profile {
   avatar_url: string | null;
   interests: string[];
   favorite_event_ids: string[];
+  cidade: string | null;
+  receber_notificacoes: boolean;
 }
 
 interface AuthContextType {
