@@ -8,6 +8,7 @@ export interface EventData {
   endereco: string;
   data: string;
   data_fim?: string | null;
+  horario?: string | null;
   descricao: string;
   atracoes: string[];
   categoria: EventCategory;
@@ -19,6 +20,8 @@ export interface EventData {
   hasExactLocation?: boolean;
   is_featured?: boolean;
   outdoor_duration?: number;
+  is_recurring?: boolean;
+  recurring_days?: string[];
 }
 
 export const categoryLabels: Record<EventCategory, string> = {
@@ -49,6 +52,16 @@ export const subcategoryOptions: Record<EventCategory, string[]> = {
   palestras: ["empreendedorismo", "tecnologia", "saúde", "gestão", "cultural", "esporte"],
   feiras: ["empreendedorismo", "tecnologia", "automação", "alimentação"],
   festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
+};
+
+export const weekDayLabels: Record<string, string> = {
+  segunda: "Segunda-feira",
+  terca: "Terça-feira",
+  quarta: "Quarta-feira",
+  quinta: "Quinta-feira",
+  sexta: "Sexta-feira",
+  sabado: "Sábado",
+  domingo: "Domingo",
 };
 
 export const cityCoordinates: Record<string, { lat: number; lng: number }> = {

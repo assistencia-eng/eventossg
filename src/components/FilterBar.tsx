@@ -6,6 +6,7 @@ import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, ChevronDown } fro
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Switch } from "@/components/ui/switch";
 
 interface FilterBarProps {
   selectedCategories: EventCategory[];
@@ -19,6 +20,10 @@ interface FilterBarProps {
   filterMonth: Date;
   onFilterMonthChange: (d: Date) => void;
   availableCities: string[];
+  allDates: boolean;
+  onAllDatesChange: (val: boolean) => void;
+  searchName: string;
+  onSearchNameChange: (val: string) => void;
 }
 
 const categories: EventCategory[] = [
@@ -37,6 +42,10 @@ const FilterBar = ({
   filterMonth,
   onFilterMonthChange,
   availableCities,
+  allDates,
+  onAllDatesChange,
+  searchName,
+  onSearchNameChange,
 }: FilterBarProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -59,7 +68,7 @@ const FilterBar = ({
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const activeFilterCount = selectedCategories.length + (distanceKm < 155 ? 1 : 0) + (searchCity.trim() ? 1 : 0);
+  const activeFilterCount = selectedCategories.length + (distanceKm < 155 ? 1 : 0) + (searchCity.trim() ? 1 : 0) + (!allDates ? 1 : 0);
 
   return (
     <div className="space-y-3">
@@ -155,28 +164,34 @@ const FilterBar = ({
               </div>
             </div>
 
-            {/* Month filter */}
+            {/* Month filter with "all dates" toggle */}
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Período
               </h3>
-              <div className="flex items-center justify-center gap-3">
-                <button
-                  onClick={() => onFilterMonthChange(subMonths(filterMonth, 1))}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-sm font-medium min-w-[140px] text-center capitalize">
-                  {format(filterMonth, "MMMM yyyy", { locale: ptBR })}
-                </span>
-                <button
-                  onClick={() => onFilterMonthChange(addMonths(filterMonth, 1))}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium">Todas as datas</span>
+                <Switch checked={allDates} onCheckedChange={(checked) => onAllDatesChange(checked)} />
               </div>
+              {!allDates && (
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => onFilterMonthChange(subMonths(filterMonth, 1))}
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-sm font-medium min-w-[140px] text-center capitalize">
+                    {format(filterMonth, "MMMM yyyy", { locale: ptBR })}
+                  </span>
+                  <button
+                    onClick={() => onFilterMonthChange(addMonths(filterMonth, 1))}
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </CollapsibleContent>
