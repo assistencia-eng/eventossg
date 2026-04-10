@@ -120,20 +120,20 @@ const FilterBar = ({
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="glass-card rounded-2xl p-5 md:p-6 space-y-5 mt-2">
+          <div className="glass-card rounded-2xl p-5 md:p-6 space-y-5 mt-2 bg-wine-dark">
             {/* Categories */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
                 Interesses
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 bg-wine-dark">
                 {categories.map((cat) => {
                   const isActive = selectedCategories.includes(cat);
                   return (
                     <button
                       key={cat}
                       onClick={() => onToggleCategory(cat)}
-                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""}`}
+                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""} ${cat === 'esporte' ? 'text-amber-100' : ''}`}
                     >
                       <span className="mr-1.5">{categoryIcons[cat]}</span>
                       {categoryLabels[cat]}
@@ -145,8 +145,8 @@ const FilterBar = ({
 
             {/* Distance slider */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                Distância: <span className="text-foreground">{distanceLabel}</span>
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-100">
+                Distância: <span className="text-amber-50">{distanceLabel}</span>
                 {!hasLocation && <span className="text-xs font-normal normal-case ml-1">(ative a localização)</span>}
               </h3>
               <Slider
@@ -159,17 +159,17 @@ const FilterBar = ({
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>1 km</span>
-                <span>150+ km</span>
+                <span className="text-amber-50">1 km</span>
+                <span className="text-amber-50">150+ km</span>
               </div>
             </div>
 
             {/* Month filter with "all dates" toggle */}
             <div>
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
                 Período
               </h3>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 text-amber-50">
                 <span className="text-sm font-medium">Todas as datas</span>
                 <Switch checked={allDates} onCheckedChange={(checked) => onAllDatesChange(checked)} />
               </div>
