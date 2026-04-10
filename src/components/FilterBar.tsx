@@ -133,7 +133,7 @@ const FilterBar = ({
                     <button
                       key={cat}
                       onClick={() => onToggleCategory(cat)}
-                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""} ${cat === 'esporte' ? 'text-amber-100' : ''} ${cat === 'entretenimento' ? 'text-amber-50' : ''}`}
+                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""} ${cat === 'esporte' ? 'text-amber-100' : ''} ${['entretenimento', 'feiras'].includes(cat) ? 'text-amber-50' : ''}`}
                     >
                       <span className="mr-1.5">{categoryIcons[cat]}</span>
                       {categoryLabels[cat]}
