@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryIcons, subcategoryOptions, type EventCategory, type EventData } from "@/data/events";
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Save, MapPin, ImagePlus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface EditEventFormProps {
   event: EventData | null;
@@ -21,6 +22,7 @@ interface EditEventFormProps {
 const allCategories = Object.keys(categoryLabels) as EventCategory[];
 
 const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
+  const { isAdmin } = useAuth();
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -158,7 +160,6 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
             <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} required maxLength={200} />
           </div>
 
-          {/* Categories multi-select */}
           <div className="space-y-2">
             <Label>Categorias *</Label>
             <div className="flex flex-wrap gap-2">
@@ -176,7 +177,6 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
             </div>
           </div>
 
-          {/* Subcategories */}
           {availableSubcategories.length > 0 && (
             <div className="space-y-2">
               <Label>Subcategorias</Label>
@@ -236,7 +236,6 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
             <Input value={form.atracoes} onChange={(e) => setForm({ ...form, atracoes: e.target.value })} maxLength={500} />
           </div>
 
-          {/* Image */}
           <div className="space-y-2">
             <Label>Imagem de capa</Label>
             <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
@@ -252,17 +251,19 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
             </label>
           </div>
 
-          {/* Featured checkbox */}
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="is_featured"
-              checked={form.is_featured}
-              onCheckedChange={(checked) => setForm({ ...form, is_featured: !!checked })}
-            />
-            <Label htmlFor="is_featured" className="cursor-pointer">Evento principal (destaque no outdoor)</Label>
-          </div>
+          {/* Featured checkbox - admin only */}
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="is_featured"
+                checked={form.is_featured}
+                onCheckedChange={(checked) => setForm({ ...form, is_featured: !!checked })}
+              />
+              <Label htmlFor="is_featured" className="cursor-pointer">Evento principal (destaque no outdoor)</Label>
+            </div>
+          )}
 
-          <Button type="submit" disabled={saving || geocoding} className="w-full">
+          <Button type="submit" disabled={saving || geocoding} className="w-full h-12 text-base">
             {geocoding ? (
               <><MapPin className="w-4 h-4 mr-2 animate-pulse" /> Localizando...</>
             ) : saving ? (

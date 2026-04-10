@@ -3,6 +3,7 @@ import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOpt
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import EventCard from "@/components/EventCard";
+import AdminManagement from "@/components/AdminManagement";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ const ProfilePage = ({
   onToggleFavorite,
   isFavorite,
 }: ProfilePageProps) => {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, isAdmin, refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(profile?.full_name || "");
 
@@ -62,7 +63,7 @@ const ProfilePage = ({
           <AvatarImage src={profile?.avatar_url || ""} />
           <AvatarFallback className="text-lg bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
         </Avatar>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {editing ? (
             <div className="flex items-center gap-2">
               <Input
@@ -80,17 +81,22 @@ const ProfilePage = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-serif font-bold">{profile?.full_name || "Meu Perfil"}</h1>
+              <h1 className="text-xl sm:text-2xl font-serif font-bold truncate">{profile?.full_name || "Meu Perfil"}</h1>
               <button onClick={() => { setEditName(profile?.full_name || ""); setEditing(true); }}>
                 <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
               </button>
             </div>
           )}
-          <p className="text-sm text-muted-foreground">{user?.email}</p>
+          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+          {isAdmin && (
+            <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+              Administrador
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Interests - Categories */}
+      {/* Interests */}
       <section className="space-y-4">
         <h2 className="text-lg font-serif font-semibold">Meus Interesses</h2>
         <div>
@@ -156,7 +162,7 @@ const ProfilePage = ({
             Nenhum evento favoritado ainda. Toque na ⭐ nos eventos para adicioná-los aqui.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {favoriteEvents.map((event, i) => (
               <EventCard
                 key={event.id}
@@ -170,6 +176,9 @@ const ProfilePage = ({
           </div>
         )}
       </section>
+
+      {/* Admin Management - only for admins */}
+      {isAdmin && <AdminManagement />}
     </div>
   );
 };
