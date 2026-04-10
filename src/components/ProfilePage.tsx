@@ -1,5 +1,14 @@
+import { useState } from "react";
 import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import EventCard from "@/components/EventCard";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Pencil, Check, X } from "lucide-react";
 
 interface ProfilePageProps {
   interests: { categories: EventCategory[]; subcategories: string[] };
@@ -22,11 +31,63 @@ const ProfilePage = ({
   onToggleFavorite,
   isFavorite,
 }: ProfilePageProps) => {
+  const { user, profile, refreshProfile } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(profile?.full_name || "");
+
+  const userInitials = profile?.full_name
+    ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || "?";
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: editName })
+      .eq("user_id", user.id);
+    if (error) {
+      toast.error("Erro ao salvar nome");
+    } else {
+      toast.success("Nome atualizado!");
+      await refreshProfile();
+    }
+    setEditing(false);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 pb-24 space-y-8">
-      <div>
-        <h1 className="text-2xl font-serif font-bold mb-1">Meu Perfil</h1>
-        <p className="text-sm text-muted-foreground">Personalize sua experiência de eventos</p>
+      {/* Profile header */}
+      <div className="flex items-center gap-4">
+        <Avatar className="w-16 h-16">
+          <AvatarImage src={profile?.avatar_url || ""} />
+          <AvatarFallback className="text-lg bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                className="h-9"
+                placeholder="Seu nome"
+              />
+              <Button size="icon" variant="ghost" onClick={handleSaveName}>
+                <Check className="w-4 h-4 text-primary" />
+              </Button>
+              <Button size="icon" variant="ghost" onClick={() => setEditing(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-serif font-bold">{profile?.full_name || "Meu Perfil"}</h1>
+              <button onClick={() => { setEditName(profile?.full_name || ""); setEditing(true); }}>
+                <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
+              </button>
+            </div>
+          )}
+          <p className="text-sm text-muted-foreground">{user?.email}</p>
+        </div>
       </div>
 
       {/* Interests - Categories */}
@@ -51,7 +112,6 @@ const ProfilePage = ({
           </div>
         </div>
 
-        {/* Subcategories for selected categories */}
         {interests.categories.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Subcategorias</h3>

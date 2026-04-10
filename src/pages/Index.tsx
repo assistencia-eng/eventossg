@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { EventData, EventCategory } from "@/data/events";
 import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocation";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
@@ -12,9 +13,11 @@ import EditEventForm from "@/components/EditEventForm";
 import OutdoorSettings from "@/components/OutdoorSettings";
 import BottomNav from "@/components/BottomNav";
 import ProfilePage from "@/components/ProfilePage";
-import { Loader2, Upload, Plus, Trash2, Settings, Sparkles } from "lucide-react";
+import LoginRequiredModal from "@/components/LoginRequiredModal";
+import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -23,8 +26,11 @@ import { toast } from "sonner";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useUserInterests } from "@/hooks/useUserInterests";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const { user, profile, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState<EventCategory[]>([]);
@@ -43,6 +49,7 @@ const Index = () => {
   const [searchCity, setSearchCity] = useState("");
   const [filterMonth, setFilterMonth] = useState(new Date());
   const [activeNav, setActiveNav] = useState<"events" | "profile">("events");
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const eventsRef = useRef<HTMLDivElement>(null);
 
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
@@ -98,6 +105,22 @@ const Index = () => {
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
   }, []);
+
+  const handleToggleFavorite = useCallback(async (id: string) => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+    await toggleFavorite(id);
+  }, [user, toggleFavorite]);
+
+  const handleNavChange = useCallback((tab: "events" | "profile") => {
+    if (tab === "profile" && !user) {
+      navigate("/auth");
+      return;
+    }
+    setActiveNav(tab);
+  }, [user, navigate]);
 
   const eventsWithDistance = useMemo(() => {
     return allEvents.map((event) => ({
@@ -166,7 +189,6 @@ const Index = () => {
     [filteredEvents, today]
   );
 
-  // "Para você" events based on user interests
   const forYouEvents = useMemo(() => {
     if (interests.categories.length === 0 && interests.subcategories.length === 0) return [];
     return allEvents.filter((event) => {
@@ -220,14 +242,47 @@ const Index = () => {
     setDeleteAllOpen(false);
   };
 
+  const userInitials = profile?.full_name
+    ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || "?";
+
   return (
     <div className="min-h-screen bg-background pb-20">
+      {/* User header bar */}
+      <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
+        <div className="container mx-auto px-4 flex items-center justify-between h-14">
+          <h1 className="text-lg font-serif font-bold text-foreground">Eventos</h1>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={profile?.avatar_url || ""} />
+                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium hidden sm:block">
+                    {profile?.full_name || user.email}
+                  </span>
+                </div>
+                <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => navigate("/auth")} className="gap-2">
+                <LogIn className="w-4 h-4" />
+                Entrar
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {activeNav === "events" ? (
         <>
           <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} />
 
           <div ref={eventsRef} className="container mx-auto px-4 py-6">
-            {/* Action buttons */}
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {locationLoading ? (
@@ -275,8 +330,7 @@ const Index = () => {
               availableCities={availableCities}
             />
 
-            {/* "Para você" section */}
-            {forYouEvents.length > 0 && (
+            {user && forYouEvents.length > 0 && (
               <div className="mt-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Sparkles className="w-5 h-5 text-primary" />
@@ -290,7 +344,7 @@ const Index = () => {
                       onSelect={setSelectedEvent}
                       index={i}
                       isFavorite={isFavorite(event.id)}
-                      onToggleFavorite={toggleFavorite}
+                      onToggleFavorite={handleToggleFavorite}
                     />
                   ))}
                 </div>
@@ -324,7 +378,7 @@ const Index = () => {
                         selected={selectedIds.has(event.id)}
                         onToggleSelect={toggleSelect}
                         isFavorite={isFavorite(event.id)}
-                        onToggleFavorite={toggleFavorite}
+                        onToggleFavorite={handleToggleFavorite}
                       />
                     ))}
                   </div>
@@ -346,12 +400,13 @@ const Index = () => {
           onToggleSubcategory={toggleSubcategory}
           favoriteEvents={favoriteEvents}
           onSelectEvent={setSelectedEvent}
-          onToggleFavorite={toggleFavorite}
+          onToggleFavorite={handleToggleFavorite}
           isFavorite={isFavorite}
         />
       )}
 
-      <BottomNav active={activeNav} onChange={setActiveNav} />
+      <BottomNav active={activeNav} onChange={handleNavChange} />
+      <LoginRequiredModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
       <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} />
       <EditEventForm event={editEvent} open={!!editEvent} onClose={() => setEditEvent(null)} onUpdated={fetchDbEvents} />
@@ -359,7 +414,6 @@ const Index = () => {
       <AddEventForm open={addOpen} onClose={() => setAddOpen(false)} onAdded={fetchDbEvents} />
       <OutdoorSettings open={outdoorSettingsOpen} onClose={() => setOutdoorSettingsOpen(false)} events={allEvents} onUpdated={fetchDbEvents} />
 
-      {/* Single delete */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -373,7 +427,6 @@ const Index = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Bulk delete */}
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -387,7 +440,6 @@ const Index = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete all */}
       <AlertDialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
