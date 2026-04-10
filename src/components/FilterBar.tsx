@@ -120,7 +120,7 @@ const FilterBar = ({
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="glass-card rounded-2xl p-5 md:p-6 space-y-5 mt-2 bg-wine-dark border-forest border-4">
+          <div className="glass-card p-5 md:p-6 space-y-5 mt-2 bg-wine-dark border-4 border-gray-800 rounded">
             {/* Categories */}
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
