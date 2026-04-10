@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { Loader2, Mail, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import BottomNav from "@/components/BottomNav";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -132,16 +133,21 @@ const Auth = () => {
     }
   };
 
+  const handleSkipLogin = () => {
+    navigate("/", { replace: true });
+  };
+
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-background pb-20">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <BottomNav active="events" onChange={() => navigate("/")} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 pb-20">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-serif">
@@ -281,8 +287,19 @@ const Auth = () => {
               </p>
             </form>
           )}
+
+          {/* Skip login option */}
+          <div className="pt-2 border-t border-border">
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleSkipLogin}>
+              Continuar sem login
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      <BottomNav active="events" onChange={(tab) => {
+        if (tab === "events") navigate("/");
+      }} />
     </div>
   );
 };

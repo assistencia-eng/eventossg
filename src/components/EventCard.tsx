@@ -1,5 +1,5 @@
-import { EventData, categoryLabels, categoryIcons } from "@/data/events";
-import { Calendar, ChevronRight, Trash2, Pencil, Star } from "lucide-react";
+import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
+import { Calendar, ChevronRight, Trash2, Pencil, Star, Clock, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -17,10 +17,30 @@ interface EventCardProps {
   isAdmin?: boolean;
 }
 
+const isHappeningNow = (event: EventData): boolean => {
+  const now = new Date();
+  const todayStr = format(now, "yyyy-MM-dd");
+  const eventStart = event.data;
+  const eventEnd = event.data_fim || event.data;
+
+  if (todayStr < eventStart || todayStr > eventEnd) return false;
+
+  if (event.horario) {
+    const [h, m] = event.horario.split(":").map(Number);
+    const eventTime = new Date(now);
+    eventTime.setHours(h, m, 0, 0);
+    const endTime = new Date(eventTime.getTime() + 3 * 60 * 60 * 1000); // assume 3h duration
+    return now >= eventTime && now <= endTime;
+  }
+
+  return true; // no time set, if date matches it's "now"
+};
+
 const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
+  const happeningNow = isHappeningNow(event);
 
   return (
     <div
@@ -38,9 +58,25 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
                 <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(event.id)} />
               </div>
             )}
-            <h3 className="text-base sm:text-lg font-serif font-bold text-foreground leading-snug line-clamp-2">
-              {event.nome}
-            </h3>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-serif font-bold text-foreground leading-snug line-clamp-2">
+                  {event.nome}
+                </h3>
+                {happeningNow && (
+                  <span className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-green-500/15 text-green-600 text-xs font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    Agora
+                  </span>
+                )}
+              </div>
+              {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
+                <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+                  <Repeat className="w-3 h-3" />
+                  <span>{event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}</span>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
             {onToggleFavorite && (
@@ -88,6 +124,12 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
               {formattedEndDate && ` — ${formattedEndDate}`}
             </span>
           </div>
+          {event.horario && (
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary shrink-0" />
+              <span className="font-medium text-foreground text-sm">{event.horario}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-sm truncate">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
           </div>
