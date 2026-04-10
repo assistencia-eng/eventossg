@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { categoryLabels, categoryIcons, subcategoryOptions, type EventCategory, type EventData } from "@/data/events";
+import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type EventCategory, type EventData } from "@/data/events";
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Save, MapPin, ImagePlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ interface EditEventFormProps {
 }
 
 const allCategories = Object.keys(categoryLabels) as EventCategory[];
+const weekDays = Object.keys(weekDayLabels);
 
 const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
   const { isAdmin } = useAuth();
@@ -33,12 +34,15 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     subcategorias: [] as string[],
     data: "",
     data_fim: "",
+    horario: "",
     cidade: "",
     local: "",
     endereco: "",
     descricao: "",
     atracoes: "",
     is_featured: false,
+    is_recurring: false,
+    recurring_days: [] as string[],
   });
 
   useEffect(() => {
@@ -49,12 +53,15 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         subcategorias: event.subcategorias || [],
         data: event.data,
         data_fim: event.data_fim || "",
+        horario: event.horario || "",
         cidade: event.cidade,
         local: event.local === "Não informado" ? "" : event.local,
         endereco: event.endereco === "Não informado" ? "" : event.endereco,
         descricao: event.descricao === "Não informado" ? "" : event.descricao,
         atracoes: event.atracoes.join(", "),
         is_featured: event.is_featured || false,
+        is_recurring: event.is_recurring || false,
+        recurring_days: event.recurring_days || [],
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
@@ -76,6 +83,15 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
       subcategorias: prev.subcategorias.includes(sub)
         ? prev.subcategorias.filter((s) => s !== sub)
         : [...prev.subcategorias, sub],
+    }));
+  };
+
+  const toggleDay = (day: string) => {
+    setForm((prev) => ({
+      ...prev,
+      recurring_days: prev.recurring_days.includes(day)
+        ? prev.recurring_days.filter((d) => d !== day)
+        : [...prev.recurring_days, day],
     }));
   };
 
@@ -120,6 +136,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         subcategorias: form.subcategorias,
         data: form.data,
         data_fim: form.data_fim || null,
+        horario: form.horario || null,
         cidade: form.cidade.trim(),
         local: form.local.trim() || "Não informado",
         endereco: form.endereco.trim() || "Não informado",
@@ -129,6 +146,8 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         longitude: geo.longitude,
         imagem: imagemUrl,
         is_featured: form.is_featured,
+        is_recurring: form.is_recurring,
+        recurring_days: form.recurring_days,
       }).eq("id", event.id);
 
       if (updateError) throw updateError;
@@ -208,6 +227,41 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               <Label>Data final</Label>
               <Input type="date" value={form.data_fim} onChange={(e) => setForm({ ...form, data_fim: e.target.value })} />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Horário de início</Label>
+            <Input type="time" value={form.horario} onChange={(e) => setForm({ ...form, horario: e.target.value })} />
+          </div>
+
+          {/* Recurring event */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="is_recurring_edit"
+                checked={form.is_recurring}
+                onCheckedChange={(checked) => setForm({ ...form, is_recurring: !!checked })}
+              />
+              <Label htmlFor="is_recurring_edit" className="cursor-pointer">Evento recorrente</Label>
+            </div>
+            {form.is_recurring && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {weekDays.map((day) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(day)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                      form.recurring_days.includes(day)
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                    }`}
+                  >
+                    {weekDayLabels[day]}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,6 @@
-import { EventData, categoryLabels, categoryIcons } from "@/data/events";
+import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, Star } from "lucide-react";
+import { Calendar, Star, Clock, Repeat, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ShareButton from "@/components/ShareButton";
@@ -52,6 +52,20 @@ const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
                 {formattedEndDate && <><br />até {formattedEndDate}</>}
               </span>
             </div>
+            {event.horario && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-primary" />
+                <span className="font-medium">{event.horario}</span>
+              </div>
+            )}
+            {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Repeat className="w-4 h-4 text-primary" />
+                <span className="font-medium">
+                  Recorrente: {event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span>
                 {event.local !== "Não informado" && `${event.local}, `}
@@ -93,6 +107,14 @@ const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
               </ul>
             </div>
           )}
+
+          {/* Disclaimer */}
+          <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Este evento pode sofrer alterações de data ou horário devido a condições climáticas ou fatores externos. Entre em contato com o administrador.
+            </p>
+          </div>
 
           {/* Share */}
           <div className="pt-2 border-t border-border">
