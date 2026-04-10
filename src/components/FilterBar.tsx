@@ -133,7 +133,7 @@ const FilterBar = ({
                     <button
                       key={cat}
                       onClick={() => onToggleCategory(cat)}
-                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""} ${cat === 'esporte' ? 'text-amber-100' : ''} ${['musica', 'entretenimento', 'feiras', 'alimentacao', 'palestras', 'festas'].includes(cat) ? 'text-amber-50' : ''}`}
+                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""} ${cat === 'esporte' ? 'text-amber-50' : ''} ${['musica', 'entretenimento', 'feiras', 'alimentacao', 'palestras', 'festas'].includes(cat) ? 'text-amber-50' : ''}`}
                     >
                       <span className="mr-1.5">{categoryIcons[cat]}</span>
                       {categoryLabels[cat]}
@@ -145,7 +145,7 @@ const FilterBar = ({
 
             {/* Distance slider */}
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-100">
+              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
                 Distância: <span className="text-amber-50">{distanceLabel}</span>
                 {!hasLocation && <span className="text-xs font-normal normal-case ml-1">(ative a localização)</span>}
               </h3>
