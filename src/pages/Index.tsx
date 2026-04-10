@@ -380,7 +380,7 @@ const Index = () => {
             )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-              <TabsList className="w-full justify-start">
+              <TabsList className="w-full justify-start border-[#7e0127]">
                 <TabsTrigger value="upcoming" className="flex-1">
                   Próximos ({upcomingEvents.length})
                 </TabsTrigger>
