@@ -80,6 +80,42 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          favorite_event_ids: string[]
+          full_name: string | null
+          id: string
+          interests: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          favorite_event_ids?: string[]
+          full_name?: string | null
+          id?: string
+          interests?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          favorite_event_ids?: string[]
+          full_name?: string | null
+          id?: string
+          interests?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
