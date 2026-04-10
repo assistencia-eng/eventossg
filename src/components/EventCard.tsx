@@ -24,7 +24,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
 
   return (
     <div
-      className={`glass-card rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up ${selected ? "ring-2 ring-primary" : ""}`}
+      className={`glass-card rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative ${selected ? "ring-2 ring-primary" : ""}`}
       style={{ animationDelay: `${index * 80}ms` }}
       onClick={() => onSelect(event)}
     >
@@ -51,19 +51,6 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             </div>
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
-            {onToggleFavorite && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleFavorite(event.id); }}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                  isFavorite
-                    ? "text-amber-500 hover:text-amber-600"
-                    : "text-muted-foreground hover:text-amber-500"
-                }`}
-                title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
-              >
-                <Star className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} />
-              </button>
-            )}
             {isAdmin && onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(event); }}
@@ -106,6 +93,21 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             <span className="text-sm truncate">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
           </div>
         </div>
+
+        {/* Favorite star - bottom right */}
+        {onToggleFavorite && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavorite(event.id); }}
+            className={`absolute bottom-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              isFavorite
+                ? "text-amber-500 hover:text-amber-600"
+                : "text-muted-foreground hover:text-amber-500"
+            }`}
+            title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
+          >
+            <Star className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} />
+          </button>
+        )}
       </div>
     </div>
   );
