@@ -306,13 +306,6 @@ const Index = () => {
           <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-900 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                {locationLoading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Obtendo localização...</>
-                ) : userLocation ? (
-                  <span className="text-xs">📍 Localização ativa</span>
-                ) : (
-                  <span className="text-xs">📍 Localização indisponível</span>
-                )}
               </div>
               {isAdmin && (
                 <div className="flex gap-2 shrink-0 flex-wrap">
