@@ -14,9 +14,10 @@ interface EventCardProps {
   onToggleSelect?: (id: string) => void;
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
+  isAdmin?: boolean;
 }
 
-const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggleSelect, isFavorite, onToggleFavorite }: EventCardProps) => {
+const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
@@ -29,47 +30,45 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
     >
       <div className={`h-1.5 category-chip-${mainCat} active w-full rounded-none border-0`} />
 
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-start gap-3 flex-1">
-            {onToggleSelect && (
+      <div className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="flex items-start gap-2 flex-1 min-w-0">
+            {isAdmin && onToggleSelect && (
               <div className="pt-1" onClick={(e) => e.stopPropagation()}>
                 <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(event.id)} />
               </div>
             )}
-            <div className="flex-1">
-              <h3 className="text-lg font-serif font-bold text-foreground leading-snug">
-                {event.nome}
-              </h3>
-            </div>
+            <h3 className="text-base sm:text-lg font-serif font-bold text-foreground leading-snug line-clamp-2">
+              {event.nome}
+            </h3>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 shrink-0">
             {onToggleFavorite && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleFavorite(event.id); }}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                   isFavorite
                     ? "text-amber-500 hover:text-amber-600"
                     : "text-muted-foreground hover:text-amber-500"
                 }`}
                 title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
               >
-                <Star className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} />
+                <Star className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} />
               </button>
             )}
-            {onEdit && (
+            {isAdmin && onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(event); }}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                 title="Editar evento"
               >
                 <Pencil className="w-4 h-4" />
               </button>
             )}
-            {onDelete && (
+            {isAdmin && onDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(event); }}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 title="Excluir evento"
               >
                 <Trash2 className="w-4 h-4" />
@@ -83,14 +82,14 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
 
         <div className="space-y-1.5 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-primary" />
-            <span className="font-medium text-foreground">
+            <Calendar className="w-4 h-4 text-primary shrink-0" />
+            <span className="font-medium text-foreground text-sm">
               {formattedDate}
               {formattedEndDate && ` — ${formattedEndDate}`}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
+            <span className="text-sm truncate">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
           </div>
         </div>
       </div>

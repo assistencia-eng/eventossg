@@ -17,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  isAdmin: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -37,6 +39,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -47,22 +50,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (data) setProfile(data as Profile);
   };
 
+  const checkAdmin = async (userId: string) => {
+    const { data } = await supabase
+      .from("admins")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setIsAdmin(!!data);
+  };
+
   const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
+    if (user) {
+      await fetchProfile(user.id);
+      await checkAdmin(user.id);
+    }
   };
 
   useEffect(() => {
-    // Set up listener BEFORE getting session
+    // Set up listener BEFORE getting session — no async inside callback
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (_event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Use setTimeout to avoid potential deadlock with Supabase client
-          setTimeout(() => fetchProfile(newSession.user.id), 0);
+          // Use setTimeout to avoid deadlock with Supabase client
+          setTimeout(() => {
+            fetchProfile(newSession.user.id);
+            checkAdmin(newSession.user.id);
+          }, 0);
         } else {
           setProfile(null);
+          setIsAdmin(false);
         }
         setLoading(false);
       }
@@ -74,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(existingSession?.user ?? null);
       if (existingSession?.user) {
         fetchProfile(existingSession.user.id);
+        checkAdmin(existingSession.user.id);
       }
       setLoading(false);
     });
@@ -86,10 +106,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(null);
     setUser(null);
     setProfile(null);
+    setIsAdmin(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, isAdmin, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
