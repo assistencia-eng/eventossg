@@ -17,7 +17,6 @@ import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -43,7 +42,7 @@ const Index = () => {
   const [outdoorSettingsOpen, setOutdoorSettingsOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState<EventData[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<EventData | null>(null);
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState("upcoming"); // kept for compatibility
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
