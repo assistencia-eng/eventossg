@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { EventCategory, categoryLabels, categoryIcons } from "@/data/events";
+import { categoryColors } from "@/data/categoryColors";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, ChevronDown } from "lucide-react";
@@ -120,78 +121,86 @@ const FilterBar = ({
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="glass-card p-5 md:p-6 space-y-5 mt-2 border-4 border-gray-800 rounded bg-[#7e0127]">
-            {/* Categories */}
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
-                Interesses
-              </h3>
-              <div className="flex flex-wrap gap-2 bg-[#7e0127]">
-                {categories.map((cat) => {
-                  const isActive = selectedCategories.includes(cat);
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => onToggleCategory(cat)}
-                      className={`category-chip category-chip-${cat} ${isActive ? "active" : ""} ${cat === 'esporte' ? 'text-amber-50' : ''} ${['musica', 'entretenimento', 'feiras', 'alimentacao', 'palestras', 'festas'].includes(cat) ? 'text-amber-50' : ''}`}
-                    >
-                      <span className="mr-1.5">{categoryIcons[cat]}</span>
-                      {categoryLabels[cat]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Distance slider */}
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
-                Distância: <span className="text-amber-50">{distanceLabel}</span>
-                {!hasLocation && <span className="text-xs font-normal normal-case ml-1">(ative a localização)</span>}
-              </h3>
-              <Slider
-                value={[distanceKm]}
-                onValueChange={([v]) => onDistanceChange(v)}
-                min={1}
-                max={155}
-                step={1}
-                disabled={!hasLocation}
-                className="w-full"
-              />
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span className="text-amber-50">1 km</span>
-                <span className="text-amber-50">150+ km</span>
-              </div>
-            </div>
-
-            {/* Month filter with "all dates" toggle */}
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wider mb-3 text-amber-50">
-                Período
-              </h3>
-              <div className="flex items-center justify-between mb-3 text-amber-50">
-                <span className="text-sm font-medium">Todas as datas</span>
-                <Switch checked={allDates} onCheckedChange={(checked) => onAllDatesChange(checked)} />
-              </div>
-              {!allDates && (
-                <div className="flex items-center justify-center gap-3">
-                  <button
-                    onClick={() => onFilterMonthChange(subMonths(filterMonth, 1))}
-                    className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  <span className="text-sm font-medium min-w-[140px] text-center capitalize">
-                    {format(filterMonth, "MMMM yyyy", { locale: ptBR })}
-                  </span>
-                  <button
-                    onClick={() => onFilterMonthChange(addMonths(filterMonth, 1))}
-                    className="w-8 h-8 rounded-full flex items-center justify-center bg-secondary hover:bg-secondary/80 transition-colors"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+          <div className="mt-2 rounded-xl overflow-hidden" style={{ backgroundColor: "#1c1c1c" }}>
+            <div className="p-5 md:p-6 space-y-6">
+              {/* Categories - Interests */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 text-neutral-400">
+                  Interesses
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {categories.map((cat) => {
+                    const isActive = selectedCategories.includes(cat);
+                    const colors = categoryColors[cat];
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => onToggleCategory(cat)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-[22px] text-sm font-medium transition-all duration-200 cursor-pointer select-none"
+                        style={{
+                          backgroundColor: isActive ? colors.vibrant : colors.muted,
+                          color: isActive ? "#fff" : colors.vibrant,
+                          border: `1px solid ${isActive ? colors.vibrant : "transparent"}`,
+                        }}
+                      >
+                        <span className="text-base">{categoryIcons[cat]}</span>
+                        <span>{categoryLabels[cat]}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
+
+              {/* Distance slider */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 text-neutral-400">
+                  Distância: <span className="text-white">{distanceLabel}</span>
+                  {!hasLocation && <span className="text-xs font-normal normal-case ml-1 text-neutral-500">(ative a localização)</span>}
+                </h3>
+                <Slider
+                  value={[distanceKm]}
+                  onValueChange={([v]) => onDistanceChange(v)}
+                  min={1}
+                  max={155}
+                  step={1}
+                  disabled={!hasLocation}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs mt-1">
+                  <span className="text-neutral-500">1 km</span>
+                  <span className="text-neutral-500">150+ km</span>
+                </div>
+              </div>
+
+              {/* Month filter with "all dates" toggle */}
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 text-neutral-400">
+                  Período
+                </h3>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-neutral-300">Todas as datas</span>
+                  <Switch checked={allDates} onCheckedChange={(checked) => onAllDatesChange(checked)} />
+                </div>
+                {!allDates && (
+                  <div className="flex items-center justify-center gap-3">
+                    <button
+                      onClick={() => onFilterMonthChange(subMonths(filterMonth, 1))}
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 transition-colors text-white"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-sm font-medium min-w-[140px] text-center capitalize text-white">
+                      {format(filterMonth, "MMMM yyyy", { locale: ptBR })}
+                    </span>
+                    <button
+                      onClick={() => onFilterMonthChange(addMonths(filterMonth, 1))}
+                      className="w-8 h-8 rounded-full flex items-center justify-center bg-neutral-800 hover:bg-neutral-700 transition-colors text-white"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </CollapsibleContent>

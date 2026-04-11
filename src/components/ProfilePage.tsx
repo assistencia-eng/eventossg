@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
+import { categoryColors } from "@/data/categoryColors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import EventCard from "@/components/EventCard";
@@ -127,9 +128,14 @@ const ProfilePage = ({
                 <button
                   key={cat}
                   onClick={() => onToggleCategory(cat)}
-                  className={`category-chip category-chip-${cat} ${isActive ? "active" : ""}`}
+                  className="px-4 py-2 rounded-[22px] text-sm font-medium transition-all duration-200 cursor-pointer select-none inline-flex items-center gap-1.5"
+                  style={{
+                    backgroundColor: isActive ? categoryColors[cat].vibrant : categoryColors[cat].muted,
+                    color: isActive ? "#fff" : categoryColors[cat].vibrant,
+                    border: `1px solid ${isActive ? categoryColors[cat].vibrant : "transparent"}`,
+                  }}
                 >
-                  <span className="mr-1.5">{categoryIcons[cat]}</span>
+                  <span>{categoryIcons[cat]}</span>
                   {categoryLabels[cat]}
                 </button>
               );
