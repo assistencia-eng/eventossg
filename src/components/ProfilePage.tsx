@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
+import { categoryColors } from "@/data/categoryColors";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import EventCard from "@/components/EventCard";
