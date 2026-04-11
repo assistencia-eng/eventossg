@@ -73,7 +73,7 @@ const ProfilePage = ({
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 pb-24 space-y-8">
+    <div className="container mx-auto px-4 py-6 pb-24 space-y-8" style={{ backgroundColor: "#151414", minHeight: "100vh" }}>
       {/* Profile header */}
       <div className="flex items-center gap-4">
         <Avatar className="w-16 h-16">
