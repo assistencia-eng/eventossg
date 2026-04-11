@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
+import { categoryColors, generateMutedColor, CategoryColor } from "@/data/categoryColors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp, Palette } from "lucide-react";
 
 const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
@@ -11,19 +12,33 @@ const CategoryManagement = () => {
   const [expandedCat, setExpandedCat] = useState<EventCategory | null>(null);
   const [editingCat, setEditingCat] = useState<EventCategory | null>(null);
   const [editLabel, setEditLabel] = useState("");
+  const [editIcon, setEditIcon] = useState("");
+  const [editColor, setEditColor] = useState("");
   const [newSubcategory, setNewSubcategory] = useState("");
 
   const handleEditCategory = (cat: EventCategory) => {
     setEditingCat(cat);
     setEditLabel(categoryLabels[cat]);
+    setEditIcon(categoryIcons[cat]);
+    setEditColor(categoryColors[cat].vibrant);
   };
 
   const handleSaveCategory = () => {
     if (!editingCat || !editLabel.trim()) return;
     categoryLabels[editingCat] = editLabel.trim();
+    if (editIcon.trim()) {
+      categoryIcons[editingCat] = editIcon.trim();
+    }
+    if (editColor.trim() && /^#[0-9a-fA-F]{6}$/.test(editColor.trim())) {
+      const vibrant = editColor.trim();
+      const muted = generateMutedColor(vibrant);
+      categoryColors[editingCat] = { vibrant, muted };
+    }
     toast.success(`Categoria "${editLabel.trim()}" atualizada!`);
     setEditingCat(null);
     setEditLabel("");
+    setEditIcon("");
+    setEditColor("");
   };
 
   const handleAddSubcategory = (cat: EventCategory) => {
@@ -60,6 +75,7 @@ const CategoryManagement = () => {
         {allCategories.map((cat) => {
           const isExpanded = expandedCat === cat;
           const isEditing = editingCat === cat;
+          const colors = categoryColors[cat];
 
           return (
             <div key={cat} className="rounded-xl border border-border overflow-hidden">
@@ -68,21 +84,65 @@ const CategoryManagement = () => {
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="text-lg">{categoryIcons[cat]}</span>
                   {isEditing ? (
-                    <div className="flex items-center gap-1.5 flex-1">
-                      <Input
-                        value={editLabel}
-                        onChange={(e) => setEditLabel(e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSaveCategory}>
-                        <Check className="w-3.5 h-3.5 text-primary" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCat(null)}>
-                        <X className="w-3.5 h-3.5" />
-                      </Button>
+                    <div className="flex flex-col gap-2 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <Input
+                          value={editLabel}
+                          onChange={(e) => setEditLabel(e.target.value)}
+                          className="h-8 text-sm"
+                          placeholder="Nome"
+                        />
+                        <Input
+                          value={editIcon}
+                          onChange={(e) => setEditIcon(e.target.value)}
+                          className="h-8 text-sm w-16"
+                          placeholder="Ícone"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Palette className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <Input
+                          type="color"
+                          value={editColor}
+                          onChange={(e) => setEditColor(e.target.value)}
+                          className="h-8 w-12 p-0.5 cursor-pointer"
+                        />
+                        <Input
+                          value={editColor}
+                          onChange={(e) => setEditColor(e.target.value)}
+                          className="h-8 text-sm flex-1"
+                          placeholder="#hex"
+                        />
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSaveCategory}>
+                          <Check className="w-3.5 h-3.5 text-primary" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingCat(null)}>
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                      {/* Preview chip */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Preview:</span>
+                        <span
+                          className="px-3 py-1.5 rounded-[22px] text-sm font-medium inline-flex items-center gap-1.5"
+                          style={{
+                            backgroundColor: /^#[0-9a-fA-F]{6}$/.test(editColor) ? generateMutedColor(editColor) : colors.muted,
+                            color: /^#[0-9a-fA-F]{6}$/.test(editColor) ? editColor : colors.vibrant,
+                          }}
+                        >
+                          <span>{editIcon || categoryIcons[cat]}</span>
+                          {editLabel || categoryLabels[cat]}
+                        </span>
+                      </div>
                     </div>
                   ) : (
-                    <span className="text-sm font-medium">{categoryLabels[cat]}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{categoryLabels[cat]}</span>
+                      <span
+                        className="w-4 h-4 rounded-full border border-border"
+                        style={{ backgroundColor: colors.vibrant }}
+                      />
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1">
