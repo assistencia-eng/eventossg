@@ -69,7 +69,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center group-hover:text-primary-foreground transition-colors bg-[#800f24]">
               <ChevronRight className="w-5 h-5" />
             </div>
           </div>
