@@ -404,7 +404,7 @@ const Index = () => {
         </>
       ) : activeNav === "search" ? (
         <div className="container mx-auto px-4 py-6 bg-[#151414]">
-          <h2 className="text-xl font-serif font-bold mb-4">Buscar eventos</h2>
+          <h2 className="text-xl font-bold mb-4 text-neutral-400 font-sans">Buscar eventos</h2>
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
