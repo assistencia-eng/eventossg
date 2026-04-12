@@ -78,7 +78,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
         <div className="space-y-1.5 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
-            <span className="font-medium text-foreground text-sm">
+            <span className="font-medium text-sm text-neutral-300">
               {formattedDate}
               {formattedEndDate && ` — ${formattedEndDate}`}
             </span>
