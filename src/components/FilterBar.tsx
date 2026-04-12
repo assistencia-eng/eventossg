@@ -75,7 +75,7 @@ const FilterBar = ({
     <div className="space-y-3">
       {/* Search bar always visible */}
       <div ref={searchRef} className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-[#383333]" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-neutral-400" />
         <Input
           placeholder="Buscar por cidade..."
           value={searchCity}
