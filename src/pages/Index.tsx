@@ -338,7 +338,7 @@ const Index = () => {
               distanceKm={distanceKm}
               onDistanceChange={setDistanceKm}
               hasLocation={!!userLocation}
-              totalResults={displayedEvents.length}
+              totalResults={upcomingEvents.length}
               searchCity={searchCity}
               onSearchCityChange={setSearchCity}
               filterMonth={filterMonth}
@@ -372,47 +372,34 @@ const Index = () => {
               </div>
             )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-              <TabsList className="w-full justify-start border-[#7e0127]">
-                <TabsTrigger value="upcoming" className="flex-1">
-                  Próximos ({upcomingEvents.length})
-                </TabsTrigger>
-                <TabsTrigger value="past" className="flex-1">
-                  Passados ({pastEvents.length})
-                </TabsTrigger>
-              </TabsList>
-
-              {[
-                { key: "upcoming", events: upcomingEvents, emptyMsg: "Nenhum evento futuro encontrado" },
-                { key: "past", events: pastEvents, emptyMsg: "Nenhum evento passado encontrado" },
-              ].map(({ key, events, emptyMsg }) => (
-                <TabsContent key={key} value={key}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-                    {events.map(({ event }, i) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onSelect={setSelectedEvent}
-                        onDelete={setDeleteTarget}
-                        onEdit={setEditEvent}
-                        index={i}
-                        selected={selectedIds.has(event.id)}
-                        onToggleSelect={toggleSelect}
-                        isFavorite={isFavorite(event.id)}
-                        onToggleFavorite={handleToggleFavorite}
-                        isAdmin={isAdmin}
-                      />
-                    ))}
-                  </div>
-                  {events.length === 0 && (
-                    <div className="text-center py-20">
-                      <p className="text-xl font-serif text-muted-foreground">{emptyMsg}</p>
-                      <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground mb-4">
+                <span className="text-[#1DB954] font-bold">{upcomingEvents.length}</span> evento{upcomingEvents.length !== 1 && "s"} encontrado{upcomingEvents.length !== 1 && "s"}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {upcomingEvents.map(({ event }, i) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onSelect={setSelectedEvent}
+                    onDelete={setDeleteTarget}
+                    onEdit={setEditEvent}
+                    index={i}
+                    selected={selectedIds.has(event.id)}
+                    onToggleSelect={toggleSelect}
+                    isFavorite={isFavorite(event.id)}
+                    onToggleFavorite={handleToggleFavorite}
+                    isAdmin={isAdmin}
+                  />
+                ))}
+              </div>
+              {upcomingEvents.length === 0 && (
+                <div className="text-center py-20">
+                  <p className="text-xl font-serif text-muted-foreground">Nenhum evento encontrado</p>
+                  <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
+                </div>
+              )}
+            </div>
           </div>
         </>
       ) : activeNav === "search" ? (
