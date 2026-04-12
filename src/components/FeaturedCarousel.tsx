@@ -45,37 +45,37 @@ const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
       )}
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-foreground/30 to-transparent" />
+      {/* Overlay - stronger gradient at bottom for text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
 
       {/* Content */}
       <div
-        className="absolute bottom-0 left-0 right-0 p-6 md:p-10 cursor-pointer z-10"
+        className="absolute bottom-0 left-0 right-0 px-14 pb-8 pt-6 md:px-16 md:pb-10 cursor-pointer z-10"
         onClick={() => onSelect(event)}
       >
         <div className="container mx-auto">
-          <p className="text-sm text-primary-foreground/80 font-medium mb-1">{formattedDate}</p>
-          <h2 className="text-2xl md:text-4xl font-serif font-bold text-primary-foreground drop-shadow-lg mb-2">
+          <p className="text-sm text-white/80 font-medium mb-1 tracking-wide uppercase">{formattedDate}</p>
+          <h2 className="text-2xl md:text-4xl font-sans font-bold text-white drop-shadow-lg mb-2 tracking-wide leading-tight">
             {event.nome}
           </h2>
-          <p className="text-sm text-primary-foreground/70">{event.local} — {event.cidade}</p>
+          <p className="text-sm text-white/70 font-medium">{event.local} — {event.cidade}</p>
         </div>
       </div>
 
-      {/* Nav arrows */}
+      {/* Nav arrows - positioned at edges to avoid text overlap */}
       {events.length > 1 && (
         <>
           <button
             onClick={(e) => { e.stopPropagation(); prev(); }}
-            className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-background/30 backdrop-blur-sm flex items-center justify-center text-primary-foreground hover:bg-background/50 transition-colors"
+            className="absolute left-1 top-1/3 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 transition-colors"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); next(); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-background/30 backdrop-blur-sm flex items-center justify-center text-primary-foreground hover:bg-background/50 transition-colors"
+            className="absolute right-1 top-1/3 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:bg-black/60 transition-colors"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </>
       )}
@@ -87,7 +87,7 @@ const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-primary-foreground w-5" : "bg-primary-foreground/40"}`}
+              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-white w-5" : "bg-white/40"}`}
             />
           ))}
         </div>

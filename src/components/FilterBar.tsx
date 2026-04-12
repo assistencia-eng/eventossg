@@ -206,12 +206,6 @@ const FilterBar = ({
         </CollapsibleContent>
       </Collapsible>
 
-      {/* Results count */}
-      <div className="px-1">
-        <span className="text-sm text-muted-foreground">
-          <strong className="text-foreground">{totalResults}</strong> evento{totalResults !== 1 && "s"} encontrado{totalResults !== 1 && "s"}
-        </span>
-      </div>
     </div>
   );
 };
