@@ -411,7 +411,7 @@ const Index = () => {
               placeholder="Buscar por nome do evento..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              className="pl-9 h-12"
+              className="pl-9 h-12 text-neutral-400 bg-[#1c1c1c] font-sans font-normal opacity-90"
               autoFocus
             />
           </div>
