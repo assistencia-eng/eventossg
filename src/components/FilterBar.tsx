@@ -117,7 +117,7 @@ const FilterBar = ({
                 </span>
               )}
             </div>
-            <ChevronDown className={`w-4 h-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+            <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
