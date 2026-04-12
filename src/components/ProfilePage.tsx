@@ -118,7 +118,7 @@ const ProfilePage = ({
 
       {/* Interests */}
       <section className="space-y-4">
-        <h2 className="text-lg font-serif font-semibold">Meus Interesses</h2>
+        <h2 className="text-lg font-semibold text-neutral-400 font-sans">Meus Interesses</h2>
         <div>
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Categorias</h3>
           <div className="flex flex-wrap gap-2">
