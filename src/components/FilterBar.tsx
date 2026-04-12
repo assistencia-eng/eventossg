@@ -84,7 +84,7 @@ const FilterBar = ({
             setShowSuggestions(true);
           }}
           onFocus={() => setShowSuggestions(true)}
-          className="pl-9 text-[#1a1919] opacity-90"
+          className="pl-9 text-[#1a1919] opacity-90 bg-[#1c1c1c]"
         />
         {showSuggestions && citySuggestions.length > 0 && (
           <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
