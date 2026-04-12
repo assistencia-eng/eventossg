@@ -104,7 +104,7 @@ const ProfilePage = ({
               </button>
             </div>
           )}
-          <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
+          <p className="text-sm truncate text-neutral-400">{user?.email}</p>
           {profile?.cidade && (
             <p className="text-xs text-muted-foreground">📍 {profile.cidade}</p>
           )}
