@@ -17,7 +17,7 @@ import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {} from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -403,7 +403,7 @@ const Index = () => {
           </div>
         </>
       ) : activeNav === "search" ? (
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6 bg-[#151414]">
           <h2 className="text-xl font-serif font-bold mb-4">Buscar eventos</h2>
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -416,7 +416,7 @@ const Index = () => {
             />
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            <strong className="text-foreground">{searchResults.length}</strong> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
+            <span className="text-[#1DB954] font-bold">{searchResults.length}</span> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {searchResults.map((event, i) => (
