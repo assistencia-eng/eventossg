@@ -182,7 +182,7 @@ const ProfilePage = ({
         <h2 className="text-lg font-semibold text-neutral-400 font-sans flex items-center gap-2">
           <Bell className="w-5 h-5" /> Notificações
         </h2>
-        <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-[#1c1c1c]">
+        <div className="flex items-center justify-between p-4 rounded-lg border-border bg-[#1c1c1c] border-0">
           <div className="space-y-0.5">
             <Label htmlFor="push-toggle" className="text-sm font-medium cursor-pointer text-neutral-300">
               Receber notificações push
