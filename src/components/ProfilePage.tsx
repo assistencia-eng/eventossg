@@ -120,7 +120,7 @@ const ProfilePage = ({
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-neutral-400 font-sans">Meus Interesses</h2>
         <div>
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Categorias</h3>
+          <h3 className="text-sm font-semibold text-neutral-400 font-sans uppercase tracking-wider mb-3">Categorias</h3>
           <div className="flex flex-wrap gap-2">
             {allCategories.map((cat) => {
               const isActive = interests.categories.includes(cat);
@@ -179,7 +179,7 @@ const ProfilePage = ({
 
       {/* Notifications */}
       <section className="space-y-3">
-        <h2 className="text-lg font-serif font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-neutral-400 font-sans flex items-center gap-2">
           <Bell className="w-5 h-5" /> Notificações
         </h2>
         <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
@@ -201,7 +201,7 @@ const ProfilePage = ({
 
       {/* Favorites */}
       <section className="space-y-4">
-        <h2 className="text-lg font-serif font-semibold">
+        <h2 className="text-lg font-semibold text-neutral-400 font-sans">
           Favoritos ({favoriteEvents.length})
         </h2>
         {favoriteEvents.length === 0 ? (
