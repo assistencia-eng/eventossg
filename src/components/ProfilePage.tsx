@@ -184,7 +184,7 @@ const ProfilePage = ({
         </h2>
         <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-[#1c1c1c]">
           <div className="space-y-0.5">
-            <Label htmlFor="push-toggle" className="text-sm font-medium cursor-pointer">
+            <Label htmlFor="push-toggle" className="text-sm font-medium cursor-pointer text-neutral-300">
               Receber notificações push
             </Label>
             <p className="text-xs text-muted-foreground">
