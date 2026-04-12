@@ -107,10 +107,10 @@ const FilterBar = ({
       {/* Collapsible filters */}
       <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen}>
         <CollapsibleTrigger asChild>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors text-sm font-medium w-full justify-between">
+          <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-colors text-sm font-medium w-full justify-between bg-[#1c1c1c] hover:bg-[#2a2a2a]">
             <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#2a2727]" />
-              <span className="text-[#372f2f]">Filtros</span>
+              <SlidersHorizontal className="w-4 h-4 text-neutral-400" />
+              <span className="text-neutral-200">Filtros</span>
               {activeFilterCount > 0 && (
                 <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
                   {activeFilterCount}
