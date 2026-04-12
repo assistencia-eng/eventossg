@@ -373,7 +373,7 @@ const Index = () => {
             )}
 
             <div className="mt-6">
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm mb-4 text-neutral-400">
                 <span className="text-[#1DB954] font-bold">{upcomingEvents.length}</span> evento{upcomingEvents.length !== 1 && "s"} encontrado{upcomingEvents.length !== 1 && "s"}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
