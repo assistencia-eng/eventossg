@@ -162,7 +162,7 @@ const ProfilePage = ({
                           className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
                             isActive
                               ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-secondary text-secondary-foreground border-border hover:border-primary/30"
+                              : "bg-[#1c1c1c] text-neutral-300 border-border hover:border-primary/30"
                           }`}
                         >
                           {sub}
