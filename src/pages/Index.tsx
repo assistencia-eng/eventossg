@@ -17,7 +17,7 @@ import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -268,11 +268,11 @@ const Index = () => {
   }, [allEvents, searchName]);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-[#151414] pb-20">
       {/* User header bar */}
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
-          <h1 className="text-amber-50 text-4xl font-sans text-left font-thin"> Serra Eventos</h1>
+          <h1 className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin">Serra Eventos</h1>
           <div className="flex items-center gap-3">
             {user ? (
               <>
@@ -290,7 +290,7 @@ const Index = () => {
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate("/auth")} className="gap-2">
+              <Button size="sm" onClick={() => navigate("/auth")} className="gap-2 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white border-0 rounded-xl">
                 <LogIn className="w-4 h-4" />
                 Entrar
               </Button>
@@ -303,7 +303,7 @@ const Index = () => {
         <>
           <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} />
 
-          <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-900 bg-[#151414]">
+          <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
               </div>
@@ -338,7 +338,7 @@ const Index = () => {
               distanceKm={distanceKm}
               onDistanceChange={setDistanceKm}
               hasLocation={!!userLocation}
-              totalResults={displayedEvents.length}
+              totalResults={upcomingEvents.length}
               searchCity={searchCity}
               onSearchCityChange={setSearchCity}
               filterMonth={filterMonth}
@@ -372,51 +372,38 @@ const Index = () => {
               </div>
             )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-              <TabsList className="w-full justify-start border-[#7e0127]">
-                <TabsTrigger value="upcoming" className="flex-1">
-                  Próximos ({upcomingEvents.length})
-                </TabsTrigger>
-                <TabsTrigger value="past" className="flex-1">
-                  Passados ({pastEvents.length})
-                </TabsTrigger>
-              </TabsList>
-
-              {[
-                { key: "upcoming", events: upcomingEvents, emptyMsg: "Nenhum evento futuro encontrado" },
-                { key: "past", events: pastEvents, emptyMsg: "Nenhum evento passado encontrado" },
-              ].map(({ key, events, emptyMsg }) => (
-                <TabsContent key={key} value={key}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-4">
-                    {events.map(({ event }, i) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        onSelect={setSelectedEvent}
-                        onDelete={setDeleteTarget}
-                        onEdit={setEditEvent}
-                        index={i}
-                        selected={selectedIds.has(event.id)}
-                        onToggleSelect={toggleSelect}
-                        isFavorite={isFavorite(event.id)}
-                        onToggleFavorite={handleToggleFavorite}
-                        isAdmin={isAdmin}
-                      />
-                    ))}
-                  </div>
-                  {events.length === 0 && (
-                    <div className="text-center py-20">
-                      <p className="text-xl font-serif text-muted-foreground">{emptyMsg}</p>
-                      <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
-                    </div>
-                  )}
-                </TabsContent>
-              ))}
-            </Tabs>
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground mb-4">
+                <span className="text-[#1DB954] font-bold">{upcomingEvents.length}</span> evento{upcomingEvents.length !== 1 && "s"} encontrado{upcomingEvents.length !== 1 && "s"}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {upcomingEvents.map(({ event }, i) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    onSelect={setSelectedEvent}
+                    onDelete={setDeleteTarget}
+                    onEdit={setEditEvent}
+                    index={i}
+                    selected={selectedIds.has(event.id)}
+                    onToggleSelect={toggleSelect}
+                    isFavorite={isFavorite(event.id)}
+                    onToggleFavorite={handleToggleFavorite}
+                    isAdmin={isAdmin}
+                  />
+                ))}
+              </div>
+              {upcomingEvents.length === 0 && (
+                <div className="text-center py-20">
+                  <p className="text-xl font-serif text-muted-foreground">Nenhum evento encontrado</p>
+                  <p className="text-sm text-muted-foreground mt-2">Tente ajustar os filtros ou adicione novos eventos.</p>
+                </div>
+              )}
+            </div>
           </div>
         </>
       ) : activeNav === "search" ? (
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-6 bg-[#151414]">
           <h2 className="text-xl font-serif font-bold mb-4">Buscar eventos</h2>
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -429,7 +416,7 @@ const Index = () => {
             />
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            <strong className="text-foreground">{searchResults.length}</strong> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
+            <span className="text-[#1DB954] font-bold">{searchResults.length}</span> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {searchResults.map((event, i) => (

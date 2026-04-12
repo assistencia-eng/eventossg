@@ -33,7 +33,7 @@ const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
 
   return (
-    <div className="relative w-full h-[50vh] min-h-[300px] overflow-hidden bg-muted">
+    <div className="relative w-full h-[35vh] min-h-[200px] overflow-hidden bg-muted">
       {/* Background image */}
       {event.imagem ? (
         <img
