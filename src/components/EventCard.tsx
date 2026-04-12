@@ -30,7 +30,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
     >
       <div className={`h-1.5 category-chip-${mainCat} active w-full rounded-none border-0`} />
 
-      <div className="p-4 sm:p-5">
+      <div className="p-4 sm:p-5 bg-[#1c1c1c]">
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex items-start gap-2 flex-1 min-w-0">
             {isAdmin && onToggleSelect && (
