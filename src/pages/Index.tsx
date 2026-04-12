@@ -268,11 +268,11 @@ const Index = () => {
   }, [allEvents, searchName]);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-[#151414] pb-20">
       {/* User header bar */}
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
-          <h1 className="text-amber-50 text-4xl font-sans text-left font-thin"> Serra Eventos</h1>
+          <h1 className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin">Serra Eventos</h1>
           <div className="flex items-center gap-3">
             {user ? (
               <>
@@ -290,7 +290,7 @@ const Index = () => {
                 </Button>
               </>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => navigate("/auth")} className="gap-2">
+              <Button size="sm" onClick={() => navigate("/auth")} className="gap-2 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white border-0 rounded-xl">
                 <LogIn className="w-4 h-4" />
                 Entrar
               </Button>
@@ -303,7 +303,7 @@ const Index = () => {
         <>
           <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} />
 
-          <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-900 bg-[#151414]">
+          <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
               </div>
