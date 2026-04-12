@@ -39,7 +39,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-center text-neutral-200">
+              <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left">
                 {event.nome}
               </h3>
               {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
