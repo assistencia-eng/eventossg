@@ -98,7 +98,7 @@ const ProfilePage = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-serif font-bold truncate">{profile?.full_name || "Meu Perfil"}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold truncate text-neutral-400 font-sans">{profile?.full_name || "Meu Perfil"}</h1>
               <button onClick={() => { setEditName(profile?.full_name || ""); setEditing(true); }}>
                 <Pencil className="w-4 h-4 text-muted-foreground hover:text-primary" />
               </button>
