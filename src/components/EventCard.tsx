@@ -90,7 +90,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             </div>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-sm truncate">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
+            <span className="text-sm truncate text-neutral-400">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
           </div>
         </div>
 
