@@ -1,5 +1,6 @@
 import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
-import { Calendar, ChevronRight, Trash2, Pencil, Star, Clock, Repeat } from "lucide-react";
+import { categoryColors } from "@/data/categoryColors";
+import { Calendar, Trash2, Pencil, Star, Clock, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,11 +51,11 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
               )}
             </div>
           </div>
-          <div className="flex items-center gap-0.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {isAdmin && onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(event); }}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                 title="Editar evento"
               >
                 <Pencil className="w-4 h-4" />
@@ -63,14 +64,29 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
             {isAdmin && onDelete && (
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(event); }}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                 title="Excluir evento"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <div className="w-10 h-10 rounded-full flex items-center justify-center group-hover:text-primary-foreground transition-colors bg-[#800f24]">
-              <ChevronRight className="w-5 h-5" />
+            <div className="flex items-center gap-1 flex-wrap justify-end">
+              {(event.categorias?.length ? event.categorias : [event.categoria]).map((cat) => {
+                const colors = categoryColors[cat];
+                return (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-none"
+                    style={{
+                      backgroundColor: colors?.muted || '#2a2a2a',
+                      color: colors?.vibrant || '#ccc',
+                    }}
+                  >
+                    <span className="text-[10px]">{categoryIcons[cat]}</span>
+                    {categoryLabels[cat]}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
