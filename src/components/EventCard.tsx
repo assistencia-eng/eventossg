@@ -29,69 +29,72 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
       style={{ animationDelay: `${index * 80}ms` }}
       onClick={() => onSelect(event)}
     >
-      <div className={`h-1.5 category-chip-${mainCat} active w-full rounded-none border-0`} />
+      <div
+        className="h-1.5 w-full rounded-none border-0"
+        style={{ backgroundColor: categoryColors[mainCat]?.vibrant || '#444' }}
+      />
 
       <div className="p-4 sm:p-5 bg-[#1c1c1c]">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="flex items-start gap-2 flex-1 min-w-0">
-            {isAdmin && onToggleSelect && (
-              <div className="pt-1" onClick={(e) => e.stopPropagation()}>
-                <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(event.id)} />
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left">
-                {event.nome}
-              </h3>
-              {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
-                <div className="flex items-center gap-1 mt-1 text-xs text-primary">
-                  <Repeat className="w-3 h-3" />
-                  <span>{event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}</span>
-                </div>
-              )}
+        <div className="flex items-start gap-2 mb-3">
+          {isAdmin && onToggleSelect && (
+            <div className="pt-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+              <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(event.id)} />
             </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            {isAdmin && onEdit && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(event); }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                title="Editar evento"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-            {isAdmin && onDelete && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(event); }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                title="Excluir evento"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-            <div className="flex items-center gap-1 flex-wrap justify-end">
-              {(event.categorias?.length ? event.categorias : [event.categoria]).map((cat) => {
-                const colors = categoryColors[cat];
-                return (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-none"
-                    style={{
-                      backgroundColor: colors?.muted || '#2a2a2a',
-                      color: colors?.vibrant || '#ccc',
-                    }}
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left">
+                  {event.nome}
+                </h3>
+                {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
+                  <div className="flex items-center gap-1 mt-1 text-xs text-primary">
+                    <Repeat className="w-3 h-3" />
+                    <span>{event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                {isAdmin && onEdit && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onEdit(event); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                    title="Editar evento"
                   >
-                    <span className="text-[10px]">{categoryIcons[cat]}</span>
-                    {categoryLabels[cat]}
-                  </span>
-                );
-              })}
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {isAdmin && onDelete && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(event); }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                    title="Excluir evento"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {(event.categorias?.length ? event.categorias : [event.categoria]).slice(0, 3).map((cat) => {
+                  const colors = categoryColors[cat];
+                  return (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-none whitespace-nowrap"
+                      style={{
+                        backgroundColor: colors?.muted || '#2a2a2a',
+                        color: colors?.vibrant || '#ccc',
+                      }}
+                    >
+                      <span className="text-[10px]">{categoryIcons[cat]}</span>
+                      {categoryLabels[cat]}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="space-y-1.5 text-sm text-muted-foreground">
+        <div className="space-y-1.5 text-sm text-muted-foreground pr-10">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-primary shrink-0" />
             <span className="font-medium text-sm text-neutral-300">
