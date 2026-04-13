@@ -21,7 +21,7 @@ const ShareButton = ({ title, text, url }: ShareButtonProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="border-[#7d7d7d]">
           <Share2 className="w-4 h-4 mr-1.5" />
           Compartilhar
         </Button>
