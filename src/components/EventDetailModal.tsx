@@ -38,7 +38,7 @@ const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
                 </span>
               ))}
             </div>
-            <DialogTitle className="text-2xl font-serif font-bold leading-snug">
+            <DialogTitle className="text-2xl font-bold leading-snug font-sans">
               {event.nome}
             </DialogTitle>
             <DialogDescription className="sr-only">Detalhes do evento {event.nome}</DialogDescription>
@@ -90,7 +90,7 @@ const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
           )}
 
           <div>
-            <h4 className="font-semibold text-foreground mb-1">Sobre o evento</h4>
+            <h4 className="font-semibold text-foreground mb-1 font-sans">Sobre o evento</h4>
             <p className="text-sm text-muted-foreground leading-relaxed">{event.descricao}</p>
           </div>
 
