@@ -102,7 +102,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
           {event.horario && (
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary shrink-0" />
-              <span className="font-medium text-foreground text-sm">{event.horario}</span>
+              <span className="font-medium text-sm text-neutral-300">{event.horario}</span>
             </div>
           )}
           <div className="flex items-center gap-2">
