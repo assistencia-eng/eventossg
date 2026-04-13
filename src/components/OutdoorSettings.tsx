@@ -44,9 +44,11 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
   };
 
   const updateTextSettings = async (eventId: string, field: string, value: any) => {
+    const updateData: Record<string, any> = {};
+    updateData[field] = value;
     const { error } = await supabase
       .from("events")
-      .update({ [field]: value })
+      .update(updateData as any)
       .eq("id", eventId);
     if (error) toast.error("Erro ao atualizar.");
     else onUpdated();
