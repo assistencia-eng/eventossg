@@ -63,7 +63,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left">
+                <h3 ref={titleRef} className="font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left" style={titleFontSize ? { fontSize: `${titleFontSize}px` } : { fontSize: '18px' }}>
                   {event.nome}
                 </h3>
                 {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
