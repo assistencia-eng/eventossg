@@ -20,6 +20,10 @@ export interface EventData {
   hasExactLocation?: boolean;
   is_featured?: boolean;
   outdoor_duration?: number;
+  outdoor_text_align?: string;
+  outdoor_text_position?: string;
+  outdoor_title_size?: number;
+  outdoor_show_description?: boolean;
   is_recurring?: boolean;
   recurring_days?: string[];
 }
