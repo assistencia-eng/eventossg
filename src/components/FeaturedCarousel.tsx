@@ -32,6 +32,26 @@ const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
   const event = events[current];
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
 
+  const textAlign = event.outdoor_text_align || "left";
+  const textPosition = event.outdoor_text_position || "bottom";
+  const titleSize = event.outdoor_title_size || 28;
+  const showDescription = event.outdoor_show_description ?? true;
+
+  // Compute position classes
+  const positionClasses = (() => {
+    const align = textAlign === "center" ? "text-center items-center" : textAlign === "right" ? "text-right items-end" : "text-left items-start";
+    if (textPosition === "top") return `absolute top-0 left-0 right-0 px-14 pt-8 pb-6 md:px-16 md:pt-10 flex flex-col ${align}`;
+    if (textPosition === "center") return `absolute inset-0 flex flex-col justify-center px-14 md:px-16 ${align}`;
+    return `absolute bottom-0 left-0 right-0 px-14 pb-8 pt-6 md:px-16 md:pb-10 flex flex-col ${align}`;
+  })();
+
+  // Gradient direction based on text position
+  const gradientClass = textPosition === "top"
+    ? "bg-gradient-to-b from-black/90 via-black/40 to-transparent"
+    : textPosition === "center"
+    ? "bg-black/50"
+    : "bg-gradient-to-t from-black/90 via-black/40 to-transparent";
+
   return (
     <div className="relative w-full h-[35vh] min-h-[200px] overflow-hidden bg-muted">
       {/* Background image */}
@@ -45,24 +65,27 @@ const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
       )}
 
-      {/* Overlay - stronger gradient at bottom for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+      {/* Overlay */}
+      <div className={`absolute inset-0 ${gradientClass}`} />
 
       {/* Content */}
       <div
-        className="absolute bottom-0 left-0 right-0 px-14 pb-8 pt-6 md:px-16 md:pb-10 cursor-pointer z-10"
+        className={`${positionClasses} cursor-pointer z-10`}
         onClick={() => onSelect(event)}
       >
-        <div className="container mx-auto">
-          <p className="text-sm text-white/80 font-medium mb-1 tracking-wide uppercase">{formattedDate}</p>
-          <h2 className="text-2xl md:text-4xl font-sans font-bold text-white drop-shadow-lg mb-2 tracking-wide leading-tight">
-            {event.nome}
-          </h2>
+        <p className="text-sm text-white/80 font-medium mb-1 tracking-wide uppercase">{formattedDate}</p>
+        <h2
+          className="font-sans font-bold text-white drop-shadow-lg mb-2 tracking-wide leading-tight"
+          style={{ fontSize: `${titleSize}px` }}
+        >
+          {event.nome}
+        </h2>
+        {showDescription && (
           <p className="text-sm text-white/70 font-medium">{event.local} — {event.cidade}</p>
-        </div>
+        )}
       </div>
 
-      {/* Nav arrows - positioned at edges to avoid text overlap */}
+      {/* Nav arrows */}
       {events.length > 1 && (
         <>
           <button

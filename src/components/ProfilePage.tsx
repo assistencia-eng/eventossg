@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Pencil, Check, X, Bell } from "lucide-react";
+import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2 } from "lucide-react";
 
 interface ProfilePageProps {
   interests: { categories: EventCategory[]; subcategories: string[] };
@@ -22,6 +22,11 @@ interface ProfilePageProps {
   onSelectEvent: (event: EventData) => void;
   onToggleFavorite: (id: string) => void;
   isFavorite: (id: string) => boolean;
+  onAddEvent?: () => void;
+  onImportEvents?: () => void;
+  onOutdoorSettings?: () => void;
+  onDeleteAll?: () => void;
+  allEventsCount?: number;
 }
 
 const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
@@ -34,6 +39,11 @@ const ProfilePage = ({
   onSelectEvent,
   onToggleFavorite,
   isFavorite,
+  onAddEvent,
+  onImportEvents,
+  onOutdoorSettings,
+  onDeleteAll,
+  allEventsCount = 0,
 }: ProfilePageProps) => {
   const { user, profile, isAdmin, refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
@@ -115,6 +125,35 @@ const ProfilePage = ({
           )}
         </div>
       </div>
+
+      {/* Admin actions */}
+      {isAdmin && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-neutral-400 font-sans">Gerenciar Eventos</h2>
+          <div className="flex flex-wrap gap-2">
+            {onAddEvent && (
+              <Button variant="outline" size="sm" onClick={onAddEvent}>
+                <Plus className="w-4 h-4 mr-1.5" /> Novo evento
+              </Button>
+            )}
+            {onImportEvents && (
+              <Button variant="outline" size="sm" onClick={onImportEvents}>
+                <Upload className="w-4 h-4 mr-1.5" /> Importar
+              </Button>
+            )}
+            {onOutdoorSettings && (
+              <Button variant="outline" size="sm" onClick={onOutdoorSettings}>
+                <Settings className="w-4 h-4 mr-1.5" /> Outdoor
+              </Button>
+            )}
+            {onDeleteAll && allEventsCount > 0 && (
+              <Button variant="outline" size="sm" onClick={onDeleteAll} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
+              </Button>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Interests */}
       <section className="space-y-4">
