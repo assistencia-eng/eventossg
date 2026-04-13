@@ -25,11 +25,16 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
 
   return (
     <div
-      className={`rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative border-2`}
-      style={{ animationDelay: `${index * 80}ms`, borderColor: categoryColors[mainCat]?.vibrant || '#444' }}
+      className={`glass-card rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative ${selected ? "ring-2 ring-primary" : ""}`}
+      style={{ animationDelay: `${index * 80}ms` }}
       onClick={() => onSelect(event)}
     >
-      <div className="p-4 sm:p-5 bg-[#1c1c1c] rounded-xl">
+      <div
+        className="h-1.5 w-full rounded-none border-0"
+        style={{ backgroundColor: categoryColors[mainCat]?.vibrant || '#444' }}
+      />
+
+      <div className="p-4 sm:p-5 bg-[#1c1c1c]">
         <div className="flex items-start gap-2 mb-3">
           {isAdmin && onToggleSelect && (
             <div className="pt-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -39,8 +44,8 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className={`font-bold leading-snug font-sans text-neutral-200 text-left ${event.nome.length > 40 ? 'text-xs' : event.nome.length > 30 ? 'text-sm' : 'text-base sm:text-lg'}`}>
-                  {event.nome.length > 55 ? event.nome.slice(0, 55) + '…' : event.nome}
+                <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left">
+                  {event.nome}
                 </h3>
                 {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
                   <div className="flex items-center gap-1 mt-1 text-xs text-primary">
