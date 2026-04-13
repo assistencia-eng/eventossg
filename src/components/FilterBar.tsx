@@ -91,7 +91,7 @@ const FilterBar = ({
             {citySuggestions.map((city) => (
               <button
                 key={city}
-                className="w-full text-left px-4 py-2.5 text-sm transition-colors bg-[#64021b] border-0 font-sans font-medium"
+                className="w-full text-left px-4 py-2.5 text-sm transition-colors border-0 font-sans font-medium bg-[#242424]"
                 onClick={() => {
                   onSearchCityChange(city);
                   setShowSuggestions(false);
