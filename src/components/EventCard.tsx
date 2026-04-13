@@ -4,6 +4,7 @@ import { Calendar, Trash2, Pencil, Star, Clock, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useRef, useEffect, useState } from "react";
 
 interface EventCardProps {
   event: EventData;
@@ -22,16 +23,34 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
+  const catColor = categoryColors[mainCat]?.vibrant || '#444';
+
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const [titleFontSize, setTitleFontSize] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    // Reset to measure naturally
+    el.style.fontSize = '';
+    const maxHeight = parseFloat(getComputedStyle(el).lineHeight) * 2 + 2; // 2 lines
+    let size = 18; // start at base size (text-lg ≈ 18px)
+    while (el.scrollHeight > maxHeight && size > 11) {
+      size -= 0.5;
+      el.style.fontSize = `${size}px`;
+    }
+    setTitleFontSize(size < 18 ? size : undefined);
+  }, [event.nome]);
 
   return (
     <div
-      className={`glass-card rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative ${selected ? "ring-2 ring-primary" : ""}`}
-      style={{ animationDelay: `${index * 80}ms` }}
+      className={`rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative border ${selected ? "ring-2 ring-primary" : ""}`}
+      style={{ animationDelay: `${index * 80}ms`, borderColor: catColor }}
       onClick={() => onSelect(event)}
     >
       <div
         className="h-1.5 w-full rounded-none border-0"
-        style={{ backgroundColor: categoryColors[mainCat]?.vibrant || '#444' }}
+        style={{ backgroundColor: catColor }}
       />
 
       <div className="p-4 sm:p-5 bg-[#1c1c1c]">
@@ -44,7 +63,7 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left">
+                <h3 ref={titleRef} className="font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left" style={titleFontSize ? { fontSize: `${titleFontSize}px` } : { fontSize: '18px' }}>
                   {event.nome}
                 </h3>
                 {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
