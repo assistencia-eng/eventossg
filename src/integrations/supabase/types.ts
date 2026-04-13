@@ -53,6 +53,10 @@ export type Database = {
           longitude: number
           nome: string
           outdoor_duration: number
+          outdoor_show_description: boolean
+          outdoor_text_align: string
+          outdoor_text_position: string
+          outdoor_title_size: number
           recurring_days: string[]
           subcategorias: string[]
           updated_at: string
@@ -77,6 +81,10 @@ export type Database = {
           longitude?: number
           nome: string
           outdoor_duration?: number
+          outdoor_show_description?: boolean
+          outdoor_text_align?: string
+          outdoor_text_position?: string
+          outdoor_title_size?: number
           recurring_days?: string[]
           subcategorias?: string[]
           updated_at?: string
@@ -101,6 +109,10 @@ export type Database = {
           longitude?: number
           nome?: string
           outdoor_duration?: number
+          outdoor_show_description?: boolean
+          outdoor_text_align?: string
+          outdoor_text_position?: string
+          outdoor_title_size?: number
           recurring_days?: string[]
           subcategorias?: string[]
           updated_at?: string

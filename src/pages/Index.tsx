@@ -89,6 +89,10 @@ const Index = () => {
           hasExactLocation: e.endereco !== "Não informado" && e.endereco !== "",
           is_featured: e.is_featured,
           outdoor_duration: e.outdoor_duration,
+          outdoor_text_align: (e as any).outdoor_text_align ?? 'left',
+          outdoor_text_position: (e as any).outdoor_text_position ?? 'bottom',
+          outdoor_title_size: (e as any).outdoor_title_size ?? 28,
+          outdoor_show_description: (e as any).outdoor_show_description ?? true,
           is_recurring: (e as any).is_recurring ?? false,
           recurring_days: (e as any).recurring_days ?? [],
         }))
@@ -307,26 +311,10 @@ const Index = () => {
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
               </div>
-              {isAdmin && (
+              {isAdmin && selectedIds.size > 0 && (
                 <div className="flex gap-2 shrink-0 flex-wrap">
-                  {selectedIds.size > 0 && (
-                    <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
-                      <Trash2 className="w-4 h-4 mr-1.5" /> Excluir ({selectedIds.size})
-                    </Button>
-                  )}
-                  {allEvents.length > 0 && (
-                    <Button variant="outline" size="sm" onClick={() => setDeleteAllOpen(true)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                      <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={() => setOutdoorSettingsOpen(true)}>
-                    <Settings className="w-4 h-4 mr-1.5" /> Outdoor
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-                    <Plus className="w-4 h-4 mr-1.5" /> Novo
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                    <Upload className="w-4 h-4 mr-1.5" /> Importar
+                  <Button variant="destructive" size="sm" onClick={() => setBulkDeleteOpen(true)}>
+                    <Trash2 className="w-4 h-4 mr-1.5" /> Excluir ({selectedIds.size})
                   </Button>
                 </div>
               )}
@@ -449,6 +437,11 @@ const Index = () => {
           onSelectEvent={setSelectedEvent}
           onToggleFavorite={handleToggleFavorite}
           isFavorite={isFavorite}
+          onAddEvent={() => setAddOpen(true)}
+          onImportEvents={() => setImportOpen(true)}
+          onOutdoorSettings={() => setOutdoorSettingsOpen(true)}
+          onDeleteAll={() => setDeleteAllOpen(true)}
+          allEventsCount={allEvents.length}
         />
       )}
 
