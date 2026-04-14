@@ -101,7 +101,7 @@ const CategoryManagement = () => {
     <section className="space-y-4">
       <div className="flex items-center gap-2">
         <Tags className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-serif font-semibold">Gerenciar Categorias</h2>
+        <h2 className="text-lg font-semibold font-sans text-neutral-400">Gerenciar Categorias</h2>
       </div>
 
       {/* Create new category */}
