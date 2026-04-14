@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { EventData, EventCategory } from "@/data/events";
+import { EventData, EventCategory, subcategoryOptions } from "@/data/events";
 import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -116,9 +116,8 @@ const Index = () => {
       const next = prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat];
       // Remove subcategories of deselected category
       if (prev.includes(cat)) {
-        const { subcategoryOptions } = require("@/data/events");
         const subs = subcategoryOptions[cat] || [];
-        setSelectedSubcategories((prev) => prev.filter((s) => !subs.includes(s)));
+        setSelectedSubcategories((sp) => sp.filter((s) => !subs.includes(s)));
       }
       return next;
     });
