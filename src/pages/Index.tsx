@@ -35,6 +35,7 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState<EventCategory[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [distanceKm, setDistanceKm] = useState(155);
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [importOpen, setImportOpen] = useState(false);
