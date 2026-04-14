@@ -174,7 +174,12 @@ const Index = () => {
       );
     }
 
-    if (searchCity.trim()) {
+    if (selectedSubcategories.length > 0) {
+      results = results.filter(({ event }) =>
+        event.subcategorias?.some((s) => selectedSubcategories.includes(s))
+      );
+    }
+
       const q = searchCity.trim().toLowerCase();
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
     }
