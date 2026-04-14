@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { EventData, EventCategory } from "@/data/events";
+import { EventData, EventCategory, subcategoryOptions } from "@/data/events";
 import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocation";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +35,7 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(true);
   const [selectedCategories, setSelectedCategories] = useState<EventCategory[]>([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [distanceKm, setDistanceKm] = useState(155);
   const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -111,8 +112,20 @@ const Index = () => {
   }, [allEvents]);
 
   const toggleCategory = useCallback((cat: EventCategory) => {
-    setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    setSelectedCategories((prev) => {
+      const next = prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat];
+      // Remove subcategories of deselected category
+      if (prev.includes(cat)) {
+        const subs = subcategoryOptions[cat] || [];
+        setSelectedSubcategories((sp) => sp.filter((s) => !subs.includes(s)));
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleFilterSubcategory = useCallback((sub: string) => {
+    setSelectedSubcategories((prev) =>
+      prev.includes(sub) ? prev.filter((s) => s !== sub) : [...prev, sub]
     );
   }, []);
 
@@ -161,6 +174,12 @@ const Index = () => {
       );
     }
 
+    if (selectedSubcategories.length > 0) {
+      results = results.filter(({ event }) =>
+        event.subcategorias?.some((s) => selectedSubcategories.includes(s))
+      );
+    }
+
     if (searchCity.trim()) {
       const q = searchCity.trim().toLowerCase();
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
@@ -189,7 +208,7 @@ const Index = () => {
 
     results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
     return results;
-  }, [eventsWithDistance, selectedCategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
+  }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
 
   const upcomingEvents = useMemo(
     () => filteredEvents.filter(({ event }) => {
@@ -336,6 +355,8 @@ const Index = () => {
               onAllDatesChange={setAllDates}
               searchName={searchName}
               onSearchNameChange={setSearchName}
+              selectedSubcategories={selectedSubcategories}
+              onToggleSubcategory={toggleFilterSubcategory}
             />
 
             {user && forYouEvents.length > 0 && (

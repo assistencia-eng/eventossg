@@ -15,6 +15,39 @@ const CategoryManagement = () => {
   const [editIcon, setEditIcon] = useState("");
   const [editColor, setEditColor] = useState("");
   const [newSubcategory, setNewSubcategory] = useState("");
+  const [showNewCatForm, setShowNewCatForm] = useState(false);
+  const [newCatKey, setNewCatKey] = useState("");
+  const [newCatLabel, setNewCatLabel] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("");
+  const [newCatColor, setNewCatColor] = useState("#6366f1");
+  const [customCategories, setCustomCategories] = useState<EventCategory[]>([]);
+
+  const displayCategories = [...allCategories, ...customCategories];
+
+  const handleCreateCategory = () => {
+    const key = newCatKey.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    if (!key || !newCatLabel.trim()) {
+      toast.error("Preencha o identificador e o nome da categoria.");
+      return;
+    }
+    if (displayCategories.includes(key as EventCategory) || categoryLabels[key as EventCategory]) {
+      toast.error("Essa categoria já existe.");
+      return;
+    }
+    const cat = key as EventCategory;
+    categoryLabels[cat] = newCatLabel.trim();
+    categoryIcons[cat] = newCatIcon.trim() || "📌";
+    const vibrant = /^#[0-9a-fA-F]{6}$/.test(newCatColor) ? newCatColor : "#6366f1";
+    categoryColors[cat] = { vibrant, muted: generateMutedColor(vibrant) };
+    subcategoryOptions[cat] = [];
+    setCustomCategories((prev) => [...prev, cat]);
+    toast.success(`Categoria "${newCatLabel.trim()}" criada!`);
+    setNewCatKey("");
+    setNewCatLabel("");
+    setNewCatIcon("");
+    setNewCatColor("#6366f1");
+    setShowNewCatForm(false);
+  };
 
   const handleEditCategory = (cat: EventCategory) => {
     setEditingCat(cat);
@@ -71,8 +104,83 @@ const CategoryManagement = () => {
         <h2 className="text-lg font-serif font-semibold">Gerenciar Categorias</h2>
       </div>
 
+      {/* Create new category */}
+      {!showNewCatForm ? (
+        <Button
+          variant="outline"
+          className="w-full gap-2 border-[#7d7d7d]"
+          onClick={() => setShowNewCatForm(true)}
+        >
+          <Plus className="w-4 h-4" />
+          Criar nova categoria
+        </Button>
+      ) : (
+        <div className="rounded-xl border border-border p-4 space-y-3 bg-secondary/30">
+          <h3 className="text-sm font-semibold text-neutral-300">Nova categoria</h3>
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              placeholder="Identificador (ex: teatro)"
+              value={newCatKey}
+              onChange={(e) => setNewCatKey(e.target.value)}
+              className="h-8 text-sm"
+            />
+            <Input
+              placeholder="Nome (ex: Teatro)"
+              value={newCatLabel}
+              onChange={(e) => setNewCatLabel(e.target.value)}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Ícone (emoji)"
+              value={newCatIcon}
+              onChange={(e) => setNewCatIcon(e.target.value)}
+              className="h-8 text-sm w-20"
+            />
+            <Palette className="w-4 h-4 text-muted-foreground shrink-0" />
+            <Input
+              type="color"
+              value={newCatColor}
+              onChange={(e) => setNewCatColor(e.target.value)}
+              className="h-8 w-12 p-0.5 cursor-pointer"
+            />
+            <Input
+              value={newCatColor}
+              onChange={(e) => setNewCatColor(e.target.value)}
+              className="h-8 text-sm flex-1"
+              placeholder="#hex"
+            />
+          </div>
+          {/* Preview */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Preview:</span>
+            <span
+              className="px-3 py-1.5 rounded-[22px] text-sm font-medium inline-flex items-center gap-1.5"
+              style={{
+                backgroundColor: /^#[0-9a-fA-F]{6}$/.test(newCatColor) ? generateMutedColor(newCatColor) : "#2a2a2a",
+                color: /^#[0-9a-fA-F]{6}$/.test(newCatColor) ? newCatColor : "#999",
+              }}
+            >
+              <span>{newCatIcon || "📌"}</span>
+              {newCatLabel || "Nova categoria"}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" className="gap-1" onClick={handleCreateCategory}>
+              <Check className="w-3.5 h-3.5" />
+              Criar
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setShowNewCatForm(false)}>
+              <X className="w-3.5 h-3.5" />
+              Cancelar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2">
-        {allCategories.map((cat) => {
+        {displayCategories.map((cat) => {
           const isExpanded = expandedCat === cat;
           const isEditing = editingCat === cat;
           const colors = categoryColors[cat];

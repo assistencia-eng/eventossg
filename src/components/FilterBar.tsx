@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { EventCategory, categoryLabels, categoryIcons } from "@/data/events";
+import { EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -25,6 +25,8 @@ interface FilterBarProps {
   onAllDatesChange: (val: boolean) => void;
   searchName: string;
   onSearchNameChange: (val: string) => void;
+  selectedSubcategories: string[];
+  onToggleSubcategory: (sub: string) => void;
 }
 
 const categories: EventCategory[] = [
@@ -47,6 +49,8 @@ const FilterBar = ({
   onAllDatesChange,
   searchName,
   onSearchNameChange,
+  selectedSubcategories,
+  onToggleSubcategory,
 }: FilterBarProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -149,6 +153,43 @@ const FilterBar = ({
                     );
                   })}
                 </div>
+
+                {/* Subcategories for selected categories */}
+                {selectedCategories.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {selectedCategories.map((cat) => {
+                      const subs = subcategoryOptions[cat];
+                      if (!subs || subs.length === 0) return null;
+                      const colors = categoryColors[cat];
+                      return (
+                        <div key={cat}>
+                          <p className="text-xs text-neutral-500 mb-1.5">
+                            {categoryIcons[cat]} {categoryLabels[cat]}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {subs.map((sub) => {
+                              const isActive = selectedSubcategories.includes(sub);
+                              return (
+                                <button
+                                  key={sub}
+                                  onClick={() => onToggleSubcategory(sub)}
+                                  className="px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer select-none"
+                                  style={{
+                                    backgroundColor: isActive ? colors.vibrant : "rgba(255,255,255,0.06)",
+                                    color: isActive ? "#fff" : colors.vibrant,
+                                    border: `1px solid ${isActive ? colors.vibrant : "rgba(255,255,255,0.1)"}`,
+                                  }}
+                                >
+                                  {sub}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Distance slider */}
