@@ -1,4 +1,5 @@
 import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
+import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar, Star, Clock, Repeat, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -17,26 +18,40 @@ const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null;
   const cats = event.categorias?.length ? event.categorias : [event.categoria];
   const mainCat = cats[0];
+  const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl">
+      <DialogContent
+        className="max-w-[340px] sm:max-w-sm max-h-[85vh] overflow-y-auto p-0 gap-0 rounded-2xl border-2"
+        style={{ borderColor: catColor }}
+      >
         {event.imagem && (
           <div className="w-full h-48 overflow-hidden">
             <img src={event.imagem} alt={event.nome} className="w-full h-full object-cover" />
           </div>
         )}
 
-        <div className={`h-2 category-chip-${mainCat} active w-full rounded-none border-0`} />
+        <div className="h-2 w-full rounded-none border-0" style={{ backgroundColor: catColor }} />
 
         <div className="p-6 space-y-5">
           <DialogHeader className="space-y-2">
             <div className="flex flex-wrap gap-1.5">
-              {cats.map((cat) => (
-                <span key={cat} className={`category-chip category-chip-${cat} text-xs inline-flex`}>
-                  {categoryIcons[cat]} {categoryLabels[cat]}
-                </span>
-              ))}
+              {cats.map((cat) => {
+                const colors = categoryColors[cat];
+                return (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
+                    style={{
+                      backgroundColor: colors?.muted || '#2a2a2a',
+                      color: colors?.vibrant || '#ccc',
+                    }}
+                  >
+                    {categoryIcons[cat]} {categoryLabels[cat]}
+                  </span>
+                );
+              })}
             </div>
             <DialogTitle className="text-2xl font-bold leading-snug font-sans">
               {event.nome}
