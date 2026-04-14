@@ -179,7 +179,7 @@ const CategoryManagement = () => {
         </div>
       )}
 
-      <div className="space-y-2 bg-[#1f1f1f]">
+      <div className="space-y-2 bg-[#1c1c1c]">
         {displayCategories.map((cat) => {
           const isExpanded = expandedCat === cat;
           const isEditing = editingCat === cat;
