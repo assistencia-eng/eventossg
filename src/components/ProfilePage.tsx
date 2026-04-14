@@ -147,7 +147,7 @@ const ProfilePage = ({
               </Button>
             )}
             {onDeleteAll && allEventsCount > 0 && (
-              <Button variant="outline" size="sm" onClick={onDeleteAll} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+              <Button variant="outline" size="sm" onClick={onDeleteAll} className="text-destructive border-destructive/30 bg-[#303030]">
                 <Trash2 className="w-4 h-4 mr-1.5" /> Excluir todos
               </Button>
             )}
