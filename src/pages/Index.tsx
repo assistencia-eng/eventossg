@@ -350,6 +350,8 @@ const Index = () => {
               onAllDatesChange={setAllDates}
               searchName={searchName}
               onSearchNameChange={setSearchName}
+              selectedSubcategories={selectedSubcategories}
+              onToggleSubcategory={toggleFilterSubcategory}
             />
 
             {user && forYouEvents.length > 0 && (
