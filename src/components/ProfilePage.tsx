@@ -132,7 +132,7 @@ const ProfilePage = ({
           <h2 className="text-lg font-semibold text-neutral-400 font-sans">Gerenciar Eventos</h2>
           <div className="flex flex-wrap gap-2">
             {onAddEvent && (
-              <Button variant="outline" size="sm" onClick={onAddEvent}>
+              <Button variant="outline" size="sm" onClick={onAddEvent} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
                 <Plus className="w-4 h-4 mr-1.5" /> Novo evento
               </Button>
             )}
