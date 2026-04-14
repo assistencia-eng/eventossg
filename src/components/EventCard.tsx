@@ -1,6 +1,6 @@
 import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
-import { Calendar, Trash2, Pencil, Star, Clock, Repeat } from "lucide-react";
+import { Calendar, Star, Clock, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,8 +9,6 @@ import { useRef, useEffect, useState } from "react";
 interface EventCardProps {
   event: EventData;
   onSelect: (event: EventData) => void;
-  onDelete?: (event: EventData) => void;
-  onEdit?: (event: EventData) => void;
   index: number;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
@@ -19,7 +17,7 @@ interface EventCardProps {
   isAdmin?: boolean;
 }
 
-const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin }: EventCardProps) => {
+const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
@@ -74,24 +72,6 @@ const EventCard = ({ event, onSelect, onDelete, onEdit, index, selected, onToggl
                 )}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                {isAdmin && onEdit && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onEdit(event); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                    title="Editar evento"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                )}
-                {isAdmin && onDelete && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(event); }}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                    title="Excluir evento"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
                 {(event.categorias?.length ? event.categorias : [event.categoria]).slice(0, 3).map((cat) => {
                   const colors = categoryColors[cat];
                   return (
