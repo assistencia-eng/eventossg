@@ -255,7 +255,7 @@ const CategoryManagement = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   {!isEditing && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleEditCategory(cat)}>
+                    <Button size="icon" className="h-8 w-8 bg-black text-white hover:bg-black/90" onClick={() => handleEditCategory(cat)}>
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                   )}
