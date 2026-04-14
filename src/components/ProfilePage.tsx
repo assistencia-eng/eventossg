@@ -137,12 +137,12 @@ const ProfilePage = ({
               </Button>
             )}
             {onImportEvents && (
-              <Button variant="outline" size="sm" onClick={onImportEvents}>
+              <Button variant="outline" size="sm" onClick={onImportEvents} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
                 <Upload className="w-4 h-4 mr-1.5" /> Importar
               </Button>
             )}
             {onOutdoorSettings && (
-              <Button variant="outline" size="sm" onClick={onOutdoorSettings}>
+              <Button variant="outline" size="sm" onClick={onOutdoorSettings} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
                 <Settings className="w-4 h-4 mr-1.5" /> Outdoor
               </Button>
             )}
