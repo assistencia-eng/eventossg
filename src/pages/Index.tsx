@@ -208,7 +208,7 @@ const Index = () => {
 
     results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
     return results;
-  }, [eventsWithDistance, selectedCategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
+  }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
 
   const upcomingEvents = useMemo(
     () => filteredEvents.filter(({ event }) => {
