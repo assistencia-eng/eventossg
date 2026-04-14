@@ -80,7 +80,7 @@ const AdminManagement = () => {
     <section className="space-y-4">
       <div className="flex items-center gap-2">
         <Shield className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-serif font-semibold">Gerenciar Administradores</h2>
+        <h2 className="text-lg font-semibold font-sans text-neutral-400">Gerenciar Administradores</h2>
       </div>
 
       {loading ? (
