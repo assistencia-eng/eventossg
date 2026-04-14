@@ -124,7 +124,7 @@ const Index = () => {
     });
   }, []);
 
-  const toggleSubcategory = useCallback((sub: string) => {
+  const toggleFilterSubcategory = useCallback((sub: string) => {
     setSelectedSubcategories((prev) =>
       prev.includes(sub) ? prev.filter((s) => s !== sub) : [...prev, sub]
     );
