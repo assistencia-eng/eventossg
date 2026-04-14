@@ -180,6 +180,7 @@ const Index = () => {
       );
     }
 
+    if (searchCity.trim()) {
       const q = searchCity.trim().toLowerCase();
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
     }
