@@ -112,8 +112,21 @@ const Index = () => {
   }, [allEvents]);
 
   const toggleCategory = useCallback((cat: EventCategory) => {
-    setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    setSelectedCategories((prev) => {
+      const next = prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat];
+      // Remove subcategories of deselected category
+      if (prev.includes(cat)) {
+        const { subcategoryOptions } = require("@/data/events");
+        const subs = subcategoryOptions[cat] || [];
+        setSelectedSubcategories((prev) => prev.filter((s) => !subs.includes(s)));
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleSubcategory = useCallback((sub: string) => {
+    setSelectedSubcategories((prev) =>
+      prev.includes(sub) ? prev.filter((s) => s !== sub) : [...prev, sub]
     );
   }, []);
 
