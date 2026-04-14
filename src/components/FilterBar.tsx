@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { EventCategory, categoryLabels, categoryIcons } from "@/data/events";
+import { EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -25,6 +25,8 @@ interface FilterBarProps {
   onAllDatesChange: (val: boolean) => void;
   searchName: string;
   onSearchNameChange: (val: string) => void;
+  selectedSubcategories: string[];
+  onToggleSubcategory: (sub: string) => void;
 }
 
 const categories: EventCategory[] = [
@@ -47,6 +49,8 @@ const FilterBar = ({
   onAllDatesChange,
   searchName,
   onSearchNameChange,
+  selectedSubcategories,
+  onToggleSubcategory,
 }: FilterBarProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
