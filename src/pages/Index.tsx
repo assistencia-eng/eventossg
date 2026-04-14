@@ -391,8 +391,6 @@ const Index = () => {
                     key={event.id}
                     event={event}
                     onSelect={setSelectedEvent}
-                    onDelete={setDeleteTarget}
-                    onEdit={setEditEvent}
                     index={i}
                     selected={selectedIds.has(event.id)}
                     onToggleSelect={toggleSelect}
@@ -433,8 +431,6 @@ const Index = () => {
                 key={event.id}
                 event={event}
                 onSelect={setSelectedEvent}
-                onDelete={setDeleteTarget}
-                onEdit={setEditEvent}
                 index={i}
                 isFavorite={isFavorite(event.id)}
                 onToggleFavorite={handleToggleFavorite}
