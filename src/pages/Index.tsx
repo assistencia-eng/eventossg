@@ -391,8 +391,6 @@ const Index = () => {
                     key={event.id}
                     event={event}
                     onSelect={setSelectedEvent}
-                    onDelete={setDeleteTarget}
-                    onEdit={setEditEvent}
                     index={i}
                     selected={selectedIds.has(event.id)}
                     onToggleSelect={toggleSelect}
@@ -433,8 +431,6 @@ const Index = () => {
                 key={event.id}
                 event={event}
                 onSelect={setSelectedEvent}
-                onDelete={setDeleteTarget}
-                onEdit={setEditEvent}
                 index={i}
                 isFavorite={isFavorite(event.id)}
                 onToggleFavorite={handleToggleFavorite}
@@ -469,7 +465,7 @@ const Index = () => {
       <BottomNav active={activeNav} onChange={handleNavChange} />
       <LoginRequiredModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
-      <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} />
+      <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} onEdit={setEditEvent} onDelete={setDeleteTarget} isAdmin={isAdmin} />
       <EditEventForm event={editEvent} open={!!editEvent} onClose={() => setEditEvent(null)} onUpdated={fetchDbEvents} />
       <ImportEvents open={importOpen} onClose={() => setImportOpen(false)} onImported={fetchDbEvents} />
       <AddEventForm open={addOpen} onClose={() => setAddOpen(false)} onAdded={fetchDbEvents} />

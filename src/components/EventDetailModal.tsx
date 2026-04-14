@@ -1,7 +1,7 @@
 import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, Star, Clock, Repeat, AlertTriangle } from "lucide-react";
+import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ShareButton from "@/components/ShareButton";
@@ -10,9 +10,12 @@ interface EventDetailModalProps {
   event: EventData | null;
   open: boolean;
   onClose: () => void;
+  onEdit?: (event: EventData) => void;
+  onDelete?: (event: EventData) => void;
+  isAdmin?: boolean;
 }
 
-const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
+const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: EventDetailModalProps) => {
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null;
@@ -130,6 +133,30 @@ const EventDetailModal = ({ event, open, onClose }: EventDetailModalProps) => {
               Este evento pode sofrer alterações de data ou horário devido a condições climáticas ou fatores externos. Entre em contato com o administrador.
             </p>
           </div>
+
+          {/* Admin actions */}
+          {isAdmin && (onEdit || onDelete) && (
+            <div className="flex items-center gap-2 pt-2 border-t border-border">
+              {onEdit && (
+                <button
+                  onClick={() => { onEdit(event); onClose(); }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Editar
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => { onDelete(event); onClose(); }}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Share */}
           <div className="pt-2 border-t border-border">
