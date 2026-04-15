@@ -4,6 +4,7 @@ import { Calendar, MapPin, Star, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
 
 interface EventCardProps {
   event: EventData;
@@ -14,6 +15,7 @@ interface EventCardProps {
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
   isAdmin?: boolean;
+  subcategoryImages?: SubcategoryImageMap;
 }
 
 const categoryPlaceholders: Record<string, string> = {
@@ -26,13 +28,17 @@ const categoryPlaceholders: Record<string, string> = {
   festas: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=200&fit=crop",
 };
 
-const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin }: EventCardProps) => {
+const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
-  const imgSrc = event.imagem || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
+  // Priority: event image > subcategory image > category placeholder
+  const subImg = subcategoryImages && event.subcategorias?.length
+    ? event.subcategorias.find((s) => subcategoryImages[s]) && subcategoryImages[event.subcategorias.find((s) => subcategoryImages[s])!]
+    : undefined;
+  const imgSrc = event.imagem || subImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
     <div
