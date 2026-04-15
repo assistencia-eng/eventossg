@@ -161,6 +161,30 @@ export type Database = {
         }
         Relationships: []
       }
+      subcategory_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          subcategory: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          subcategory: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          subcategory?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
