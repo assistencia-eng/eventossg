@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useUserInterests } from "@/hooks/useUserInterests";
+import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
