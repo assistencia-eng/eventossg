@@ -16,14 +16,23 @@ interface EventCardProps {
   isAdmin?: boolean;
 }
 
+const categoryPlaceholders: Record<string, string> = {
+  musica: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=200&fit=crop",
+  esporte: "https://images.unsplash.com/photo-1461896836934-bd45ba24e308?w=400&h=200&fit=crop",
+  alimentacao: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=200&fit=crop",
+  entretenimento: "https://images.unsplash.com/photo-1503095396549-807759245b35?w=400&h=200&fit=crop",
+  palestras: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop",
+  feiras: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=400&h=200&fit=crop",
+  festas: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=200&fit=crop",
+};
+
 const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
-  const placeholderImg = "/placeholder.svg";
-  const imgSrc = event.imagem || placeholderImg;
+  const imgSrc = event.imagem || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
     <div
@@ -39,7 +48,6 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
           className="w-full h-full object-cover"
           loading="lazy"
         />
-        {/* Dark gradient overlay at bottom */}
         <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#1c1c1c] to-transparent" />
 
         {/* Category chips top-right */}
@@ -74,7 +82,7 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
       <div className="h-1 w-full" style={{ backgroundColor: catColor }} />
 
       {/* Content */}
-      <div className="p-4 space-y-2.5">
+      <div className="p-4 pr-12 space-y-2.5">
         <h3 className="font-bold text-base leading-snug line-clamp-2 font-sans text-neutral-100">
           {event.nome}
         </h3>
