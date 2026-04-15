@@ -1,10 +1,9 @@
 import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
-import { Calendar, Star, Clock, Repeat } from "lucide-react";
+import { Calendar, MapPin, Star, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useRef, useEffect, useState } from "react";
 
 interface EventCardProps {
   event: EventData;
@@ -23,110 +22,101 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const [titleFontSize, setTitleFontSize] = useState<number | undefined>(undefined);
-
-  useEffect(() => {
-    const el = titleRef.current;
-    if (!el) return;
-    // Reset to measure naturally
-    el.style.fontSize = '';
-    const maxHeight = parseFloat(getComputedStyle(el).lineHeight) * 2 + 2; // 2 lines
-    let size = 18; // start at base size (text-lg ≈ 18px)
-    while (el.scrollHeight > maxHeight && size > 11) {
-      size -= 0.5;
-      el.style.fontSize = `${size}px`;
-    }
-    setTitleFontSize(size < 18 ? size : undefined);
-  }, [event.nome]);
+  const placeholderImg = "/placeholder.svg";
+  const imgSrc = event.imagem || placeholderImg;
 
   return (
     <div
-      className={`rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative border ${selected ? "ring-2 ring-primary" : ""}`}
+      className={`rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer group animate-fade-in-up relative border bg-[#1c1c1c] shadow-md shadow-black/30 hover:shadow-xl hover:shadow-black/40 ${selected ? "ring-2 ring-primary" : ""}`}
       style={{ animationDelay: `${index * 80}ms`, borderColor: catColor }}
       onClick={() => onSelect(event)}
     >
-      <div
-        className="h-1.5 w-full rounded-none border-0"
-        style={{ backgroundColor: catColor }}
-      />
+      {/* Image section */}
+      <div className="relative w-full h-[120px] overflow-hidden">
+        <img
+          src={imgSrc}
+          alt={event.nome}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+        {/* Dark gradient overlay at bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#1c1c1c] to-transparent" />
 
-      <div className="p-4 sm:p-5 bg-[#1c1c1c]">
-        <div className="flex items-start gap-2 mb-3">
-          {isAdmin && onToggleSelect && (
-            <div className="pt-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-              <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(event.id)} />
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <h3 ref={titleRef} className="font-bold leading-snug line-clamp-2 font-sans text-neutral-200 text-left" style={titleFontSize ? { fontSize: `${titleFontSize}px` } : { fontSize: '18px' }}>
-                  {event.nome}
-                </h3>
-                {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
-                  <div className="flex items-center gap-1 mt-1 text-xs text-primary">
-                    <Repeat className="w-3 h-3" />
-                    <span>{event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                {(event.categorias?.length ? event.categorias : [event.categoria]).slice(0, 3).map((cat) => {
-                  const colors = categoryColors[cat];
-                  return (
-                    <span
-                      key={cat}
-                      className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-none whitespace-nowrap"
-                      style={{
-                        backgroundColor: colors?.muted || '#2a2a2a',
-                        color: colors?.vibrant || '#ccc',
-                      }}
-                    >
-                      <span className="text-[10px]">{categoryIcons[cat]}</span>
-                      {categoryLabels[cat]}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+        {/* Category chips top-right */}
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+          {(event.categorias?.length ? event.categorias : [event.categoria]).slice(0, 3).map((cat) => {
+            const colors = categoryColors[cat];
+            return (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium leading-none whitespace-nowrap backdrop-blur-sm"
+                style={{
+                  backgroundColor: (colors?.muted || '#2a2a2a') + 'cc',
+                  color: colors?.vibrant || '#ccc',
+                }}
+              >
+                <span className="text-[10px]">{categoryIcons[cat]}</span>
+                {categoryLabels[cat]}
+              </span>
+            );
+          })}
         </div>
 
-        <div className="space-y-1.5 text-sm text-muted-foreground pr-10">
+        {/* Admin checkbox top-left */}
+        {isAdmin && onToggleSelect && (
+          <div className="absolute top-2 left-2" onClick={(e) => e.stopPropagation()}>
+            <Checkbox checked={selected} onCheckedChange={() => onToggleSelect(event.id)} className="border-neutral-400 data-[state=checked]:bg-primary" />
+          </div>
+        )}
+      </div>
+
+      {/* Color bar */}
+      <div className="h-1 w-full" style={{ backgroundColor: catColor }} />
+
+      {/* Content */}
+      <div className="p-4 space-y-2.5">
+        <h3 className="font-bold text-base leading-snug line-clamp-2 font-sans text-neutral-100">
+          {event.nome}
+        </h3>
+
+        {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs text-primary">
+            <Repeat className="w-3 h-3" />
+            <span>{event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}</span>
+          </div>
+        )}
+
+        <div className="space-y-1.5 text-sm">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-primary shrink-0" />
-            <span className="font-medium text-sm text-neutral-300">
+            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-neutral-300 text-xs">
               {formattedDate}
               {formattedEndDate && ` — ${formattedEndDate}`}
             </span>
           </div>
-          {event.horario && (
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary shrink-0" />
-              <span className="font-medium text-sm text-neutral-300">{event.horario}</span>
-            </div>
-          )}
           <div className="flex items-center gap-2">
-            <span className="text-sm truncate text-neutral-400">{event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}</span>
+            <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-neutral-400 text-xs truncate">
+              {event.local !== "Não informado" ? `${event.local} — ` : ""}{event.cidade}
+            </span>
           </div>
         </div>
-
-        {/* Favorite star - bottom right */}
-        {onToggleFavorite && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavorite(event.id); }}
-            className={`absolute bottom-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-              isFavorite
-                ? "text-amber-500 hover:text-amber-600"
-                : "text-muted-foreground hover:text-amber-500"
-            }`}
-            title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
-          >
-            <Star className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} />
-          </button>
-        )}
       </div>
+
+      {/* Favorite star */}
+      {onToggleFavorite && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleFavorite(event.id); }}
+          className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+            isFavorite
+              ? "text-amber-500 hover:text-amber-600"
+              : "text-neutral-500 hover:text-amber-500"
+          }`}
+          title={isFavorite ? "Remover dos favoritos" : "Favoritar"}
+        >
+          <Star className="w-4.5 h-4.5" fill={isFavorite ? "currentColor" : "none"} />
+        </button>
+      )}
     </div>
   );
 };
