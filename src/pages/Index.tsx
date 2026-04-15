@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useUserInterests } from "@/hooks/useUserInterests";
+import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -58,6 +59,7 @@ const Index = () => {
 
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
   const { interests, toggleCategory: toggleInterestCategory, toggleSubcategory } = useUserInterests();
+  const { images: subcategoryImages } = useSubcategoryImages();
 
   useEffect(() => {
     getUserLocation()
@@ -375,6 +377,7 @@ const Index = () => {
                       isFavorite={isFavorite(event.id)}
                       onToggleFavorite={handleToggleFavorite}
                       isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
                     />
                   ))}
                 </div>
@@ -397,6 +400,7 @@ const Index = () => {
                     isFavorite={isFavorite(event.id)}
                     onToggleFavorite={handleToggleFavorite}
                     isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
                   />
                 ))}
               </div>
@@ -435,6 +439,7 @@ const Index = () => {
                 isFavorite={isFavorite(event.id)}
                 onToggleFavorite={handleToggleFavorite}
                 isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
               />
             ))}
           </div>
