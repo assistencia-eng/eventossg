@@ -377,6 +377,7 @@ const Index = () => {
                       isFavorite={isFavorite(event.id)}
                       onToggleFavorite={handleToggleFavorite}
                       isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
                     />
                   ))}
                 </div>
@@ -399,6 +400,7 @@ const Index = () => {
                     isFavorite={isFavorite(event.id)}
                     onToggleFavorite={handleToggleFavorite}
                     isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
                   />
                 ))}
               </div>
@@ -437,6 +439,7 @@ const Index = () => {
                 isFavorite={isFavorite(event.id)}
                 onToggleFavorite={handleToggleFavorite}
                 isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
               />
             ))}
           </div>
