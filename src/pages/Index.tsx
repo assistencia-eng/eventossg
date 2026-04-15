@@ -59,6 +59,7 @@ const Index = () => {
 
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
   const { interests, toggleCategory: toggleInterestCategory, toggleSubcategory } = useUserInterests();
+  const { images: subcategoryImages } = useSubcategoryImages();
 
   useEffect(() => {
     getUserLocation()
