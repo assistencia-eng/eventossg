@@ -152,6 +152,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           descricao: ev.descricao,
           atracoes: ev.atracoes,
           categoria: ev.categoria,
+          categorias: ev.categorias || [ev.categoria],
+          subcategorias: ev.subcategorias || [],
           latitude: geoResults[i].latitude,
           longitude: geoResults[i].longitude,
         }))
