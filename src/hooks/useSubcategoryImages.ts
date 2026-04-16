@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SubcategoryImageMap = Record<string, string>;
+// Maps subcategory -> array of image URLs (up to 3)
+export type SubcategoryImageMap = Record<string, string[]>;
 
 export const useSubcategoryImages = () => {
   const [images, setImages] = useState<SubcategoryImageMap>({});
@@ -10,11 +11,13 @@ export const useSubcategoryImages = () => {
   const fetchImages = async () => {
     const { data } = await supabase
       .from("subcategory_images")
-      .select("subcategory, image_url");
+      .select("subcategory, image_url, image_index")
+      .order("image_index", { ascending: true });
     if (data) {
       const map: SubcategoryImageMap = {};
       data.forEach((row) => {
-        map[row.subcategory] = row.image_url;
+        if (!map[row.subcategory]) map[row.subcategory] = [];
+        map[row.subcategory].push(row.image_url);
       });
       setImages(map);
     }

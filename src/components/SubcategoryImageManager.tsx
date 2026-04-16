@@ -25,11 +25,12 @@ const SubcategoryImageManager = () => {
     })).filter((g) => g.subs.length > 0);
   }, [search]);
 
-  const handleUpload = async (subcategory: string, file: File) => {
-    setUploading(subcategory);
+  const handleUpload = async (subcategory: string, slotIndex: number, file: File) => {
+    const key = `${subcategory}-${slotIndex}`;
+    setUploading(key);
     try {
       const ext = file.name.split(".").pop() || "jpg";
-      const path = `subcategory/${subcategory.replace(/\s+/g, "_")}_${Date.now()}.${ext}`;
+      const path = `subcategory/${subcategory.replace(/\s+/g, "_")}_${slotIndex}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("event-images")
@@ -43,22 +44,31 @@ const SubcategoryImageManager = () => {
 
       const imageUrl = urlData.publicUrl;
 
-      // Upsert into subcategory_images
-      const existing = images[subcategory];
+      // Check if this slot already exists
+      const existingImages = images[subcategory] || [];
+      // We need to check by querying the DB for this specific slot
+      const { data: existing } = await supabase
+        .from("subcategory_images")
+        .select("id")
+        .eq("subcategory", subcategory)
+        .eq("image_index", slotIndex)
+        .maybeSingle();
+
       if (existing) {
         const { error } = await supabase
           .from("subcategory_images")
           .update({ image_url: imageUrl })
-          .eq("subcategory", subcategory);
+          .eq("subcategory", subcategory)
+          .eq("image_index", slotIndex);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("subcategory_images")
-          .insert({ subcategory, image_url: imageUrl });
+          .insert({ subcategory, image_url: imageUrl, image_index: slotIndex });
         if (error) throw error;
       }
 
-      toast.success(`Imagem de "${subcategory}" atualizada!`);
+      toast.success(`Imagem ${slotIndex} de "${subcategory}" atualizada!`);
       await refetch();
     } catch (err: any) {
       toast.error(err.message || "Erro ao fazer upload");
@@ -67,14 +77,15 @@ const SubcategoryImageManager = () => {
     }
   };
 
-  const handleRemove = async (subcategory: string) => {
+  const handleRemove = async (subcategory: string, slotIndex: number) => {
     try {
       const { error } = await supabase
         .from("subcategory_images")
         .delete()
-        .eq("subcategory", subcategory);
+        .eq("subcategory", subcategory)
+        .eq("image_index", slotIndex);
       if (error) throw error;
-      toast.success(`Imagem de "${subcategory}" removida`);
+      toast.success(`Imagem ${slotIndex} de "${subcategory}" removida`);
       await refetch();
     } catch (err: any) {
       toast.error(err.message || "Erro ao remover");
@@ -85,9 +96,9 @@ const SubcategoryImageManager = () => {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-neutral-400 font-sans">Imagens por Subcategoria</h2>
+      <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens por Subcategoria</h2>
       <p className="text-xs text-muted-foreground">
-        Defina imagens padrão para cada subcategoria. Eventos sem imagem própria usarão a imagem da subcategoria correspondente.
+        Defina até 3 imagens para cada subcategoria. Cards de mesma subcategoria usarão imagens variadas automaticamente.
       </p>
 
       <div className="relative">
@@ -108,68 +119,69 @@ const SubcategoryImageManager = () => {
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color }}>
                 <span>{categoryIcons[cat]}</span> {categoryLabels[cat]}
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-3">
                 {subs.map((sub) => {
-                  const imgUrl = images[sub];
-                  const isUploading = uploading === sub;
+                  const subImages = images[sub] || [];
                   return (
                     <div
                       key={sub}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-[#1a1a1a] border border-border"
+                      className="p-3 rounded-xl bg-[#1a1a1a] border border-border space-y-2"
                     >
-                      {/* Thumbnail */}
-                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#2a2a2a] shrink-0 flex items-center justify-center">
-                        {imgUrl ? (
-                          <img src={imgUrl} alt={sub} className="w-full h-full object-cover" />
-                        ) : (
-                          <ImageIcon className="w-5 h-5 text-neutral-600" />
-                        )}
-                      </div>
+                      <p className="text-sm font-medium text-neutral-200 capitalize">{sub}</p>
 
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-neutral-200 truncate capitalize">{sub}</p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {imgUrl ? "Imagem definida" : "Sem imagem"}
-                        </p>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <label className="cursor-pointer">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            disabled={isUploading}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) handleUpload(sub, file);
-                              e.target.value = "";
-                            }}
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-primary"
-                            asChild
-                            disabled={isUploading}
-                          >
-                            <span>
-                              <Upload className="w-4 h-4" />
-                            </span>
-                          </Button>
-                        </label>
-                        {imgUrl && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => handleRemove(sub)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                      {/* 3 image slots */}
+                      <div className="grid grid-cols-3 gap-2">
+                        {[1, 2, 3].map((slot) => {
+                          const imgUrl = subImages[slot - 1] || null;
+                          const isSlotUploading = uploading === `${sub}-${slot}`;
+                          return (
+                            <div key={slot} className="space-y-1">
+                              <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#2a2a2a] flex items-center justify-center">
+                                {imgUrl ? (
+                                  <img src={imgUrl} alt={`${sub} ${slot}`} className="w-full h-full object-cover" />
+                                ) : (
+                                  <ImageIcon className="w-5 h-5 text-neutral-600" />
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <label className="cursor-pointer flex-1">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    disabled={isSlotUploading}
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) handleUpload(sub, slot, file);
+                                      e.target.value = "";
+                                    }}
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-primary w-full"
+                                    asChild
+                                    disabled={isSlotUploading}
+                                  >
+                                    <span>
+                                      <Upload className="w-3.5 h-3.5" />
+                                    </span>
+                                  </Button>
+                                </label>
+                                {imgUrl && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive"
+                                    onClick={() => handleRemove(sub, slot)}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
