@@ -6,6 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const validCategories = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
+
+const validSubcategories: Record<string, string[]> = {
+  musica: ["rock", "sertanejo", "pagode", "eletrônica", "funk", "hip-hop", "reggae", "jazz", "tradicionalista", "gaúcha", "MPB"],
+  esporte: ["futebol", "corrida", "vôlei", "basquete", "padel", "tênis", "beach tennis", "futevôlei", "arte marcial", "natação", "fitness", "academia"],
+  alimentacao: ["bebidas", "vinho", "fast food", "churrasco", "vegano", "sushi", "doces", "naturais"],
+  entretenimento: ["teatro", "musical", "drama", "comédia", "apresentação cultural", "premiações", "encontros"],
+  palestras: ["empreendedorismo", "tecnologia", "saúde", "gestão", "cultural", "esporte"],
+  feiras: ["empreendedorismo", "tecnologia", "automação", "alimentação"],
+  festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -24,6 +36,10 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    const subcatList = Object.entries(validSubcategories)
+      .map(([cat, subs]) => `  ${cat}: ${subs.join(", ")}`)
+      .join("\n");
+
     const systemPrompt = `Você é um assistente especializado em extrair eventos de textos não estruturados.
 Analise o conteúdo fornecido e extraia TODOS os eventos encontrados.
 
@@ -35,11 +51,15 @@ Para cada evento, retorne um objeto JSON com os seguintes campos:
 - data: data no formato YYYY-MM-DD (se não tiver ano, use 2026)
 - descricao: descrição do evento
 - atracoes: array de strings com as atrações
-- categoria: uma de "musica", "esporte", "teatro", "alimentacao" (classifique com base no contexto)
+- categoria: a categoria PRINCIPAL do evento. Deve ser UMA das seguintes: ${validCategories.join(", ")}
+- categorias: array com TODAS as categorias aplicáveis ao evento (pode ter mais de uma). Valores possíveis: ${validCategories.join(", ")}
+- subcategorias: array com as subcategorias mais adequadas ao evento. As subcategorias disponíveis por categoria são:
+${subcatList}
+  Escolha as subcategorias que melhor descrevem o evento com base no seu conteúdo, nome, atrações e descrição. Um evento pode ter subcategorias de diferentes categorias.
 - NÃO inclua latitude ou longitude, esses campos serão calculados automaticamente via geocodificação
 
 Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
-Tente inferir a categoria com base no contexto do evento.
+Classifique categoria, categorias e subcategorias com base no contexto, nome, atrações e descrição do evento.
 
 IMPORTANTE: Responda APENAS com um JSON válido no formato:
 { "events": [ { ...evento1 }, { ...evento2 } ] }`;
@@ -89,7 +109,6 @@ IMPORTANTE: Responda APENAS com um JSON válido no formato:
     try {
       parsed = JSON.parse(rawContent);
     } catch {
-      // Try extracting JSON from markdown code block
       const match = rawContent.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (match) {
         parsed = JSON.parse(match[1]);
@@ -98,20 +117,33 @@ IMPORTANTE: Responda APENAS com um JSON válido no formato:
       }
     }
 
-    const events = (parsed.events || []).map((e: Record<string, unknown>) => ({
-      nome: e.nome || "Não informado",
-      local: e.local || "Não informado",
-      cidade: e.cidade || "Não informado",
-      endereco: e.endereco || "Não informado",
-      data: e.data || new Date().toISOString().split("T")[0],
-      descricao: e.descricao || "Não informado",
-      atracoes: Array.isArray(e.atracoes) ? e.atracoes : [],
-      categoria: ["musica", "esporte", "teatro", "alimentacao"].includes(e.categoria as string)
-        ? e.categoria
-        : "musica",
-      latitude: -29.3731,
-      longitude: -50.876,
-    }));
+    // All valid subcategories flattened
+    const allValidSubs = Object.values(validSubcategories).flat();
+
+    const events = (parsed.events || []).map((e: Record<string, unknown>) => {
+      const mainCat = validCategories.includes(e.categoria as string) ? e.categoria as string : "entretenimento";
+      const cats = Array.isArray(e.categorias)
+        ? (e.categorias as string[]).filter((c) => validCategories.includes(c))
+        : [mainCat];
+      const subs = Array.isArray(e.subcategorias)
+        ? (e.subcategorias as string[]).filter((s) => allValidSubs.includes(s))
+        : [];
+
+      return {
+        nome: e.nome || "Não informado",
+        local: e.local || "Não informado",
+        cidade: e.cidade || "Não informado",
+        endereco: e.endereco || "Não informado",
+        data: e.data || new Date().toISOString().split("T")[0],
+        descricao: e.descricao || "Não informado",
+        atracoes: Array.isArray(e.atracoes) ? e.atracoes : [],
+        categoria: mainCat,
+        categorias: cats.length > 0 ? cats : [mainCat],
+        subcategorias: subs,
+        latitude: -29.3731,
+        longitude: -50.876,
+      };
+    });
 
     return new Response(JSON.stringify({ events }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
