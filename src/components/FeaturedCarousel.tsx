@@ -3,10 +3,12 @@ import { EventData } from "@/data/events";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
 
 interface FeaturedCarouselProps {
   events: EventData[];
   onSelect: (event: EventData) => void;
+  subcategoryImages?: SubcategoryImageMap;
 }
 
 const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
