@@ -11,7 +11,7 @@ interface FeaturedCarouselProps {
   subcategoryImages?: SubcategoryImageMap;
 }
 
-const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
+const FeaturedCarousel = ({ events, onSelect, subcategoryImages }: FeaturedCarouselProps) => {
   const [current, setCurrent] = useState(0);
 
   const next = useCallback(() => {
