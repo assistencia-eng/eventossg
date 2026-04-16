@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
+import { useMemo } from "react";
 
 interface EventCardProps {
   event: EventData;
@@ -28,16 +29,33 @@ const categoryPlaceholders: Record<string, string> = {
   festas: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=400&h=200&fit=crop",
 };
 
+// Deterministic but varied image selection based on event id
+function pickSubcategoryImage(
+  event: EventData,
+  subcategoryImages?: SubcategoryImageMap
+): string | undefined {
+  if (!subcategoryImages || !event.subcategorias?.length) return undefined;
+  for (const sub of event.subcategorias) {
+    const imgs = subcategoryImages[sub];
+    if (imgs && imgs.length > 0) {
+      // Use a simple hash of event id to pick one of the available images
+      let hash = 0;
+      for (let i = 0; i < event.id.length; i++) {
+        hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
+      }
+      return imgs[Math.abs(hash) % imgs.length];
+    }
+  }
+  return undefined;
+}
+
 const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
-  // Priority: event image > subcategory image > category placeholder
-  const subImg = subcategoryImages && event.subcategorias?.length
-    ? event.subcategorias.find((s) => subcategoryImages[s]) && subcategoryImages[event.subcategorias.find((s) => subcategoryImages[s])!]
-    : undefined;
+  const subImg = useMemo(() => pickSubcategoryImage(event, subcategoryImages), [event, subcategoryImages]);
   const imgSrc = event.imagem || subImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
