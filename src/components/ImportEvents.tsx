@@ -21,6 +21,8 @@ interface ExtractedEvent {
   descricao: string;
   atracoes: string[];
   categoria: EventCategory;
+  categorias: string[];
+  subcategorias: string[];
   latitude: number;
   longitude: number;
 }
@@ -150,6 +152,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           descricao: ev.descricao,
           atracoes: ev.atracoes,
           categoria: ev.categoria,
+          categorias: ev.categorias || [ev.categoria],
+          subcategorias: ev.subcategorias || [],
           latitude: geoResults[i].latitude,
           longitude: geoResults[i].longitude,
         }))
@@ -354,6 +358,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                         <p className="text-xs text-muted-foreground">
                           {ev.cidade} • {ev.data} • {ev.local}
                         </p>
+                        {ev.subcategorias?.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {ev.subcategorias.map((sub) => (
+                              <Badge key={sub} variant="outline" className="text-[10px] py-0 capitalize">
+                                {sub}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {ev.descricao}
                         </p>
