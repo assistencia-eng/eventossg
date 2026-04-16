@@ -21,6 +21,8 @@ interface ExtractedEvent {
   descricao: string;
   atracoes: string[];
   categoria: EventCategory;
+  categorias: string[];
+  subcategorias: string[];
   latitude: number;
   longitude: number;
 }
