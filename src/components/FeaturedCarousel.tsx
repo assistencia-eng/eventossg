@@ -3,13 +3,15 @@ import { EventData } from "@/data/events";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
 
 interface FeaturedCarouselProps {
   events: EventData[];
   onSelect: (event: EventData) => void;
+  subcategoryImages?: SubcategoryImageMap;
 }
 
-const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
+const FeaturedCarousel = ({ events, onSelect, subcategoryImages }: FeaturedCarouselProps) => {
   const [current, setCurrent] = useState(0);
 
   const next = useCallback(() => {
@@ -55,15 +57,31 @@ const FeaturedCarousel = ({ events, onSelect }: FeaturedCarouselProps) => {
   return (
     <div className="relative w-full h-[35vh] min-h-[200px] overflow-hidden bg-muted">
       {/* Background image */}
-      {event.imagem ? (
-        <img
-          src={event.imagem}
-          alt={event.nome}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-        />
-      ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
-      )}
+      {(() => {
+        let imgSrc = event.imagem;
+        if (!imgSrc && subcategoryImages && event.subcategorias?.length) {
+          for (const sub of event.subcategorias) {
+            const imgs = subcategoryImages[sub];
+            if (imgs && imgs.length > 0) {
+              let hash = 0;
+              for (let i = 0; i < event.id.length; i++) {
+                hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
+              }
+              imgSrc = imgs[Math.abs(hash) % imgs.length];
+              break;
+            }
+          }
+        }
+        return imgSrc ? (
+          <img
+            src={imgSrc}
+            alt={event.nome}
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
+        );
+      })()}
 
       {/* Overlay */}
       <div className={`absolute inset-0 ${gradientClass}`} />
