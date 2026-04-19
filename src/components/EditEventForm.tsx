@@ -65,6 +65,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_featured: event.is_featured || false,
         is_recurring: event.is_recurring || false,
         recurring_days: event.recurring_days || [],
+        subcategory_image_index: event.subcategory_image_index ?? null,
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
