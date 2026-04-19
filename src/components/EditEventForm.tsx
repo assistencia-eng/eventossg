@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type EventCategory, type EventData } from "@/data/events";
 import { geocodeAddress } from "@/lib/geocode";
-import { Loader2, Save, MapPin, ImagePlus } from "lucide-react";
+import { Loader2, Save, MapPin, ImagePlus, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 
 interface EditEventFormProps {
   event: EventData | null;
@@ -24,6 +25,7 @@ const weekDays = Object.keys(weekDayLabels);
 
 const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
   const { isAdmin } = useAuth();
+  const { images: subcategoryImages } = useSubcategoryImages();
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -43,6 +45,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     is_featured: false,
     is_recurring: false,
     recurring_days: [] as string[],
+    subcategory_image_index: null as number | null,
   });
 
   useEffect(() => {
@@ -62,6 +65,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_featured: event.is_featured || false,
         is_recurring: event.is_recurring || false,
         recurring_days: event.recurring_days || [],
+        subcategory_image_index: event.subcategory_image_index ?? null,
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
@@ -148,6 +152,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_featured: form.is_featured,
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
+        subcategory_image_index: imageFile || event.imagem ? null : form.subcategory_image_index,
       }).eq("id", event.id);
 
       if (updateError) throw updateError;
@@ -304,6 +309,65 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               )}
             </label>
           </div>
+
+          {/* Subcategory image selector - shown when no custom image is used */}
+          {!imagePreview && !imageFile && (() => {
+            const subWithImages = form.subcategorias.find((s) => (subcategoryImages[s] || []).length > 0);
+            const subImgs = subWithImages ? subcategoryImages[subWithImages] : [];
+            if (!subWithImages || subImgs.length === 0) return null;
+            return (
+              <div className="space-y-2">
+                <Label>Imagem da subcategoria <span className="text-xs text-muted-foreground">({subWithImages})</span></Label>
+                <p className="text-xs text-muted-foreground">
+                  Como este evento não tem imagem própria, escolha qual das imagens da subcategoria será exibida no card. Deixe em "Automático" para variação.
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, subcategory_image_index: null })}
+                    className={`aspect-[4/3] rounded-lg border-2 flex flex-col items-center justify-center text-xs font-medium transition-all ${
+                      form.subcategory_image_index === null
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-secondary text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    Auto
+                  </button>
+                  {[1, 2, 3].map((slot) => {
+                    const url = subImgs[slot - 1];
+                    if (!url) {
+                      return (
+                        <div
+                          key={slot}
+                          className="aspect-[4/3] rounded-lg border-2 border-dashed border-border bg-secondary/30 flex items-center justify-center text-[10px] text-muted-foreground"
+                        >
+                          Slot {slot}
+                        </div>
+                      );
+                    }
+                    const isSelected = form.subcategory_image_index === slot;
+                    return (
+                      <button
+                        key={slot}
+                        type="button"
+                        onClick={() => setForm({ ...form, subcategory_image_index: slot })}
+                        className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
+                          isSelected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <img src={url} alt={`Imagem ${slot}`} className="w-full h-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                            <Check className="w-5 h-5 text-primary-foreground" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Featured checkbox - admin only */}
           {isAdmin && (

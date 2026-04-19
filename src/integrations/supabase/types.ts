@@ -59,6 +59,7 @@ export type Database = {
           outdoor_title_size: number
           recurring_days: string[]
           subcategorias: string[]
+          subcategory_image_index: number | null
           updated_at: string
         }
         Insert: {
@@ -87,6 +88,7 @@ export type Database = {
           outdoor_title_size?: number
           recurring_days?: string[]
           subcategorias?: string[]
+          subcategory_image_index?: number | null
           updated_at?: string
         }
         Update: {
@@ -115,6 +117,7 @@ export type Database = {
           outdoor_title_size?: number
           recurring_days?: string[]
           subcategorias?: string[]
+          subcategory_image_index?: number | null
           updated_at?: string
         }
         Relationships: []

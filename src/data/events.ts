@@ -26,6 +26,7 @@ export interface EventData {
   outdoor_show_description?: boolean;
   is_recurring?: boolean;
   recurring_days?: string[];
+  subcategory_image_index?: number | null;
 }
 
 export const categoryLabels: Record<EventCategory, string> = {
