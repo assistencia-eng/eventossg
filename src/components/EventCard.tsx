@@ -38,7 +38,12 @@ function pickSubcategoryImage(
   for (const sub of event.subcategorias) {
     const imgs = subcategoryImages[sub];
     if (imgs && imgs.length > 0) {
-      // Use a simple hash of event id to pick one of the available images
+      // If admin manually selected an image index (1-based), respect it
+      const manualIdx = event.subcategory_image_index;
+      if (manualIdx && manualIdx >= 1 && manualIdx <= imgs.length) {
+        return imgs[manualIdx - 1];
+      }
+      // Otherwise auto-pick deterministically based on event id
       let hash = 0;
       for (let i = 0; i < event.id.length; i++) {
         hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
