@@ -9,8 +9,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type EventCategory, type EventData } from "@/data/events";
 import { geocodeAddress } from "@/lib/geocode";
-import { Loader2, Save, MapPin, ImagePlus } from "lucide-react";
+import { Loader2, Save, MapPin, ImagePlus, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 
 interface EditEventFormProps {
   event: EventData | null;
