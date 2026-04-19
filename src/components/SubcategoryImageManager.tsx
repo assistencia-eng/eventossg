@@ -29,8 +29,15 @@ const SubcategoryImageManager = () => {
     const key = `${subcategory}-${slotIndex}`;
     setUploading(key);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `subcategory/${subcategory.replace(/\s+/g, "_")}_${slotIndex}_${Date.now()}.${ext}`;
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      // Sanitize subcategory for Supabase storage key (ASCII only, no special chars or accents)
+      const safeSub = subcategory
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // strip diacritics: é→e, ç→c, ô→o
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")     // anything non-ASCII-alphanumeric → _
+        .replace(/^_+|_+$/g, "") || "sub";
+      const path = `subcategory/${safeSub}_${slotIndex}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("event-images")
