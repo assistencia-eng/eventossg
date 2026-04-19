@@ -357,7 +357,7 @@ const CategoryManagement = () => {
                       size="sm"
                       className="h-8 gap-1"
                       onClick={() => handleAddSubcategory(cat)}
-                      disabled={!newSubcategory.trim()}
+                      disabled={!newSubcategory.trim() || savingSub}
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Adicionar
