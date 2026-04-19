@@ -23,6 +23,7 @@ const defaultSubcategoriesSnapshot: Record<string, string[]> = {
 };
 
 const CategoryManagement = () => {
+  useSubcategoriesVersion(); // re-render when subcategories sync
   const [expandedCat, setExpandedCat] = useState<EventCategory | null>(null);
   const [editingCat, setEditingCat] = useState<EventCategory | null>(null);
   const [editLabel, setEditLabel] = useState("");
@@ -35,6 +36,7 @@ const CategoryManagement = () => {
   const [newCatIcon, setNewCatIcon] = useState("");
   const [newCatColor, setNewCatColor] = useState("#6366f1");
   const [customCategories, setCustomCategories] = useState<EventCategory[]>([]);
+  const [savingSub, setSavingSub] = useState(false);
 
   const displayCategories = [...allCategories, ...customCategories];
 
