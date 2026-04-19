@@ -4,11 +4,26 @@ import { categoryColors, generateMutedColor, CategoryColor } from "@/data/catego
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { refreshSubcategories, useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp, Palette } from "lucide-react";
 
 const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
+// Snapshot of the original built-in subcategories. Used to decide whether a removal
+// must be persisted as a "removed default" entry in the database.
+const defaultSubcategoriesSnapshot: Record<string, string[]> = {
+  musica: ["rock", "sertanejo", "pagode", "eletrônica", "funk", "hip-hop", "reggae", "jazz", "tradicionalista", "gaúcha", "MPB"],
+  esporte: ["futebol", "corrida", "vôlei", "basquete", "padel", "tênis", "beach tennis", "futevôlei", "arte marcial", "natação", "fitness", "academia"],
+  alimentacao: ["bebidas", "vinho", "fast food", "churrasco", "vegano", "sushi", "doces", "naturais"],
+  entretenimento: ["teatro", "musical", "drama", "comédia", "apresentação cultural", "premiações", "encontros"],
+  palestras: ["empreendedorismo", "tecnologia", "saúde", "gestão", "cultural", "esporte"],
+  feiras: ["empreendedorismo", "tecnologia", "automação", "alimentação"],
+  festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
+};
+
 const CategoryManagement = () => {
+  useSubcategoriesVersion(); // re-render when subcategories sync
   const [expandedCat, setExpandedCat] = useState<EventCategory | null>(null);
   const [editingCat, setEditingCat] = useState<EventCategory | null>(null);
   const [editLabel, setEditLabel] = useState("");
@@ -21,6 +36,7 @@ const CategoryManagement = () => {
   const [newCatIcon, setNewCatIcon] = useState("");
   const [newCatColor, setNewCatColor] = useState("#6366f1");
   const [customCategories, setCustomCategories] = useState<EventCategory[]>([]);
+  const [savingSub, setSavingSub] = useState(false);
 
   const displayCategories = [...allCategories, ...customCategories];
 
@@ -74,27 +90,61 @@ const CategoryManagement = () => {
     setEditColor("");
   };
 
-  const handleAddSubcategory = (cat: EventCategory) => {
+  const handleAddSubcategory = async (cat: EventCategory) => {
     if (!newSubcategory.trim()) return;
     const sub = newSubcategory.trim();
     if (subcategoryOptions[cat]?.includes(sub)) {
       toast.error("Essa subcategoria já existe.");
       return;
     }
-    if (!subcategoryOptions[cat]) {
-      subcategoryOptions[cat] = [];
+    setSavingSub(true);
+    // If this exact sub was previously removed (default), drop the removal record so it comes back.
+    const wasDefault = (defaultSubcategoriesSnapshot[cat] || []).includes(sub);
+    if (wasDefault) {
+      await supabase
+        .from("removed_default_subcategories")
+        .delete()
+        .eq("categoria", cat)
+        .eq("subcategoria", sub);
+    } else {
+      const { error } = await supabase
+        .from("custom_subcategories")
+        .insert({ categoria: cat, subcategoria: sub });
+      if (error) {
+        setSavingSub(false);
+        toast.error("Erro ao salvar subcategoria: " + error.message);
+        return;
+      }
     }
-    subcategoryOptions[cat].push(sub);
+    await refreshSubcategories();
     toast.success(`Subcategoria "${sub}" adicionada!`);
     setNewSubcategory("");
+    setSavingSub(false);
   };
 
-  const handleRemoveSubcategory = (cat: EventCategory, sub: string) => {
-    const idx = subcategoryOptions[cat]?.indexOf(sub);
-    if (idx !== undefined && idx >= 0) {
-      subcategoryOptions[cat].splice(idx, 1);
-      toast.success(`Subcategoria "${sub}" removida.`);
+  const handleRemoveSubcategory = async (cat: EventCategory, sub: string) => {
+    const wasDefault = (defaultSubcategoriesSnapshot[cat] || []).includes(sub);
+    if (wasDefault) {
+      const { error } = await supabase
+        .from("removed_default_subcategories")
+        .insert({ categoria: cat, subcategoria: sub });
+      if (error) {
+        toast.error("Erro ao remover: " + error.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase
+        .from("custom_subcategories")
+        .delete()
+        .eq("categoria", cat)
+        .eq("subcategoria", sub);
+      if (error) {
+        toast.error("Erro ao remover: " + error.message);
+        return;
+      }
     }
+    await refreshSubcategories();
+    toast.success(`Subcategoria "${sub}" removida.`);
   };
 
   return (
@@ -307,7 +357,7 @@ const CategoryManagement = () => {
                       size="sm"
                       className="h-8 gap-1"
                       onClick={() => handleAddSubcategory(cat)}
-                      disabled={!newSubcategory.trim()}
+                      disabled={!newSubcategory.trim() || savingSub}
                     >
                       <Plus className="w-3.5 h-3.5" />
                       Adicionar
