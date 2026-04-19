@@ -25,6 +25,7 @@ const weekDays = Object.keys(weekDayLabels);
 
 const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
   const { isAdmin } = useAuth();
+  const { images: subcategoryImages } = useSubcategoryImages();
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -44,6 +45,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     is_featured: false,
     is_recurring: false,
     recurring_days: [] as string[],
+    subcategory_image_index: null as number | null,
   });
 
   useEffect(() => {
