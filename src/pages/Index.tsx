@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
+import ForYouCarousel from "@/components/ForYouCarousel";
 import EventDetailModal from "@/components/EventDetailModal";
 import ImportEvents from "@/components/ImportEvents";
 import AddEventForm from "@/components/AddEventForm";
