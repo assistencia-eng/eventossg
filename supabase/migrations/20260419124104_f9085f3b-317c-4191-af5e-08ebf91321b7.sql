@@ -1,0 +1,1 @@
+ALTER TABLE public.subcategory_images DROP CONSTRAINT IF EXISTS subcategory_images_subcategory_key;
