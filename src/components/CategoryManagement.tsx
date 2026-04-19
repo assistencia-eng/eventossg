@@ -4,9 +4,23 @@ import { categoryColors, generateMutedColor, CategoryColor } from "@/data/catego
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { refreshSubcategories, useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp, Palette } from "lucide-react";
 
 const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
+
+// Snapshot of the original built-in subcategories. Used to decide whether a removal
+// must be persisted as a "removed default" entry in the database.
+const defaultSubcategoriesSnapshot: Record<string, string[]> = {
+  musica: ["rock", "sertanejo", "pagode", "eletrônica", "funk", "hip-hop", "reggae", "jazz", "tradicionalista", "gaúcha", "MPB"],
+  esporte: ["futebol", "corrida", "vôlei", "basquete", "padel", "tênis", "beach tennis", "futevôlei", "arte marcial", "natação", "fitness", "academia"],
+  alimentacao: ["bebidas", "vinho", "fast food", "churrasco", "vegano", "sushi", "doces", "naturais"],
+  entretenimento: ["teatro", "musical", "drama", "comédia", "apresentação cultural", "premiações", "encontros"],
+  palestras: ["empreendedorismo", "tecnologia", "saúde", "gestão", "cultural", "esporte"],
+  feiras: ["empreendedorismo", "tecnologia", "automação", "alimentação"],
+  festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
+};
 
 const CategoryManagement = () => {
   const [expandedCat, setExpandedCat] = useState<EventCategory | null>(null);
