@@ -90,27 +90,61 @@ const CategoryManagement = () => {
     setEditColor("");
   };
 
-  const handleAddSubcategory = (cat: EventCategory) => {
+  const handleAddSubcategory = async (cat: EventCategory) => {
     if (!newSubcategory.trim()) return;
     const sub = newSubcategory.trim();
     if (subcategoryOptions[cat]?.includes(sub)) {
       toast.error("Essa subcategoria já existe.");
       return;
     }
-    if (!subcategoryOptions[cat]) {
-      subcategoryOptions[cat] = [];
+    setSavingSub(true);
+    // If this exact sub was previously removed (default), drop the removal record so it comes back.
+    const wasDefault = (defaultSubcategoriesSnapshot[cat] || []).includes(sub);
+    if (wasDefault) {
+      await supabase
+        .from("removed_default_subcategories")
+        .delete()
+        .eq("categoria", cat)
+        .eq("subcategoria", sub);
+    } else {
+      const { error } = await supabase
+        .from("custom_subcategories")
+        .insert({ categoria: cat, subcategoria: sub });
+      if (error) {
+        setSavingSub(false);
+        toast.error("Erro ao salvar subcategoria: " + error.message);
+        return;
+      }
     }
-    subcategoryOptions[cat].push(sub);
+    await refreshSubcategories();
     toast.success(`Subcategoria "${sub}" adicionada!`);
     setNewSubcategory("");
+    setSavingSub(false);
   };
 
-  const handleRemoveSubcategory = (cat: EventCategory, sub: string) => {
-    const idx = subcategoryOptions[cat]?.indexOf(sub);
-    if (idx !== undefined && idx >= 0) {
-      subcategoryOptions[cat].splice(idx, 1);
-      toast.success(`Subcategoria "${sub}" removida.`);
+  const handleRemoveSubcategory = async (cat: EventCategory, sub: string) => {
+    const wasDefault = (defaultSubcategoriesSnapshot[cat] || []).includes(sub);
+    if (wasDefault) {
+      const { error } = await supabase
+        .from("removed_default_subcategories")
+        .insert({ categoria: cat, subcategoria: sub });
+      if (error) {
+        toast.error("Erro ao remover: " + error.message);
+        return;
+      }
+    } else {
+      const { error } = await supabase
+        .from("custom_subcategories")
+        .delete()
+        .eq("categoria", cat)
+        .eq("subcategoria", sub);
+      if (error) {
+        toast.error("Erro ao remover: " + error.message);
+        return;
+      }
     }
+    await refreshSubcategories();
+    toast.success(`Subcategoria "${sub}" removida.`);
   };
 
   return (
