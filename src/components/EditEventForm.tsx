@@ -152,6 +152,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_featured: form.is_featured,
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
+        subcategory_image_index: imageFile || event.imagem ? null : form.subcategory_image_index,
       }).eq("id", event.id);
 
       if (updateError) throw updateError;
