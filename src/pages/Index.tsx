@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
+import ForYouCarousel from "@/components/ForYouCarousel";
 import EventDetailModal from "@/components/EventDetailModal";
 import ImportEvents from "@/components/ImportEvents";
 import AddEventForm from "@/components/AddEventForm";
@@ -362,26 +363,14 @@ const Index = () => {
             />
 
             {user && forYouEvents.length > 0 && (
-              <div className="mt-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-serif font-semibold">Para você</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {forYouEvents.slice(0, 3).map((event, i) => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onSelect={setSelectedEvent}
-                      index={i}
-                      isFavorite={isFavorite(event.id)}
-                      onToggleFavorite={handleToggleFavorite}
-                      isAdmin={isAdmin}
-                    subcategoryImages={subcategoryImages}
-                    />
-                  ))}
-                </div>
-              </div>
+              <ForYouCarousel
+                events={forYouEvents.slice(0, 8)}
+                onSelect={setSelectedEvent}
+                isFavorite={isFavorite}
+                onToggleFavorite={handleToggleFavorite}
+                isAdmin={isAdmin}
+                subcategoryImages={subcategoryImages}
+              />
             )}
 
             <div className="mt-6">
