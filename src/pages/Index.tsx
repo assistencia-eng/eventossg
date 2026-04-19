@@ -99,6 +99,7 @@ const Index = () => {
           outdoor_show_description: (e as any).outdoor_show_description ?? true,
           is_recurring: (e as any).is_recurring ?? false,
           recurring_days: (e as any).recurring_days ?? [],
+          subcategory_image_index: (e as any).subcategory_image_index ?? null,
         }))
       );
     }
