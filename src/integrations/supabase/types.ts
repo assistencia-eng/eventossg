@@ -32,6 +32,66 @@ export type Database = {
         }
         Relationships: []
       }
+      category_overrides: {
+        Row: {
+          color_vibrant: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          key: string
+          label: string | null
+          updated_at: string
+        }
+        Insert: {
+          color_vibrant?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          key: string
+          label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color_vibrant?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          key?: string
+          label?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      custom_categories: {
+        Row: {
+          color_vibrant: string
+          created_at: string
+          icon: string
+          id: string
+          key: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          color_vibrant?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          color_vibrant?: string
+          created_at?: string
+          icon?: string
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_subcategories: {
         Row: {
           categoria: string

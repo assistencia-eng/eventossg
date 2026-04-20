@@ -3,17 +3,26 @@ import { subcategoryOptions, categoryLabels, categoryIcons, EventCategory } from
 import { categoryColors } from "@/data/categoryColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Upload, Trash2, Search, Image as ImageIcon } from "lucide-react";
 
-const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
+const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
 const SubcategoryImageManager = () => {
+  const subVersion = useSubcategoriesVersion();
+  const catVersion = useCategoriesVersion();
   const { images, loading, refetch } = useSubcategoryImages();
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+
+  const allCategories: EventCategory[] = useMemo(
+    () => [...baseCategories, ...getCustomCategoryKeys()],
+    [catVersion]
+  );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -23,7 +32,7 @@ const SubcategoryImageManager = () => {
         !q || s.toLowerCase().includes(q) || categoryLabels[cat].toLowerCase().includes(q)
       ),
     })).filter((g) => g.subs.length > 0);
-  }, [search]);
+  }, [search, subVersion, catVersion, allCategories]);
 
   const handleUpload = async (categoria: EventCategory, subcategory: string, slotIndex: number, file: File) => {
     const key = `${categoria}-${subcategory}-${slotIndex}`;
