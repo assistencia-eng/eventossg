@@ -8,6 +8,8 @@ import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
 interface FilterBarProps {
   selectedCategories: EventCategory[];
@@ -29,7 +31,7 @@ interface FilterBarProps {
   onToggleSubcategory: (sub: string) => void;
 }
 
-const categories: EventCategory[] = [
+const defaultCategories: EventCategory[] = [
   "musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"
 ];
 
@@ -56,6 +58,16 @@ const FilterBar = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const distanceLabel = distanceKm >= 150 ? "150+ km" : `${distanceKm} km`;
+
+  // Re-render when categories or subcategories sync from DB
+  const catsVersion = useCategoriesVersion();
+  const subsVersion = useSubcategoriesVersion();
+
+  const categories = useMemo<EventCategory[]>(() => {
+    const customs = getCustomCategoryKeys();
+    return [...defaultCategories, ...customs.filter((c) => !defaultCategories.includes(c))];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [catsVersion]);
 
   const citySuggestions = useMemo(() => {
     if (!searchCity.trim()) return [];
