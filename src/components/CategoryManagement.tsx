@@ -29,6 +29,7 @@ const defaultSubcategoriesSnapshot: Record<string, string[]> = {
 
 const CategoryManagement = () => {
   useSubcategoriesVersion(); // re-render when subcategories sync
+  useCategoriesVersion(); // re-render when categories sync
   const [expandedCat, setExpandedCat] = useState<EventCategory | null>(null);
   const [editingCat, setEditingCat] = useState<EventCategory | null>(null);
   const [editLabel, setEditLabel] = useState("");
@@ -40,12 +41,14 @@ const CategoryManagement = () => {
   const [newCatLabel, setNewCatLabel] = useState("");
   const [newCatIcon, setNewCatIcon] = useState("");
   const [newCatColor, setNewCatColor] = useState("#6366f1");
-  const [customCategories, setCustomCategories] = useState<EventCategory[]>([]);
   const [savingSub, setSavingSub] = useState(false);
+  const [savingCat, setSavingCat] = useState(false);
 
+  const customCategories = getCustomCategoryKeys();
   const displayCategories = [...allCategories, ...customCategories];
+  const isCustomCategory = (cat: EventCategory) => customCategories.includes(cat);
 
-  const handleCreateCategory = () => {
+  const handleCreateCategory = async () => {
     const key = newCatKey.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
     if (!key || !newCatLabel.trim()) {
       toast.error("Preencha o identificador e o nome da categoria.");
@@ -55,19 +58,40 @@ const CategoryManagement = () => {
       toast.error("Essa categoria já existe.");
       return;
     }
-    const cat = key as EventCategory;
-    categoryLabels[cat] = newCatLabel.trim();
-    categoryIcons[cat] = newCatIcon.trim() || "📌";
     const vibrant = /^#[0-9a-fA-F]{6}$/.test(newCatColor) ? newCatColor : "#6366f1";
-    categoryColors[cat] = { vibrant, muted: generateMutedColor(vibrant) };
-    subcategoryOptions[cat] = [];
-    setCustomCategories((prev) => [...prev, cat]);
+    setSavingCat(true);
+    const { error } = await supabase.from("custom_categories").insert({
+      key,
+      label: newCatLabel.trim(),
+      icon: newCatIcon.trim() || "📌",
+      color_vibrant: vibrant,
+    });
+    if (error) {
+      setSavingCat(false);
+      toast.error("Erro ao salvar categoria: " + error.message);
+      return;
+    }
+    await refreshCategories();
+    setSavingCat(false);
     toast.success(`Categoria "${newCatLabel.trim()}" criada!`);
     setNewCatKey("");
     setNewCatLabel("");
     setNewCatIcon("");
     setNewCatColor("#6366f1");
     setShowNewCatForm(false);
+  };
+
+  const handleDeleteCustomCategory = async (cat: EventCategory) => {
+    if (!confirm(`Excluir a categoria "${categoryLabels[cat]}"? As subcategorias dela também serão removidas.`)) return;
+    const { error } = await supabase.from("custom_categories").delete().eq("key", cat);
+    if (error) {
+      toast.error("Erro ao excluir: " + error.message);
+      return;
+    }
+    await supabase.from("custom_subcategories").delete().eq("categoria", cat);
+    await refreshCategories();
+    await refreshSubcategories();
+    toast.success("Categoria excluída.");
   };
 
   const handleEditCategory = (cat: EventCategory) => {
@@ -77,17 +101,34 @@ const CategoryManagement = () => {
     setEditColor(categoryColors[cat].vibrant);
   };
 
-  const handleSaveCategory = () => {
+  const handleSaveCategory = async () => {
     if (!editingCat || !editLabel.trim()) return;
-    categoryLabels[editingCat] = editLabel.trim();
-    if (editIcon.trim()) {
-      categoryIcons[editingCat] = editIcon.trim();
+    const vibrant =
+      editColor.trim() && /^#[0-9a-fA-F]{6}$/.test(editColor.trim())
+        ? editColor.trim()
+        : categoryColors[editingCat].vibrant;
+    const payload = {
+      key: editingCat,
+      label: editLabel.trim(),
+      icon: editIcon.trim() || categoryIcons[editingCat],
+      color_vibrant: vibrant,
+    };
+    let error;
+    if (isCustomCategory(editingCat)) {
+      ({ error } = await supabase
+        .from("custom_categories")
+        .update({ label: payload.label, icon: payload.icon, color_vibrant: payload.color_vibrant })
+        .eq("key", editingCat));
+    } else {
+      ({ error } = await supabase
+        .from("category_overrides")
+        .upsert(payload, { onConflict: "key" }));
     }
-    if (editColor.trim() && /^#[0-9a-fA-F]{6}$/.test(editColor.trim())) {
-      const vibrant = editColor.trim();
-      const muted = generateMutedColor(vibrant);
-      categoryColors[editingCat] = { vibrant, muted };
+    if (error) {
+      toast.error("Erro ao salvar: " + error.message);
+      return;
     }
+    await refreshCategories();
     toast.success(`Categoria "${editLabel.trim()}" atualizada!`);
     setEditingCat(null);
     setEditLabel("");
