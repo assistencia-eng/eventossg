@@ -222,7 +222,7 @@ const CategoryManagement = () => {
             </span>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" className="gap-1" onClick={handleCreateCategory}>
+            <Button size="sm" className="gap-1" onClick={handleCreateCategory} disabled={savingCat}>
               <Check className="w-3.5 h-3.5" />
               Criar
             </Button>
@@ -312,6 +312,16 @@ const CategoryManagement = () => {
                   {!isEditing && (
                     <Button size="icon" className="h-8 w-8 bg-black text-white hover:bg-black/90" onClick={() => handleEditCategory(cat)}>
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                    </Button>
+                  )}
+                  {!isEditing && isCustomCategory(cat) && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => handleDeleteCustomCategory(cat)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   )}
                   <Button
