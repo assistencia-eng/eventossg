@@ -4,7 +4,7 @@ import { Calendar, MapPin, Star, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
+import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
 import { useMemo } from "react";
 
 interface EventCardProps {
@@ -35,8 +35,18 @@ function pickSubcategoryImage(
   subcategoryImages?: SubcategoryImageMap
 ): string | undefined {
   if (!subcategoryImages || !event.subcategorias?.length) return undefined;
+  // Prefer the event's own categories so we get the right image when a
+  // subcategory name (e.g. "tecnologia") exists in multiple categories.
+  const cats = event.categorias?.length ? event.categorias : [event.categoria];
   for (const sub of event.subcategorias) {
-    const imgs = subcategoryImages[sub];
+    let imgs: string[] | undefined;
+    for (const cat of cats) {
+      const candidate = subcategoryImages[subImgKey(cat, sub)];
+      if (candidate && candidate.length > 0) {
+        imgs = candidate;
+        break;
+      }
+    }
     if (imgs && imgs.length > 0) {
       // If admin manually selected an image index (1-based), respect it
       const manualIdx = event.subcategory_image_index;
