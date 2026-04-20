@@ -3,7 +3,7 @@ import { EventData } from "@/data/events";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
+import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
 
 interface FeaturedCarouselProps {
   events: EventData[];
@@ -60,15 +60,18 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages }: FeaturedCarou
       {(() => {
         let imgSrc = event.imagem;
         if (!imgSrc && subcategoryImages && event.subcategorias?.length) {
-          for (const sub of event.subcategorias) {
-            const imgs = subcategoryImages[sub];
-            if (imgs && imgs.length > 0) {
-              let hash = 0;
-              for (let i = 0; i < event.id.length; i++) {
-                hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
+          const cats = event.categorias?.length ? event.categorias : [event.categoria];
+          outer: for (const sub of event.subcategorias) {
+            for (const cat of cats) {
+              const imgs = subcategoryImages[subImgKey(cat, sub)];
+              if (imgs && imgs.length > 0) {
+                let hash = 0;
+                for (let i = 0; i < event.id.length; i++) {
+                  hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
+                }
+                imgSrc = imgs[Math.abs(hash) % imgs.length];
+                break outer;
               }
-              imgSrc = imgs[Math.abs(hash) % imgs.length];
-              break;
             }
           }
         }
