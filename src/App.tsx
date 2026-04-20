@@ -9,10 +9,12 @@ import Auth from "./pages/Auth.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { useSubcategoriesSync } from "@/hooks/useSubcategoriesSync";
+import { useCategoriesSync } from "@/hooks/useCategoriesSync";
 
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
+  useCategoriesSync();
   useSubcategoriesSync();
   return (
     <Routes>
