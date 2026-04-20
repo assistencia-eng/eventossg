@@ -11,7 +11,7 @@ import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type 
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Save, MapPin, ImagePlus, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
+import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 
 interface EditEventFormProps {
   event: EventData | null;
@@ -312,12 +312,26 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
 
           {/* Subcategory image selector - shown when no custom image is used */}
           {!imagePreview && !imageFile && (() => {
-            const subWithImages = form.subcategorias.find((s) => (subcategoryImages[s] || []).length > 0);
-            const subImgs = subWithImages ? subcategoryImages[subWithImages] : [];
+            // Find a (categoria, subcategoria) pair that has uploaded images
+            let subWithImages: string | undefined;
+            let catForSub: EventCategory | undefined;
+            let subImgs: string[] = [];
+            for (const sub of form.subcategorias) {
+              for (const cat of form.categorias) {
+                const imgs = subcategoryImages[subImgKey(cat, sub)] || [];
+                if (imgs.length > 0) {
+                  subWithImages = sub;
+                  catForSub = cat;
+                  subImgs = imgs;
+                  break;
+                }
+              }
+              if (subWithImages) break;
+            }
             if (!subWithImages || subImgs.length === 0) return null;
             return (
               <div className="space-y-2">
-                <Label>Imagem da subcategoria <span className="text-xs text-muted-foreground">({subWithImages})</span></Label>
+                <Label>Imagem da subcategoria <span className="text-xs text-muted-foreground">({categoryLabels[catForSub!]} → {subWithImages})</span></Label>
                 <p className="text-xs text-muted-foreground">
                   Como este evento não tem imagem própria, escolha qual das imagens da subcategoria será exibida no card. Deixe em "Automático" para variação.
                 </p>
