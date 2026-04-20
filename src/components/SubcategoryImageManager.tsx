@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { subcategoryOptions, categoryLabels, categoryIcons, EventCategory } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
 import { supabase } from "@/integrations/supabase/client";
-import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
+import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -25,19 +25,17 @@ const SubcategoryImageManager = () => {
     })).filter((g) => g.subs.length > 0);
   }, [search]);
 
-  const handleUpload = async (subcategory: string, slotIndex: number, file: File) => {
-    const key = `${subcategory}-${slotIndex}`;
+  const handleUpload = async (categoria: EventCategory, subcategory: string, slotIndex: number, file: File) => {
+    const key = `${categoria}-${subcategory}-${slotIndex}`;
     setUploading(key);
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-      // Sanitize subcategory for Supabase storage key (ASCII only, no special chars or accents)
-      const safeSub = subcategory
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // strip diacritics: é→e, ç→c, ô→o
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")     // anything non-ASCII-alphanumeric → _
-        .replace(/^_+|_+$/g, "") || "sub";
-      const path = `subcategory/${safeSub}_${slotIndex}_${Date.now()}.${ext}`;
+      // Sanitize for Supabase storage key (ASCII only, no special chars or accents)
+      const sanitize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      const safeCat = sanitize(categoria) || "cat";
+      const safeSub = sanitize(subcategory) || "sub";
+      const path = `subcategory/${safeCat}_${safeSub}_${slotIndex}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from("event-images")
@@ -51,12 +49,11 @@ const SubcategoryImageManager = () => {
 
       const imageUrl = urlData.publicUrl;
 
-      // Check if this slot already exists
-      const existingImages = images[subcategory] || [];
-      // We need to check by querying the DB for this specific slot
+      // Check if this slot for (categoria, subcategoria) already exists
       const { data: existing } = await supabase
         .from("subcategory_images")
         .select("id")
+        .eq("categoria", categoria)
         .eq("subcategory", subcategory)
         .eq("image_index", slotIndex)
         .maybeSingle();
@@ -65,17 +62,16 @@ const SubcategoryImageManager = () => {
         const { error } = await supabase
           .from("subcategory_images")
           .update({ image_url: imageUrl })
-          .eq("subcategory", subcategory)
-          .eq("image_index", slotIndex);
+          .eq("id", existing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("subcategory_images")
-          .insert({ subcategory, image_url: imageUrl, image_index: slotIndex });
+          .insert({ categoria, subcategory, image_url: imageUrl, image_index: slotIndex });
         if (error) throw error;
       }
 
-      toast.success(`Imagem ${slotIndex} de "${subcategory}" atualizada!`);
+      toast.success(`Imagem ${slotIndex} de "${categoryLabels[categoria]} → ${subcategory}" atualizada!`);
       await refetch();
     } catch (err: any) {
       toast.error(err.message || "Erro ao fazer upload");
@@ -84,15 +80,16 @@ const SubcategoryImageManager = () => {
     }
   };
 
-  const handleRemove = async (subcategory: string, slotIndex: number) => {
+  const handleRemove = async (categoria: EventCategory, subcategory: string, slotIndex: number) => {
     try {
       const { error } = await supabase
         .from("subcategory_images")
         .delete()
+        .eq("categoria", categoria)
         .eq("subcategory", subcategory)
         .eq("image_index", slotIndex);
       if (error) throw error;
-      toast.success(`Imagem ${slotIndex} de "${subcategory}" removida`);
+      toast.success(`Imagem ${slotIndex} de "${categoryLabels[categoria]} → ${subcategory}" removida`);
       await refetch();
     } catch (err: any) {
       toast.error(err.message || "Erro ao remover");
@@ -105,7 +102,7 @@ const SubcategoryImageManager = () => {
     <section className="space-y-4">
       <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens por Subcategoria</h2>
       <p className="text-xs text-muted-foreground">
-        Defina até 3 imagens para cada subcategoria. Cards de mesma subcategoria usarão imagens variadas automaticamente.
+        Defina até 3 imagens para cada subcategoria. Cada categoria tem suas próprias imagens, mesmo quando o nome da subcategoria se repete.
       </p>
 
       <div className="relative">
@@ -128,7 +125,7 @@ const SubcategoryImageManager = () => {
               </h3>
               <div className="space-y-3">
                 {subs.map((sub) => {
-                  const subImages = images[sub] || [];
+                  const subImages = images[subImgKey(cat, sub)] || [];
                   return (
                     <div
                       key={sub}
@@ -140,7 +137,7 @@ const SubcategoryImageManager = () => {
                       <div className="grid grid-cols-3 gap-2">
                         {[1, 2, 3].map((slot) => {
                           const imgUrl = subImages[slot - 1] || null;
-                          const isSlotUploading = uploading === `${sub}-${slot}`;
+                          const isSlotUploading = uploading === `${cat}-${sub}-${slot}`;
                           return (
                             <div key={slot} className="space-y-1">
                               <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-[#2a2a2a] flex items-center justify-center">
@@ -159,7 +156,7 @@ const SubcategoryImageManager = () => {
                                     disabled={isSlotUploading}
                                     onChange={(e) => {
                                       const file = e.target.files?.[0];
-                                      if (file) handleUpload(sub, slot, file);
+                                      if (file) handleUpload(cat, sub, slot, file);
                                       e.target.value = "";
                                     }}
                                   />
@@ -180,7 +177,7 @@ const SubcategoryImageManager = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 text-destructive"
-                                    onClick={() => handleRemove(sub, slot)}
+                                    onClick={() => handleRemove(cat, sub, slot)}
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </Button>
