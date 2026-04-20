@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
-import { categoryColors, generateMutedColor, CategoryColor } from "@/data/categoryColors";
+import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshSubcategories, useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import {
+  refreshCategories,
+  useCategoriesVersion,
+  getCustomCategoryKeys,
+} from "@/hooks/useCategoriesSync";
 import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp, Palette } from "lucide-react";
 
 const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
