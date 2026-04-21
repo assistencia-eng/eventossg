@@ -277,6 +277,7 @@ const ProfilePage = ({
       </section>
 
       {/* Admin sections */}
+      {isAdmin && <AIPromptManager />}
       {isAdmin && <SubcategoryImageManager />}
       {isAdmin && <CategoryManagement />}
       {isAdmin && <AdminManagement />}
