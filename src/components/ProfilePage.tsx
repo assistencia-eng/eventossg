@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2 } from "lucide-react";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
 interface ProfilePageProps {
   interests: { categories: EventCategory[]; subcategories: string[] };
@@ -30,7 +32,7 @@ interface ProfilePageProps {
   allEventsCount?: number;
 }
 
-const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
+const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
 const ProfilePage = ({
   interests,
