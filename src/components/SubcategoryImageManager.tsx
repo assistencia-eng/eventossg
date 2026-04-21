@@ -157,9 +157,9 @@ const SubcategoryImageManager = () => {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens por Subcategoria</h2>
+      <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens de Categorias e Subcategorias</h2>
       <p className="text-xs text-muted-foreground">
-        Defina até 3 imagens para cada subcategoria. Cada categoria tem suas próprias imagens, mesmo quando o nome da subcategoria se repete.
+        Defina uma imagem geral para cada categoria (usada quando o evento não tiver imagem própria nem da subcategoria) e até 3 imagens para cada subcategoria.
       </p>
 
       <div className="relative">
@@ -175,11 +175,54 @@ const SubcategoryImageManager = () => {
       <div className="space-y-6">
         {filtered.map(({ cat, subs }) => {
           const color = categoryColors[cat]?.vibrant || "#888";
+          const catImg = categoryImages[cat] || null;
+          const isCatUploading = uploadingCat === cat;
           return (
             <div key={cat}>
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color }}>
                 <span>{categoryIcons[cat]}</span> {categoryLabels[cat]}
               </h3>
+
+              {/* Category general image */}
+              <div className="p-3 rounded-xl bg-[#1a1a1a] border border-border space-y-2 mb-3">
+                <p className="text-xs font-medium text-neutral-300 uppercase tracking-wider">Imagem geral da categoria</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-24 aspect-[4/3] rounded-lg overflow-hidden bg-[#2a2a2a] flex items-center justify-center shrink-0">
+                    {catImg ? (
+                      <img src={catImg} alt={categoryLabels[cat]} className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-neutral-600" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isCatUploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadCategory(cat, file);
+                          e.target.value = "";
+                        }}
+                      />
+                      <Button variant="outline" size="sm" className="gap-1.5 w-full" asChild disabled={isCatUploading}>
+                        <span><Upload className="w-3.5 h-3.5" /> {catImg ? "Trocar" : "Enviar"}</span>
+                      </Button>
+                    </label>
+                    {catImg && (
+                      <Button variant="ghost" size="sm" className="gap-1.5 text-destructive" onClick={() => handleRemoveCategory(cat)}>
+                        <Trash2 className="w-3.5 h-3.5" /> Remover
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {subs.length === 0 && (
+                <p className="text-xs text-muted-foreground italic px-1">Nenhuma subcategoria nesta categoria.</p>
+              )}
               <div className="space-y-3">
                 {subs.map((sub) => {
                   const subImages = images[subImgKey(cat, sub)] || [];
