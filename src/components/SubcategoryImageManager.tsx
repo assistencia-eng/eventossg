@@ -108,6 +108,51 @@ const SubcategoryImageManager = () => {
     }
   };
 
+  const handleUploadCategory = async (categoria: EventCategory, file: File) => {
+    setUploadingCat(categoria);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const sanitize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      const safeCat = sanitize(categoria) || "cat";
+      const path = `category/${safeCat}_${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("event-images")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("event-images").getPublicUrl(path);
+      const imageUrl = urlData.publicUrl;
+
+      const { error } = await supabase
+        .from("category_images")
+        .upsert({ categoria, image_url: imageUrl }, { onConflict: "categoria" });
+      if (error) throw error;
+
+      toast.success(`Imagem geral de "${categoryLabels[categoria]}" atualizada!`);
+      await refetchCategoryImages();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao fazer upload");
+    } finally {
+      setUploadingCat(null);
+    }
+  };
+
+  const handleRemoveCategory = async (categoria: EventCategory) => {
+    try {
+      const { error } = await supabase
+        .from("category_images")
+        .delete()
+        .eq("categoria", categoria);
+      if (error) throw error;
+      toast.success(`Imagem geral de "${categoryLabels[categoria]}" removida`);
+      await refetchCategoryImages();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao remover");
+    }
+  };
+
   if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
 
   return (
