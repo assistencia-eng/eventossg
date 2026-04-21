@@ -198,17 +198,26 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
           <div className="space-y-2">
             <Label>Categorias *</Label>
             <div className="flex flex-wrap gap-2">
-              {allCategories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => toggleCategory(cat)}
-                  className={`category-chip category-chip-${cat} ${form.categorias.includes(cat) ? "active" : ""}`}
-                >
-                  <span className="mr-1">{categoryIcons[cat]}</span>
-                  {categoryLabels[cat]}
-                </button>
-              ))}
+              {allCategories.map((cat) => {
+                const isActive = form.categorias.includes(cat);
+                const colors = categoryColors[cat] || { vibrant: "#6366f1", muted: generateMutedColor("#6366f1") };
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => toggleCategory(cat)}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 inline-flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: isActive ? colors.vibrant : colors.muted,
+                      color: isActive ? "#fff" : colors.vibrant,
+                      border: `1px solid ${isActive ? colors.vibrant : "transparent"}`,
+                    }}
+                  >
+                    <span>{categoryIcons[cat]}</span>
+                    {categoryLabels[cat]}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
