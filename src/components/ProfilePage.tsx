@@ -51,6 +51,16 @@ const ProfilePage = ({
   const { user, profile, isAdmin, refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(profile?.full_name || "");
+  const catVersion = useCategoriesVersion();
+  const subVersion = useSubcategoriesVersion();
+
+  const allCategories = useMemo<EventCategory[]>(
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    [catVersion]
+  );
+
+  // touch subVersion to re-render when subcategoryOptions changes
+  void subVersion;
 
   const userInitials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
