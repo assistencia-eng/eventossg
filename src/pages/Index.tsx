@@ -434,6 +434,7 @@ const Index = () => {
                 onToggleFavorite={handleToggleFavorite}
                 isAdmin={isAdmin}
                     subcategoryImages={subcategoryImages}
+                categoryImages={categoryImages}
               />
             ))}
           </div>
