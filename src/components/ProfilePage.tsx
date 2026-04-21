@@ -7,6 +7,7 @@ import EventCard from "@/components/EventCard";
 import AdminManagement from "@/components/AdminManagement";
 import CategoryManagement from "@/components/CategoryManagement";
 import SubcategoryImageManager from "@/components/SubcategoryImageManager";
+import AIPromptManager from "@/components/AIPromptManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
