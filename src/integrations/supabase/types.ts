@@ -32,6 +32,30 @@ export type Database = {
         }
         Relationships: []
       }
+      category_images: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          image_url: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          image_url: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       category_overrides: {
         Row: {
           color_vibrant: string | null

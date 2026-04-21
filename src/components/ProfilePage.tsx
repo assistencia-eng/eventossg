@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2 } from "lucide-react";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
 interface ProfilePageProps {
   interests: { categories: EventCategory[]; subcategories: string[] };
@@ -30,7 +32,7 @@ interface ProfilePageProps {
   allEventsCount?: number;
 }
 
-const allCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
+const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
 const ProfilePage = ({
   interests,
@@ -49,6 +51,16 @@ const ProfilePage = ({
   const { user, profile, isAdmin, refreshProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(profile?.full_name || "");
+  const catVersion = useCategoriesVersion();
+  const subVersion = useSubcategoriesVersion();
+
+  const allCategories = useMemo<EventCategory[]>(
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    [catVersion]
+  );
+
+  // touch subVersion to re-render when subcategoryOptions changes
+  void subVersion;
 
   const userInitials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()

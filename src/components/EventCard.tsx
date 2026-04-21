@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
+import { CategoryImageMap } from "@/hooks/useCategoryImages";
 import { useMemo } from "react";
 
 interface EventCardProps {
@@ -17,6 +18,7 @@ interface EventCardProps {
   onToggleFavorite?: (id: string) => void;
   isAdmin?: boolean;
   subcategoryImages?: SubcategoryImageMap;
+  categoryImages?: CategoryImageMap;
 }
 
 const categoryPlaceholders: Record<string, string> = {
@@ -64,14 +66,22 @@ function pickSubcategoryImage(
   return undefined;
 }
 
-const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages }: EventCardProps) => {
+const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages, categoryImages }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
   const subImg = useMemo(() => pickSubcategoryImage(event, subcategoryImages), [event, subcategoryImages]);
-  const imgSrc = event.imagem || subImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
+  // Fallback chain: event own image -> subcategory image -> category general image -> hardcoded placeholder
+  const cats = event.categorias?.length ? event.categorias : [event.categoria];
+  let catImg: string | undefined;
+  if (categoryImages) {
+    for (const c of cats) {
+      if (categoryImages[c]) { catImg = categoryImages[c]; break; }
+    }
+  }
+  const imgSrc = event.imagem || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
     <div

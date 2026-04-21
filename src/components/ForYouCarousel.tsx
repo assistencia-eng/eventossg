@@ -3,6 +3,7 @@ import { Sparkles } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import { EventData } from "@/data/events";
 import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
+import { CategoryImageMap } from "@/hooks/useCategoryImages";
 
 interface ForYouCarouselProps {
   events: EventData[];
@@ -11,6 +12,7 @@ interface ForYouCarouselProps {
   onToggleFavorite: (id: string) => void;
   isAdmin?: boolean;
   subcategoryImages?: SubcategoryImageMap;
+  categoryImages?: CategoryImageMap;
 }
 
 const MAX_EVENTS = 5;
@@ -22,6 +24,7 @@ const ForYouCarousel = ({
   onToggleFavorite,
   isAdmin,
   subcategoryImages,
+  categoryImages,
 }: ForYouCarouselProps) => {
   const limited = useMemo(() => events.slice(0, MAX_EVENTS), [events]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -164,6 +167,7 @@ const ForYouCarousel = ({
                 onToggleFavorite={onToggleFavorite}
                 isAdmin={isAdmin}
                 subcategoryImages={subcategoryImages}
+                categoryImages={categoryImages}
               />
             </div>
           );

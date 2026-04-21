@@ -8,8 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type EventCategory } from "@/data/events";
+import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useMemo } from "react";
 
 interface AddEventFormProps {
   open: boolean;
@@ -17,10 +21,17 @@ interface AddEventFormProps {
   onAdded: () => void;
 }
 
-const allCategories = Object.keys(categoryLabels) as EventCategory[];
+const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 const weekDays = Object.keys(weekDayLabels);
 
 const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
+  const catVersion = useCategoriesVersion();
+  const subVersion = useSubcategoriesVersion();
+  const allCategories = useMemo<EventCategory[]>(
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    [catVersion]
+  );
+  void subVersion;
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -163,17 +174,26 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
           <div className="space-y-2">
             <Label>Categorias *</Label>
             <div className="flex flex-wrap gap-2">
-              {allCategories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => toggleCategory(cat)}
-                  className={`category-chip category-chip-${cat} ${form.categorias.includes(cat) ? "active" : ""}`}
-                >
-                  <span className="mr-1">{categoryIcons[cat]}</span>
-                  {categoryLabels[cat]}
-                </button>
-              ))}
+              {allCategories.map((cat) => {
+                const isActive = form.categorias.includes(cat);
+                const colors = categoryColors[cat] || { vibrant: "#6366f1", muted: generateMutedColor("#6366f1") };
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => toggleCategory(cat)}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 inline-flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: isActive ? colors.vibrant : colors.muted,
+                      color: isActive ? "#fff" : colors.vibrant,
+                      border: `1px solid ${isActive ? colors.vibrant : "transparent"}`,
+                    }}
+                  >
+                    <span>{categoryIcons[cat]}</span>
+                    {categoryLabels[cat]}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

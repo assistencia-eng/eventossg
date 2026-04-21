@@ -29,6 +29,7 @@ import { startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useUserInterests } from "@/hooks/useUserInterests";
 import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
+import { useCategoryImages } from "@/hooks/useCategoryImages";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -61,6 +62,7 @@ const Index = () => {
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
   const { interests, toggleCategory: toggleInterestCategory, toggleSubcategory } = useUserInterests();
   const { images: subcategoryImages } = useSubcategoryImages();
+  const { images: categoryImages } = useCategoryImages();
 
   useEffect(() => {
     getUserLocation()
@@ -328,7 +330,7 @@ const Index = () => {
 
       {activeNav === "events" ? (
         <>
-          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} />
+          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} />
 
           <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
@@ -371,6 +373,7 @@ const Index = () => {
                 onToggleFavorite={handleToggleFavorite}
                 isAdmin={isAdmin}
                 subcategoryImages={subcategoryImages}
+                categoryImages={categoryImages}
               />
             )}
 
@@ -391,6 +394,7 @@ const Index = () => {
                     onToggleFavorite={handleToggleFavorite}
                     isAdmin={isAdmin}
                     subcategoryImages={subcategoryImages}
+                    categoryImages={categoryImages}
                   />
                 ))}
               </div>
@@ -430,6 +434,7 @@ const Index = () => {
                 onToggleFavorite={handleToggleFavorite}
                 isAdmin={isAdmin}
                     subcategoryImages={subcategoryImages}
+                categoryImages={categoryImages}
               />
             ))}
           </div>

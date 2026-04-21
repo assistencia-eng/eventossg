@@ -3,6 +3,7 @@ import { subcategoryOptions, categoryLabels, categoryIcons, EventCategory } from
 import { categoryColors } from "@/data/categoryColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
+import { useCategoryImages } from "@/hooks/useCategoryImages";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,13 @@ const SubcategoryImageManager = () => {
   const subVersion = useSubcategoriesVersion();
   const catVersion = useCategoriesVersion();
   const { images, loading, refetch } = useSubcategoryImages();
+  const { images: categoryImages, refetch: refetchCategoryImages } = useCategoryImages();
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadingCat, setUploadingCat] = useState<string | null>(null);
 
   const allCategories: EventCategory[] = useMemo(
-    () => [...baseCategories, ...getCustomCategoryKeys()],
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
     [catVersion]
   );
 
@@ -31,7 +34,7 @@ const SubcategoryImageManager = () => {
       subs: (subcategoryOptions[cat] || []).filter((s) =>
         !q || s.toLowerCase().includes(q) || categoryLabels[cat].toLowerCase().includes(q)
       ),
-    })).filter((g) => g.subs.length > 0);
+    }));
   }, [search, subVersion, catVersion, allCategories]);
 
   const handleUpload = async (categoria: EventCategory, subcategory: string, slotIndex: number, file: File) => {
@@ -105,13 +108,58 @@ const SubcategoryImageManager = () => {
     }
   };
 
+  const handleUploadCategory = async (categoria: EventCategory, file: File) => {
+    setUploadingCat(categoria);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+      const sanitize = (s: string) =>
+        s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+      const safeCat = sanitize(categoria) || "cat";
+      const path = `category/${safeCat}_${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("event-images")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("event-images").getPublicUrl(path);
+      const imageUrl = urlData.publicUrl;
+
+      const { error } = await supabase
+        .from("category_images")
+        .upsert({ categoria, image_url: imageUrl }, { onConflict: "categoria" });
+      if (error) throw error;
+
+      toast.success(`Imagem geral de "${categoryLabels[categoria]}" atualizada!`);
+      await refetchCategoryImages();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao fazer upload");
+    } finally {
+      setUploadingCat(null);
+    }
+  };
+
+  const handleRemoveCategory = async (categoria: EventCategory) => {
+    try {
+      const { error } = await supabase
+        .from("category_images")
+        .delete()
+        .eq("categoria", categoria);
+      if (error) throw error;
+      toast.success(`Imagem geral de "${categoryLabels[categoria]}" removida`);
+      await refetchCategoryImages();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao remover");
+    }
+  };
+
   if (loading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens por Subcategoria</h2>
+      <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens de Categorias e Subcategorias</h2>
       <p className="text-xs text-muted-foreground">
-        Defina até 3 imagens para cada subcategoria. Cada categoria tem suas próprias imagens, mesmo quando o nome da subcategoria se repete.
+        Defina uma imagem geral para cada categoria (usada quando o evento não tiver imagem própria nem da subcategoria) e até 3 imagens para cada subcategoria.
       </p>
 
       <div className="relative">
@@ -127,11 +175,54 @@ const SubcategoryImageManager = () => {
       <div className="space-y-6">
         {filtered.map(({ cat, subs }) => {
           const color = categoryColors[cat]?.vibrant || "#888";
+          const catImg = categoryImages[cat] || null;
+          const isCatUploading = uploadingCat === cat;
           return (
             <div key={cat}>
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color }}>
                 <span>{categoryIcons[cat]}</span> {categoryLabels[cat]}
               </h3>
+
+              {/* Category general image */}
+              <div className="p-3 rounded-xl bg-[#1a1a1a] border border-border space-y-2 mb-3">
+                <p className="text-xs font-medium text-neutral-300 uppercase tracking-wider">Imagem geral da categoria</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-24 aspect-[4/3] rounded-lg overflow-hidden bg-[#2a2a2a] flex items-center justify-center shrink-0">
+                    {catImg ? (
+                      <img src={catImg} alt={categoryLabels[cat]} className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5 text-neutral-600" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={isCatUploading}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadCategory(cat, file);
+                          e.target.value = "";
+                        }}
+                      />
+                      <Button variant="outline" size="sm" className="gap-1.5 w-full" asChild disabled={isCatUploading}>
+                        <span><Upload className="w-3.5 h-3.5" /> {catImg ? "Trocar" : "Enviar"}</span>
+                      </Button>
+                    </label>
+                    {catImg && (
+                      <Button variant="ghost" size="sm" className="gap-1.5 text-destructive" onClick={() => handleRemoveCategory(cat)}>
+                        <Trash2 className="w-3.5 h-3.5" /> Remover
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {subs.length === 0 && (
+                <p className="text-xs text-muted-foreground italic px-1">Nenhuma subcategoria nesta categoria.</p>
+              )}
               <div className="space-y-3">
                 {subs.map((sub) => {
                   const subImages = images[subImgKey(cat, sub)] || [];
