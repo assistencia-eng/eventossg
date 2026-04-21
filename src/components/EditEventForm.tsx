@@ -8,10 +8,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type EventCategory, type EventData } from "@/data/events";
+import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Save, MapPin, ImagePlus, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useMemo } from "react";
 
 interface EditEventFormProps {
   event: EventData | null;
@@ -20,7 +24,7 @@ interface EditEventFormProps {
   onUpdated: () => void;
 }
 
-const allCategories = Object.keys(categoryLabels) as EventCategory[];
+const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 const weekDays = Object.keys(weekDayLabels);
 
 const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
