@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,9 +7,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const validCategories = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
+const defaultCategories = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
-const validSubcategories: Record<string, string[]> = {
+const defaultSubcategories: Record<string, string[]> = {
   musica: ["rock", "sertanejo", "pagode", "eletrônica", "funk", "hip-hop", "reggae", "jazz", "tradicionalista", "gaúcha", "MPB"],
   esporte: ["futebol", "corrida", "vôlei", "basquete", "padel", "tênis", "beach tennis", "futevôlei", "arte marcial", "natação", "fitness", "academia"],
   alimentacao: ["bebidas", "vinho", "fast food", "churrasco", "vegano", "sushi", "doces", "naturais"],
@@ -17,6 +18,36 @@ const validSubcategories: Record<string, string[]> = {
   feiras: ["empreendedorismo", "tecnologia", "automação", "alimentação"],
   festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
 };
+
+const DEFAULT_PROMPT = `Você é um assistente especializado em extrair eventos de textos não estruturados.
+Analise o conteúdo fornecido e extraia TODOS os eventos encontrados.
+
+Para cada evento, retorne um objeto JSON com os seguintes campos:
+- nome: nome do evento (obrigatório)
+- local: nome do local/venue
+- cidade: cidade do evento
+- endereco: endereço completo
+- data: data no formato YYYY-MM-DD (se não tiver ano, use 2026)
+- horario: horário no formato HH:MM (24h), opcional
+- descricao: descrição do evento
+- atracoes: array de strings com as atrações
+- categoria: a categoria PRINCIPAL do evento. Deve ser UMA das categorias válidas listadas abaixo
+- categorias: array com TODAS as categorias aplicáveis ao evento (pode ter mais de uma)
+- subcategorias: array com as subcategorias mais adequadas ao evento
+- NÃO inclua latitude ou longitude, esses campos serão calculados automaticamente via geocodificação
+
+Categorias válidas: {{CATEGORIES}}
+
+Subcategorias disponíveis por categoria:
+{{SUBCATEGORIES}}
+
+Escolha as subcategorias que melhor descrevem o evento com base no seu conteúdo, nome, atrações e descrição. Um evento pode ter subcategorias de diferentes categorias.
+
+Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
+Classifique categoria, categorias e subcategorias com base no contexto, nome, atrações e descrição do evento.
+
+IMPORTANTE: Responda APENAS com um JSON válido no formato:
+{ "events": [ { ...evento1 }, { ...evento2 } ] }`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -36,33 +67,48 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const subcatList = Object.entries(validSubcategories)
+    // Build dynamic taxonomy: defaults + customs from DB
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const [customCatsRes, customSubsRes, removedSubsRes, promptRes] = await Promise.all([
+      supabase.from("custom_categories").select("key, label"),
+      supabase.from("custom_subcategories").select("categoria, subcategoria"),
+      supabase.from("removed_default_subcategories").select("categoria, subcategoria"),
+      supabase.from("ai_prompts").select("prompt").eq("key", "import_events").maybeSingle(),
+    ]);
+
+    const allCategories = [
+      ...defaultCategories,
+      ...((customCatsRes.data || []).map((r: { key: string }) => r.key).filter((k: string) => !defaultCategories.includes(k))),
+    ];
+
+    // Compose subcategory map
+    const subMap: Record<string, string[]> = {};
+    for (const c of allCategories) {
+      subMap[c] = [...(defaultSubcategories[c] || [])];
+    }
+    // Remove defaults that admins removed
+    for (const r of (removedSubsRes.data || []) as Array<{ categoria: string; subcategoria: string }>) {
+      if (subMap[r.categoria]) {
+        subMap[r.categoria] = subMap[r.categoria].filter((s) => s !== r.subcategoria);
+      }
+    }
+    // Add custom subs
+    for (const r of (customSubsRes.data || []) as Array<{ categoria: string; subcategoria: string }>) {
+      if (!subMap[r.categoria]) subMap[r.categoria] = [];
+      if (!subMap[r.categoria].includes(r.subcategoria)) subMap[r.categoria].push(r.subcategoria);
+    }
+
+    const subcatList = Object.entries(subMap)
       .map(([cat, subs]) => `  ${cat}: ${subs.join(", ")}`)
       .join("\n");
 
-    const systemPrompt = `Você é um assistente especializado em extrair eventos de textos não estruturados.
-Analise o conteúdo fornecido e extraia TODOS os eventos encontrados.
-
-Para cada evento, retorne um objeto JSON com os seguintes campos:
-- nome: nome do evento (obrigatório)
-- local: nome do local/venue
-- cidade: cidade do evento
-- endereco: endereço completo
-- data: data no formato YYYY-MM-DD (se não tiver ano, use 2026)
-- descricao: descrição do evento
-- atracoes: array de strings com as atrações
-- categoria: a categoria PRINCIPAL do evento. Deve ser UMA das seguintes: ${validCategories.join(", ")}
-- categorias: array com TODAS as categorias aplicáveis ao evento (pode ter mais de uma). Valores possíveis: ${validCategories.join(", ")}
-- subcategorias: array com as subcategorias mais adequadas ao evento. As subcategorias disponíveis por categoria são:
-${subcatList}
-  Escolha as subcategorias que melhor descrevem o evento com base no seu conteúdo, nome, atrações e descrição. Um evento pode ter subcategorias de diferentes categorias.
-- NÃO inclua latitude ou longitude, esses campos serão calculados automaticamente via geocodificação
-
-Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
-Classifique categoria, categorias e subcategorias com base no contexto, nome, atrações e descrição do evento.
-
-IMPORTANTE: Responda APENAS com um JSON válido no formato:
-{ "events": [ { ...evento1 }, { ...evento2 } ] }`;
+    const promptTemplate = promptRes.data?.prompt || DEFAULT_PROMPT;
+    const systemPrompt = promptTemplate
+      .replaceAll("{{CATEGORIES}}", allCategories.join(", "))
+      .replaceAll("{{SUBCATEGORIES}}", subcatList);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -117,13 +163,12 @@ IMPORTANTE: Responda APENAS com um JSON válido no formato:
       }
     }
 
-    // All valid subcategories flattened
-    const allValidSubs = Object.values(validSubcategories).flat();
+    const allValidSubs = Object.values(subMap).flat();
 
     const events = (parsed.events || []).map((e: Record<string, unknown>) => {
-      const mainCat = validCategories.includes(e.categoria as string) ? e.categoria as string : "entretenimento";
+      const mainCat = allCategories.includes(e.categoria as string) ? (e.categoria as string) : "entretenimento";
       const cats = Array.isArray(e.categorias)
-        ? (e.categorias as string[]).filter((c) => validCategories.includes(c))
+        ? (e.categorias as string[]).filter((c) => allCategories.includes(c))
         : [mainCat];
       const subs = Array.isArray(e.subcategorias)
         ? (e.subcategorias as string[]).filter((s) => allValidSubs.includes(s))
@@ -135,6 +180,7 @@ IMPORTANTE: Responda APENAS com um JSON válido no formato:
         cidade: e.cidade || "Não informado",
         endereco: e.endereco || "Não informado",
         data: e.data || new Date().toISOString().split("T")[0],
+        horario: typeof e.horario === "string" ? e.horario : null,
         descricao: e.descricao || "Não informado",
         atracoes: Array.isArray(e.atracoes) ? e.atracoes : [],
         categoria: mainCat,
