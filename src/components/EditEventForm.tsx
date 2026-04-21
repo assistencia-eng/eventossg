@@ -28,6 +28,13 @@ const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "en
 const weekDays = Object.keys(weekDayLabels);
 
 const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) => {
+  const catVersion = useCategoriesVersion();
+  const subVersion = useSubcategoriesVersion();
+  const allCategories = useMemo<EventCategory[]>(
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    [catVersion]
+  );
+  void subVersion;
   const { isAdmin } = useAuth();
   const { images: subcategoryImages } = useSubcategoryImages();
   const [saving, setSaving] = useState(false);
