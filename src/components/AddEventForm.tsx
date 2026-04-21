@@ -8,8 +8,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type EventCategory } from "@/data/events";
+import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
+import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useMemo } from "react";
 
 interface AddEventFormProps {
   open: boolean;
@@ -17,10 +21,17 @@ interface AddEventFormProps {
   onAdded: () => void;
 }
 
-const allCategories = Object.keys(categoryLabels) as EventCategory[];
+const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 const weekDays = Object.keys(weekDayLabels);
 
 const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
+  const catVersion = useCategoriesVersion();
+  const subVersion = useSubcategoriesVersion();
+  const allCategories = useMemo<EventCategory[]>(
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    [catVersion]
+  );
+  void subVersion;
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
