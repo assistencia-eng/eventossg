@@ -4,14 +4,16 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
+import { CategoryImageMap } from "@/hooks/useCategoryImages";
 
 interface FeaturedCarouselProps {
   events: EventData[];
   onSelect: (event: EventData) => void;
   subcategoryImages?: SubcategoryImageMap;
+  categoryImages?: CategoryImageMap;
 }
 
-const FeaturedCarousel = ({ events, onSelect, subcategoryImages }: FeaturedCarouselProps) => {
+const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages }: FeaturedCarouselProps) => {
   const [current, setCurrent] = useState(0);
 
   const next = useCallback(() => {
@@ -59,8 +61,8 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages }: FeaturedCarou
       {/* Background image */}
       {(() => {
         let imgSrc = event.imagem;
+        const cats = event.categorias?.length ? event.categorias : [event.categoria];
         if (!imgSrc && subcategoryImages && event.subcategorias?.length) {
-          const cats = event.categorias?.length ? event.categorias : [event.categoria];
           outer: for (const sub of event.subcategorias) {
             for (const cat of cats) {
               const imgs = subcategoryImages[subImgKey(cat, sub)];
@@ -73,6 +75,12 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages }: FeaturedCarou
                 break outer;
               }
             }
+          }
+        }
+        // Fallback to category general image
+        if (!imgSrc && categoryImages) {
+          for (const cat of cats) {
+            if (categoryImages[cat]) { imgSrc = categoryImages[cat]; break; }
           }
         }
         return imgSrc ? (
