@@ -3,6 +3,7 @@ import { subcategoryOptions, categoryLabels, categoryIcons, EventCategory } from
 import { categoryColors } from "@/data/categoryColors";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
+import { useCategoryImages } from "@/hooks/useCategoryImages";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { Button } from "@/components/ui/button";
@@ -16,11 +17,13 @@ const SubcategoryImageManager = () => {
   const subVersion = useSubcategoriesVersion();
   const catVersion = useCategoriesVersion();
   const { images, loading, refetch } = useSubcategoryImages();
+  const { images: categoryImages, refetch: refetchCategoryImages } = useCategoryImages();
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadingCat, setUploadingCat] = useState<string | null>(null);
 
   const allCategories: EventCategory[] = useMemo(
-    () => [...baseCategories, ...getCustomCategoryKeys()],
+    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
     [catVersion]
   );
 
@@ -31,7 +34,7 @@ const SubcategoryImageManager = () => {
       subs: (subcategoryOptions[cat] || []).filter((s) =>
         !q || s.toLowerCase().includes(q) || categoryLabels[cat].toLowerCase().includes(q)
       ),
-    })).filter((g) => g.subs.length > 0);
+    }));
   }, [search, subVersion, catVersion, allCategories]);
 
   const handleUpload = async (categoria: EventCategory, subcategory: string, slotIndex: number, file: File) => {
