@@ -6,6 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
 import { CategoryImageMap } from "@/hooks/useCategoryImages";
+import { KeywordImageMap, pickKeywordImage } from "@/hooks/useKeywordImages";
 import { useMemo } from "react";
 
 interface EventCardProps {
@@ -19,6 +20,7 @@ interface EventCardProps {
   isAdmin?: boolean;
   subcategoryImages?: SubcategoryImageMap;
   categoryImages?: CategoryImageMap;
+  keywordImages?: KeywordImageMap;
 }
 
 const categoryPlaceholders: Record<string, string> = {
@@ -66,14 +68,15 @@ function pickSubcategoryImage(
   return undefined;
 }
 
-const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages, categoryImages }: EventCardProps) => {
+const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages, categoryImages, keywordImages }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
+  const kwImg = useMemo(() => pickKeywordImage(event.nome, keywordImages, event.id), [event.nome, event.id, keywordImages]);
   const subImg = useMemo(() => pickSubcategoryImage(event, subcategoryImages), [event, subcategoryImages]);
-  // Fallback chain: event own image -> subcategory image -> category general image -> hardcoded placeholder
+  // Fallback chain: event own image -> keyword image (priority) -> subcategory image -> category general image -> hardcoded placeholder
   const cats = event.categorias?.length ? event.categorias : [event.categoria];
   let catImg: string | undefined;
   if (categoryImages) {
@@ -81,7 +84,7 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
       if (categoryImages[c]) { catImg = categoryImages[c]; break; }
     }
   }
-  const imgSrc = event.imagem || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
+  const imgSrc = event.imagem || kwImg || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
     <div
