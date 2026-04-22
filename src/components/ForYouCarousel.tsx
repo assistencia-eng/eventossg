@@ -130,6 +130,14 @@ const ForYouCarousel = ({
     }
   };
 
+  const scrollByDir = (dir: 1 | -1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const first = el.children[0] as HTMLElement | undefined;
+    const step = first ? first.clientWidth + 12 : el.clientWidth * 0.8;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
   if (limited.length === 0) return null;
 
   return (
@@ -139,39 +147,62 @@ const ForYouCarousel = ({
         <h2 className="text-lg font-serif font-semibold">Para você</h2>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-[12%] gap-3 pb-2"
-        style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          scrollPaddingLeft: "12%",
-          scrollPaddingRight: "12%",
-        }}
-      >
-        {looped.map((event, i) => {
-          const realIdx = realLen > 1 ? i % realLen : i;
-          const isActive = realIdx === activeIndex;
-          return (
-            <div
-              key={`${event.id}-${i}`}
-              className={`snap-center shrink-0 basis-[76%] sm:basis-[55%] md:basis-[38%] lg:basis-[28%] transition-transform duration-300 ${
-                isActive ? "scale-100" : "scale-[0.94] opacity-80"
-              }`}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-[12%] gap-3 pb-2"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            scrollPaddingLeft: "12%",
+            scrollPaddingRight: "12%",
+          }}
+        >
+          {looped.map((event, i) => {
+            const realIdx = realLen > 1 ? i % realLen : i;
+            const isActive = realIdx === activeIndex;
+            return (
+              <div
+                key={`${event.id}-${i}`}
+                className={`snap-center shrink-0 basis-[76%] sm:basis-[55%] md:basis-[38%] lg:basis-[28%] h-[290px] transition-transform duration-300 ${
+                  isActive ? "scale-100" : "scale-[0.94] opacity-80"
+                }`}
+              >
+                <div className="h-full [&>div]:h-full [&>div]:flex [&>div]:flex-col">
+                  <EventCard
+                    event={event}
+                    onSelect={onSelect}
+                    index={i}
+                    isFavorite={isFavorite(event.id)}
+                    onToggleFavorite={onToggleFavorite}
+                    isAdmin={isAdmin}
+                    subcategoryImages={subcategoryImages}
+                    categoryImages={categoryImages}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {limited.length > 1 && (
+          <>
+            <button
+              onClick={() => scrollByDir(-1)}
+              aria-label="Anterior"
+              className="absolute left-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center text-white shadow-md transition-colors"
             >
-              <EventCard
-                event={event}
-                onSelect={onSelect}
-                index={i}
-                isFavorite={isFavorite(event.id)}
-                onToggleFavorite={onToggleFavorite}
-                isAdmin={isAdmin}
-                subcategoryImages={subcategoryImages}
-                categoryImages={categoryImages}
-              />
-            </div>
-          );
-        })}
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => scrollByDir(1)}
+              aria-label="Próximo"
+              className="absolute right-1 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center text-white shadow-md transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </>
+        )}
       </div>
 
       {limited.length > 1 && (
