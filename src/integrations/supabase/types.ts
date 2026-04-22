@@ -167,7 +167,7 @@ export type Database = {
       events: {
         Row: {
           atracoes: string[]
-          categoria: Database["public"]["Enums"]["event_category"]
+          categoria: string
           categorias: string[]
           cidade: string
           created_at: string
@@ -196,7 +196,7 @@ export type Database = {
         }
         Insert: {
           atracoes?: string[]
-          categoria?: Database["public"]["Enums"]["event_category"]
+          categoria?: string
           categorias?: string[]
           cidade?: string
           created_at?: string
@@ -225,7 +225,7 @@ export type Database = {
         }
         Update: {
           atracoes?: string[]
-          categoria?: Database["public"]["Enums"]["event_category"]
+          categoria?: string
           categorias?: string[]
           cidade?: string
           created_at?: string
