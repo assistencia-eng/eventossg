@@ -4,6 +4,7 @@ import EventCard from "@/components/EventCard";
 import { EventData } from "@/data/events";
 import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
 import { CategoryImageMap } from "@/hooks/useCategoryImages";
+import { KeywordImageMap } from "@/hooks/useKeywordImages";
 
 interface ForYouCarouselProps {
   events: EventData[];
@@ -13,6 +14,7 @@ interface ForYouCarouselProps {
   isAdmin?: boolean;
   subcategoryImages?: SubcategoryImageMap;
   categoryImages?: CategoryImageMap;
+  keywordImages?: KeywordImageMap;
 }
 
 const MAX_EVENTS = 5;
@@ -25,6 +27,7 @@ const ForYouCarousel = ({
   isAdmin,
   subcategoryImages,
   categoryImages,
+  keywordImages,
 }: ForYouCarouselProps) => {
   const limited = useMemo(() => events.slice(0, MAX_EVENTS), [events]);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -178,6 +181,7 @@ const ForYouCarousel = ({
                     isAdmin={isAdmin}
                     subcategoryImages={subcategoryImages}
                     categoryImages={categoryImages}
+                    keywordImages={keywordImages}
                   />
                 </div>
               </div>

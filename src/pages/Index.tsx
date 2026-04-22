@@ -30,6 +30,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useUserInterests } from "@/hooks/useUserInterests";
 import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 import { useCategoryImages } from "@/hooks/useCategoryImages";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -63,6 +64,7 @@ const Index = () => {
   const { interests, toggleCategory: toggleInterestCategory, toggleSubcategory } = useUserInterests();
   const { images: subcategoryImages } = useSubcategoryImages();
   const { images: categoryImages } = useCategoryImages();
+  const { images: keywordImages } = useKeywordImages();
 
   useEffect(() => {
     getUserLocation()
@@ -330,7 +332,7 @@ const Index = () => {
 
       {activeNav === "events" ? (
         <>
-          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} />
+          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} />
 
           <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
@@ -374,6 +376,7 @@ const Index = () => {
                 isAdmin={isAdmin}
                 subcategoryImages={subcategoryImages}
                 categoryImages={categoryImages}
+                keywordImages={keywordImages}
               />
             )}
 
@@ -395,6 +398,7 @@ const Index = () => {
                     isAdmin={isAdmin}
                     subcategoryImages={subcategoryImages}
                     categoryImages={categoryImages}
+                    keywordImages={keywordImages}
                   />
                 ))}
               </div>
@@ -435,6 +439,7 @@ const Index = () => {
                 isAdmin={isAdmin}
                     subcategoryImages={subcategoryImages}
                 categoryImages={categoryImages}
+                keywordImages={keywordImages}
               />
             ))}
           </div>
