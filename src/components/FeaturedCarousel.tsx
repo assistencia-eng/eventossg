@@ -5,15 +5,17 @@ import { ptBR } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
 import { CategoryImageMap } from "@/hooks/useCategoryImages";
+import { KeywordImageMap, pickKeywordImage } from "@/hooks/useKeywordImages";
 
 interface FeaturedCarouselProps {
   events: EventData[];
   onSelect: (event: EventData) => void;
   subcategoryImages?: SubcategoryImageMap;
   categoryImages?: CategoryImageMap;
+  keywordImages?: KeywordImageMap;
 }
 
-const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages }: FeaturedCarouselProps) => {
+const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages, keywordImages }: FeaturedCarouselProps) => {
   const [current, setCurrent] = useState(0);
 
   const next = useCallback(() => {
@@ -62,6 +64,11 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages 
       {(() => {
         let imgSrc = event.imagem;
         const cats = event.categorias?.length ? event.categorias : [event.categoria];
+        // Priority: keyword image (matched in title) before subcategory image
+        if (!imgSrc) {
+          const kw = pickKeywordImage(event.nome, keywordImages, event.id);
+          if (kw) imgSrc = kw;
+        }
         if (!imgSrc && subcategoryImages && event.subcategorias?.length) {
           outer: for (const sub of event.subcategorias) {
             for (const cat of cats) {
