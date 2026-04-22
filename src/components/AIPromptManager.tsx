@@ -118,11 +118,11 @@ const AIPromptManager = () => {
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <Textarea
+              <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={18}
-                className="font-mono text-xs bg-background border-border text-neutral-200"
+                className="flex min-h-[80px] w-full rounded-md border px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono text-xs border-border bg-[#1c1c1c] text-neutral-50"
                 placeholder="Instruções para a IA..."
               />
             )}
