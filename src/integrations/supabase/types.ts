@@ -254,6 +254,33 @@ export type Database = {
         }
         Relationships: []
       }
+      keyword_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_index: number
+          image_url: string
+          keyword: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_index?: number
+          image_url: string
+          keyword: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_index?: number
+          image_url?: string
+          keyword?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
