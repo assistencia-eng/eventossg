@@ -164,7 +164,7 @@ const ForYouCarousel = ({
             return (
               <div
                 key={`${event.id}-${i}`}
-                className={`snap-center shrink-0 basis-[76%] sm:basis-[55%] md:basis-[38%] lg:basis-[28%] h-[290px] transition-transform duration-300 ${
+                className={`snap-center shrink-0 w-[280px] sm:w-[320px] md:w-[340px] lg:w-[360px] h-[290px] transition-transform duration-300 ${
                   isActive ? "scale-100" : "scale-[0.94] opacity-80"
                 }`}
               >
