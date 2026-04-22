@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useMemo } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import EventCard from "@/components/EventCard";
 import { EventData } from "@/data/events";
 import { SubcategoryImageMap } from "@/hooks/useSubcategoryImages";
