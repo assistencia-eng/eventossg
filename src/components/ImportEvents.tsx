@@ -760,6 +760,33 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           </div>
         )}
       </DialogContent>
+
+      <AlertDialog open={showDupConfirm} onOpenChange={setShowDupConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Eventos duplicados detectados
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i)).length} evento(s) na importação parecem
+              já existir no banco. Tem certeza que deseja criá-los mesmo assim? Você pode voltar e marcar individualmente
+              quais ignorar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar e revisar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDupConfirm(false);
+                void confirmImport();
+              }}
+            >
+              Importar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
