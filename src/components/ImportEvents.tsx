@@ -152,6 +152,17 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setExtractedEvents([]);
     setEditingIndex(null);
     setError(null);
+    setSkipDuplicates(new Set());
+    setShowDupConfirm(false);
+  };
+
+  const toggleSkipDuplicate = (index: number) => {
+    setSkipDuplicates((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   };
 
   const handleClose = () => {
