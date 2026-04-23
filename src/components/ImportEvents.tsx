@@ -113,7 +113,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         const content = await extractTextFromFile(file);
 
         const { data, error: fnError } = await supabase.functions.invoke("process-file", {
-          body: { content, fileName: file.name },
+          body: { content, fileName: file.name, availableKeywords },
         });
 
         if (fnError) throw new Error(fnError.message || "Erro ao processar arquivo");
@@ -171,6 +171,20 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     );
   };
 
+  const toggleEventKeyword = (index: number, kw: string) => {
+    setExtractedEvents((prev) =>
+      prev.map((ev, i) => {
+        if (i !== index) return ev;
+        const list = ev.keywords || [];
+        const has = list.includes(kw);
+        return {
+          ...ev,
+          keywords: has ? list.filter((k) => k !== kw) : [...list, kw],
+        };
+      })
+    );
+  };
+
   const removeEvent = (index: number) => {
     setExtractedEvents((prev) => prev.filter((_, i) => i !== index));
   };
@@ -200,6 +214,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           categoria: ev.categoria,
           categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
           subcategorias: ev.subcategorias || [],
+          keywords: ev.keywords || [],
           latitude: geoResults[i].latitude,
           longitude: geoResults[i].longitude,
         }))
