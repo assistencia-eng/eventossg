@@ -175,6 +175,11 @@ serve(async (req) => {
     }
 
     const allValidSubs = Object.values(subMap).flat();
+    const validKeywordsLower = (Array.isArray(availableKeywords) ? availableKeywords : []).map((k: string) => String(k).toLowerCase());
+    const validKeywordsByLower = new Map<string, string>();
+    for (const k of (Array.isArray(availableKeywords) ? availableKeywords : [])) {
+      validKeywordsByLower.set(String(k).toLowerCase(), String(k));
+    }
 
     const events = (parsed.events || []).map((e: Record<string, unknown>) => {
       const mainCat = allCategories.includes(e.categoria as string) ? (e.categoria as string) : "entretenimento";
@@ -184,6 +189,13 @@ serve(async (req) => {
       const subs = Array.isArray(e.subcategorias)
         ? (e.subcategorias as string[]).filter((s) => allValidSubs.includes(s))
         : [];
+      const kws = Array.isArray(e.keywords)
+        ? (e.keywords as string[])
+            .map((k) => validKeywordsByLower.get(String(k).toLowerCase()))
+            .filter((k): k is string => !!k)
+        : [];
+      // Dedupe
+      const uniqueKws = Array.from(new Set(kws));
 
       return {
         nome: e.nome || "Não informado",
@@ -197,10 +209,12 @@ serve(async (req) => {
         categoria: mainCat,
         categorias: cats.length > 0 ? cats : [mainCat],
         subcategorias: subs,
+        keywords: uniqueKws,
         latitude: -29.3731,
         longitude: -50.876,
       };
     });
+    void validKeywordsLower;
 
     return new Response(JSON.stringify({ events }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
