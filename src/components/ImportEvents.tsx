@@ -120,7 +120,14 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         if (data?.error) throw new Error(data.error);
 
         if (data?.events) {
-          allEvents.push(...data.events);
+          // Normalize: ensure keywords is always an array of strings from the library
+          const normalized = (data.events as ExtractedEvent[]).map((ev) => ({
+            ...ev,
+            keywords: Array.isArray(ev.keywords)
+              ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
+              : [],
+          }));
+          allEvents.push(...normalized);
         }
       }
 
@@ -447,6 +454,34 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                             </div>
                           </div>
                         )}
+
+                        {/* Keywords (from library) */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Palavras-chave</Label>
+                          {availableKeywords.length === 0 ? (
+                            <p className="text-[11px] text-muted-foreground italic">Nenhuma palavra-chave cadastrada.</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {availableKeywords.map((kw) => {
+                                const active = (ev.keywords || []).includes(kw);
+                                return (
+                                  <button
+                                    key={kw}
+                                    type="button"
+                                    onClick={() => toggleEventKeyword(i, kw)}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                                      active
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                                    }`}
+                                  >
+                                    {kw}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="space-y-1.5">
                           <Label className="text-xs">Descrição</Label>
