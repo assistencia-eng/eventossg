@@ -50,13 +50,39 @@ export function pickKeywordImage(
   if (!keywordImages || !text) return undefined;
   const haystack = normalize(text);
   const keys = Object.keys(keywordImages);
-  // Sort by descending length so longer (more specific) keywords win ties.
   keys.sort((a, b) => b.length - a.length);
   for (const k of keys) {
     const nk = normalize(k);
     if (!nk) continue;
     if (haystack.includes(nk)) {
       const imgs = keywordImages[k];
+      if (imgs && imgs.length > 0) {
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+          hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
+        }
+        return imgs[Math.abs(hash) % imgs.length];
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Pick image based on an explicit list of event keywords (tags) — takes
+ * priority over title scanning.
+ */
+export function pickImageByEventKeywords(
+  eventKeywords: string[] | undefined | null,
+  keywordImages: KeywordImageMap | undefined,
+  seed: string
+): string | undefined {
+  if (!keywordImages || !eventKeywords || eventKeywords.length === 0) return undefined;
+  for (const kw of eventKeywords) {
+    const nk = normalize(kw);
+    const matchKey = Object.keys(keywordImages).find((k) => normalize(k) === nk);
+    if (matchKey) {
+      const imgs = keywordImages[matchKey];
       if (imgs && imgs.length > 0) {
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
