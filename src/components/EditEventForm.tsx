@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
@@ -37,6 +38,8 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
   void subVersion;
   const { isAdmin } = useAuth();
   const { images: subcategoryImages } = useSubcategoryImages();
+  const { images: keywordImages } = useKeywordImages();
+  const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -57,6 +60,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     is_recurring: false,
     recurring_days: [] as string[],
     subcategory_image_index: null as number | null,
+    keywords: [] as string[],
   });
 
   useEffect(() => {
@@ -77,11 +81,21 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_recurring: event.is_recurring || false,
         recurring_days: event.recurring_days || [],
         subcategory_image_index: event.subcategory_image_index ?? null,
+        keywords: event.keywords || [],
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
     }
   }, [event]);
+
+  const toggleKeyword = (kw: string) => {
+    setForm((prev) => ({
+      ...prev,
+      keywords: prev.keywords.includes(kw)
+        ? prev.keywords.filter((k) => k !== kw)
+        : [...prev.keywords, kw],
+    }));
+  };
 
   const toggleCategory = (cat: EventCategory) => {
     setForm((prev) => ({
@@ -164,6 +178,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
         subcategory_image_index: imageFile || event.imagem ? null : form.subcategory_image_index,
+        keywords: form.keywords,
       }).eq("id", event.id);
 
       if (updateError) throw updateError;
