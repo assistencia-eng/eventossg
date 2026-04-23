@@ -289,20 +289,36 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setExtractedEvents((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const confirmImport = async () => {
+  const handleConfirmClick = () => {
     if (extractedEvents.length === 0) return;
+    // Pending duplicates that aren't yet marked to skip => warn
+    const pendingDups = Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i));
+    if (pendingDups.length > 0) {
+      setShowDupConfirm(true);
+      return;
+    }
+    void confirmImport();
+  };
+
+  const confirmImport = async () => {
+    // Filter out duplicates the admin chose to skip
+    const toImport = extractedEvents.filter((_, i) => !skipDuplicates.has(i));
+    if (toImport.length === 0) {
+      toast.info("Nenhum evento para importar (todos foram marcados como duplicados).");
+      return;
+    }
     setStep("geocoding");
 
     try {
       const geoResults = await geocodeBatch(
-        extractedEvents.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
+        toImport.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
         (current, total) => setGeocodeProgress({ current, total })
       );
 
       setStep("saving");
 
       const { error: insertError } = await supabase.from("events").insert(
-        extractedEvents.map((ev, i) => ({
+        toImport.map((ev, i) => ({
           nome: ev.nome,
           local: ev.local,
           cidade: ev.cidade,
@@ -322,7 +338,10 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
       if (insertError) throw insertError;
 
-      toast.success(`${extractedEvents.length} evento(s) importado(s) com sucesso!`);
+      const skippedCount = extractedEvents.length - toImport.length;
+      toast.success(
+        `${toImport.length} evento(s) importado(s)${skippedCount > 0 ? ` • ${skippedCount} duplicado(s) ignorado(s)` : ""}.`
+      );
       onImported();
       handleClose();
     } catch (err) {
