@@ -716,17 +716,27 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
               );
             })}
 
+            {duplicateMap.size > 0 && (
+              <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>
+                  {duplicateMap.size} possível(is) duplicado(s) detectado(s).
+                  {skipDuplicates.size > 0 && ` ${skipDuplicates.size} marcado(s) para ignorar.`}
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => { setStep("upload"); setExtractedEvents([]); }} className="flex-1">
+              <Button variant="outline" onClick={() => { setStep("upload"); setExtractedEvents([]); setSkipDuplicates(new Set()); }} className="flex-1">
                 Voltar
               </Button>
               <Button
-                onClick={confirmImport}
-                disabled={extractedEvents.length === 0}
+                onClick={handleConfirmClick}
+                disabled={extractedEvents.length === 0 || (extractedEvents.length - skipDuplicates.size) === 0}
                 className="flex-1"
               >
                 <Check className="w-4 h-4 mr-1" />
-                Confirmar importação ({extractedEvents.length})
+                Confirmar importação ({extractedEvents.length - skipDuplicates.size})
               </Button>
             </div>
           </div>
