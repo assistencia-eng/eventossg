@@ -180,6 +180,7 @@ export type Database = {
           imagem: string | null
           is_featured: boolean
           is_recurring: boolean
+          keywords: string[]
           latitude: number
           local: string
           longitude: number
@@ -209,6 +210,7 @@ export type Database = {
           imagem?: string | null
           is_featured?: boolean
           is_recurring?: boolean
+          keywords?: string[]
           latitude?: number
           local?: string
           longitude?: number
@@ -238,6 +240,7 @@ export type Database = {
           imagem?: string | null
           is_featured?: boolean
           is_recurring?: boolean
+          keywords?: string[]
           latitude?: number
           local?: string
           longitude?: number
