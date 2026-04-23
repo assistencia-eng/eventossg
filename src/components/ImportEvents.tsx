@@ -456,9 +456,33 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                 .flatMap((c) => subcategoryOptions[c as EventCategory] || []);
               const uniqueSubs = [...new Set(availableSubs)];
 
+              const dup = duplicateMap.get(i);
+              const skipped = skipDuplicates.has(i);
+
               return (
-                <Card key={i} className="overflow-hidden">
-                  <CardContent className="p-4">
+                <Card
+                  key={i}
+                  className={`overflow-hidden ${dup ? (skipped ? "border-muted opacity-60" : "border-amber-500/60 ring-1 ring-amber-500/30") : ""}`}
+                >
+                  <CardContent className="p-4 space-y-2">
+                    {dup && (
+                      <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">Possível evento duplicado</p>
+                          <p className="opacity-90 truncate">
+                            Já existe: <span className="font-medium">{dup.nome}</span> — {dup.cidade} • {dup.data}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleSkipDuplicate(i)}
+                            className="mt-1 underline underline-offset-2 hover:text-amber-100"
+                          >
+                            {skipped ? "Importar mesmo assim" : "Não importar este evento"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {editing ? (
                       <div className="space-y-3">
                         <div className="space-y-1.5">
