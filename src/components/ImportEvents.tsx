@@ -45,6 +45,61 @@ type ImportStep = "upload" | "processing" | "preview" | "geocoding" | "saving";
 
 const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
+interface ExistingEventLite {
+  id: string;
+  nome: string;
+  cidade: string;
+  data: string;
+  local: string;
+}
+
+const norm = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+// Levenshtein-based similarity ratio (0..1)
+const similarity = (a: string, b: string): number => {
+  if (!a && !b) return 1;
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) / Math.max(m, n) > 0.5) return 0;
+  const dp: number[] = Array(n + 1).fill(0).map((_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1] ? prev : Math.min(prev + 1, dp[j] + 1, dp[j - 1] + 1);
+      prev = tmp;
+    }
+  }
+  return 1 - dp[n] / Math.max(m, n);
+};
+
+const findDuplicate = (ev: ExtractedEvent, existing: ExistingEventLite[]): ExistingEventLite | null => {
+  const evName = norm(ev.nome);
+  const evCity = norm(ev.cidade);
+  const evLocal = norm(ev.local);
+  for (const ex of existing) {
+    const exName = norm(ex.nome);
+    const sim = similarity(evName, exName);
+    const sameDate = ex.data === ev.data;
+    const sameCity = norm(ex.cidade) === evCity && evCity.length > 0;
+    const sameLocal = norm(ex.local) === evLocal && evLocal.length > 0;
+    // Strong duplicate: identical/very similar name AND (same date OR same city/local)
+    if (sim >= 0.85 && (sameDate || sameCity || sameLocal)) return ex;
+    // Exact name match alone is also flagged
+    if (sim === 1 && (sameDate || sameCity)) return ex;
+  }
+  return null;
+};
+
 const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [step, setStep] = useState<ImportStep>("upload");
   const [files, setFiles] = useState<File[]>([]);
@@ -53,12 +108,38 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 });
+  const [existingEvents, setExistingEvents] = useState<ExistingEventLite[]>([]);
+  const [skipDuplicates, setSkipDuplicates] = useState<Set<number>>(new Set());
+  const [showDupConfirm, setShowDupConfirm] = useState(false);
 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   void subVersion;
   const { images: keywordImages } = useKeywordImages();
   const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
+
+  // Load existing events when dialog opens (lightweight fields only)
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: err } = await supabase
+        .from("events")
+        .select("id, nome, cidade, data, local");
+      if (!cancelled && !err && data) setExistingEvents(data as ExistingEventLite[]);
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  // Compute duplicates map for current preview
+  const duplicateMap = useMemo(() => {
+    const map = new Map<number, ExistingEventLite>();
+    extractedEvents.forEach((ev, i) => {
+      const dup = findDuplicate(ev, existingEvents);
+      if (dup) map.set(i, dup);
+    });
+    return map;
+  }, [extractedEvents, existingEvents]);
 
   const allCategories = useMemo<EventCategory[]>(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
