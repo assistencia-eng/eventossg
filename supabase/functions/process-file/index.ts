@@ -34,6 +34,7 @@ Para cada evento, retorne um objeto JSON com os seguintes campos:
 - categoria: a categoria PRINCIPAL do evento. Deve ser UMA das categorias válidas listadas abaixo
 - categorias: array com TODAS as categorias aplicáveis ao evento (pode ter mais de uma)
 - subcategorias: array com as subcategorias mais adequadas ao evento
+- keywords: array com palavras-chave relevantes ao evento. **OBRIGATÓRIO**: use APENAS palavras EXATAS da lista fornecida abaixo. Se nenhuma palavra-chave da lista fizer sentido para o evento, retorne []. NÃO invente palavras-chave novas.
 - NÃO inclua latitude ou longitude, esses campos serão calculados automaticamente via geocodificação
 
 Categorias válidas: {{CATEGORIES}}
@@ -41,7 +42,12 @@ Categorias válidas: {{CATEGORIES}}
 Subcategorias disponíveis por categoria:
 {{SUBCATEGORIES}}
 
+Palavras-chave disponíveis (USE APENAS ESTAS, ou []):
+{{KEYWORDS}}
+
 Escolha as subcategorias que melhor descrevem o evento com base no seu conteúdo, nome, atrações e descrição. Um evento pode ter subcategorias de diferentes categorias.
+
+Para keywords: analise o nome, descrição e atrações; selecione as palavras da lista que aparecem ou estão diretamente relacionadas ao evento. Exemplo: evento "Encontro de Motos Antigas" → se "moto" estiver na lista, inclua "moto".
 
 Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
 Classifique categoria, categorias e subcategorias com base no contexto, nome, atrações e descrição do evento.
@@ -53,7 +59,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { content, fileName } = await req.json();
+    const { content, fileName, availableKeywords } = await req.json();
 
     if (!content || typeof content !== "string") {
       return new Response(JSON.stringify({ error: "Campo 'content' é obrigatório" }), {
@@ -105,10 +111,15 @@ serve(async (req) => {
       .map(([cat, subs]) => `  ${cat}: ${subs.join(", ")}`)
       .join("\n");
 
+    const kwList = Array.isArray(availableKeywords) && availableKeywords.length > 0
+      ? availableKeywords.join(", ")
+      : "(nenhuma palavra-chave cadastrada — sempre retorne keywords: [])";
+
     const promptTemplate = promptRes.data?.prompt || DEFAULT_PROMPT;
     const systemPrompt = promptTemplate
       .replaceAll("{{CATEGORIES}}", allCategories.join(", "))
-      .replaceAll("{{SUBCATEGORIES}}", subcatList);
+      .replaceAll("{{SUBCATEGORIES}}", subcatList)
+      .replaceAll("{{KEYWORDS}}", kwList);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
