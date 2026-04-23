@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeBatch } from "@/lib/geocode";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
 
 interface ExtractedEvent {
   nome: string;
@@ -28,6 +29,7 @@ interface ExtractedEvent {
   categoria: EventCategory;
   categorias: string[];
   subcategorias: string[];
+  keywords: string[];
   latitude: number;
   longitude: number;
 }
@@ -54,6 +56,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   void subVersion;
+  const { images: keywordImages } = useKeywordImages();
+  const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
 
   const allCategories = useMemo<EventCategory[]>(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
