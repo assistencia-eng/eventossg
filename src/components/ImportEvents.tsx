@@ -539,6 +539,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                               ))}
                             </div>
                           )}
+                          {ev.keywords && ev.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {ev.keywords.map((kw) => (
+                                <Badge key={kw} className="text-[10px] py-0 bg-primary/20 text-primary border-primary/30">
+                                  #{kw}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                           <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                             {ev.descricao}
                           </p>
