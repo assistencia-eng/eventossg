@@ -27,6 +27,7 @@ export interface EventData {
   is_recurring?: boolean;
   recurring_days?: string[];
   subcategory_image_index?: number | null;
+  keywords?: string[];
 }
 
 export const categoryLabels: Record<EventCategory, string> = {

@@ -6,7 +6,7 @@ import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
 import { CategoryImageMap } from "@/hooks/useCategoryImages";
-import { KeywordImageMap, pickKeywordImage } from "@/hooks/useKeywordImages";
+import { KeywordImageMap, pickKeywordImage, pickImageByEventKeywords } from "@/hooks/useKeywordImages";
 import { useMemo } from "react";
 
 interface EventCardProps {
@@ -74,9 +74,10 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
   const mainCat = event.categorias?.[0] || event.categoria;
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
 
+  const kwTagImg = useMemo(() => pickImageByEventKeywords(event.keywords, keywordImages, event.id), [event.keywords, event.id, keywordImages]);
   const kwImg = useMemo(() => pickKeywordImage(event.nome, keywordImages, event.id), [event.nome, event.id, keywordImages]);
   const subImg = useMemo(() => pickSubcategoryImage(event, subcategoryImages), [event, subcategoryImages]);
-  // Fallback chain: event own image -> keyword image (priority) -> subcategory image -> category general image -> hardcoded placeholder
+  // Fallback: event image -> explicit event keyword tag image -> title-scanned keyword -> subcategory -> category -> placeholder
   const cats = event.categorias?.length ? event.categorias : [event.categoria];
   let catImg: string | undefined;
   if (categoryImages) {
@@ -84,7 +85,7 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
       if (categoryImages[c]) { catImg = categoryImages[c]; break; }
     }
   }
-  const imgSrc = event.imagem || kwImg || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
+  const imgSrc = event.imagem || kwTagImg || kwImg || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
     <div

@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
@@ -37,6 +38,8 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
   void subVersion;
   const { isAdmin } = useAuth();
   const { images: subcategoryImages } = useSubcategoryImages();
+  const { images: keywordImages } = useKeywordImages();
+  const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -57,6 +60,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     is_recurring: false,
     recurring_days: [] as string[],
     subcategory_image_index: null as number | null,
+    keywords: [] as string[],
   });
 
   useEffect(() => {
@@ -77,11 +81,21 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_recurring: event.is_recurring || false,
         recurring_days: event.recurring_days || [],
         subcategory_image_index: event.subcategory_image_index ?? null,
+        keywords: event.keywords || [],
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
     }
   }, [event]);
+
+  const toggleKeyword = (kw: string) => {
+    setForm((prev) => ({
+      ...prev,
+      keywords: prev.keywords.includes(kw)
+        ? prev.keywords.filter((k) => k !== kw)
+        : [...prev.keywords, kw],
+    }));
+  };
 
   const toggleCategory = (cat: EventCategory) => {
     setForm((prev) => ({
@@ -164,6 +178,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
         subcategory_image_index: imageFile || event.imagem ? null : form.subcategory_image_index,
+        keywords: form.keywords,
       }).eq("id", event.id);
 
       if (updateError) throw updateError;
@@ -313,6 +328,37 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
           <div className="space-y-2">
             <Label>Atrações (separadas por vírgula)</Label>
             <Input value={form.atracoes} onChange={(e) => setForm({ ...form, atracoes: e.target.value })} maxLength={500} />
+          </div>
+
+          {/* Keywords (tags) — only existing library keywords */}
+          <div className="space-y-2">
+            <Label>Palavras-chave</Label>
+            <p className="text-xs text-muted-foreground">
+              Selecione tags da biblioteca. Eventos com palavra-chave usam a imagem da palavra (prioridade sobre subcategoria).
+            </p>
+            {availableKeywords.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Nenhuma palavra-chave cadastrada. Crie em "Meu Perfil → Biblioteca de Palavras".</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {availableKeywords.map((kw) => {
+                  const active = form.keywords.includes(kw);
+                  return (
+                    <button
+                      key={kw}
+                      type="button"
+                      onClick={() => toggleKeyword(kw)}
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                        active
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                      }`}
+                    >
+                      {kw}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

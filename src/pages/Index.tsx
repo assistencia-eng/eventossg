@@ -104,6 +104,7 @@ const Index = () => {
           is_recurring: (e as any).is_recurring ?? false,
           recurring_days: (e as any).recurring_days ?? [],
           subcategory_image_index: (e as any).subcategory_image_index ?? null,
+          keywords: (e as any).keywords ?? [],
         }))
       );
     }
@@ -291,11 +292,16 @@ const Index = () => {
     ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() || "?";
 
-  // Search view filtered events
+  // Search view filtered events — matches name OR any keyword tag
   const searchResults = useMemo(() => {
     if (!searchName.trim()) return allEvents;
     const q = searchName.trim().toLowerCase();
-    return allEvents.filter((e) => e.nome.toLowerCase().includes(q));
+    const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const nq = norm(q);
+    return allEvents.filter((e) =>
+      e.nome.toLowerCase().includes(q) ||
+      (e.keywords || []).some((k) => norm(k).includes(nq))
+    );
   }, [allEvents, searchName]);
 
   return (

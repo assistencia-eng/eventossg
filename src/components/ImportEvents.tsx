@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeBatch } from "@/lib/geocode";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
 
 interface ExtractedEvent {
   nome: string;
@@ -28,6 +29,7 @@ interface ExtractedEvent {
   categoria: EventCategory;
   categorias: string[];
   subcategorias: string[];
+  keywords: string[];
   latitude: number;
   longitude: number;
 }
@@ -54,6 +56,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   void subVersion;
+  const { images: keywordImages } = useKeywordImages();
+  const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
 
   const allCategories = useMemo<EventCategory[]>(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
@@ -109,14 +113,21 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         const content = await extractTextFromFile(file);
 
         const { data, error: fnError } = await supabase.functions.invoke("process-file", {
-          body: { content, fileName: file.name },
+          body: { content, fileName: file.name, availableKeywords },
         });
 
         if (fnError) throw new Error(fnError.message || "Erro ao processar arquivo");
         if (data?.error) throw new Error(data.error);
 
         if (data?.events) {
-          allEvents.push(...data.events);
+          // Normalize: ensure keywords is always an array of strings from the library
+          const normalized = (data.events as ExtractedEvent[]).map((ev) => ({
+            ...ev,
+            keywords: Array.isArray(ev.keywords)
+              ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
+              : [],
+          }));
+          allEvents.push(...normalized);
         }
       }
 
@@ -167,6 +178,20 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     );
   };
 
+  const toggleEventKeyword = (index: number, kw: string) => {
+    setExtractedEvents((prev) =>
+      prev.map((ev, i) => {
+        if (i !== index) return ev;
+        const list = ev.keywords || [];
+        const has = list.includes(kw);
+        return {
+          ...ev,
+          keywords: has ? list.filter((k) => k !== kw) : [...list, kw],
+        };
+      })
+    );
+  };
+
   const removeEvent = (index: number) => {
     setExtractedEvents((prev) => prev.filter((_, i) => i !== index));
   };
@@ -196,6 +221,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           categoria: ev.categoria,
           categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
           subcategorias: ev.subcategorias || [],
+          keywords: ev.keywords || [],
           latitude: geoResults[i].latitude,
           longitude: geoResults[i].longitude,
         }))
@@ -429,6 +455,34 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                           </div>
                         )}
 
+                        {/* Keywords (from library) */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Palavras-chave</Label>
+                          {availableKeywords.length === 0 ? (
+                            <p className="text-[11px] text-muted-foreground italic">Nenhuma palavra-chave cadastrada.</p>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {availableKeywords.map((kw) => {
+                                const active = (ev.keywords || []).includes(kw);
+                                return (
+                                  <button
+                                    key={kw}
+                                    type="button"
+                                    onClick={() => toggleEventKeyword(i, kw)}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                                      active
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                                    }`}
+                                  >
+                                    {kw}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
                         <div className="space-y-1.5">
                           <Label className="text-xs">Descrição</Label>
                           <Textarea
@@ -481,6 +535,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                               {ev.subcategorias.map((sub) => (
                                 <Badge key={sub} variant="outline" className="text-[10px] py-0 capitalize">
                                   {sub}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {ev.keywords && ev.keywords.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {ev.keywords.map((kw) => (
+                                <Badge key={kw} className="text-[10px] py-0 bg-primary/20 text-primary border-primary/30">
+                                  #{kw}
                                 </Badge>
                               ))}
                             </div>

@@ -21,6 +21,7 @@ Para cada evento, retorne um objeto JSON com os seguintes campos:
 - categoria: a categoria PRINCIPAL do evento. Deve ser UMA das categorias válidas listadas abaixo
 - categorias: array com TODAS as categorias aplicáveis ao evento (pode ter mais de uma)
 - subcategorias: array com as subcategorias mais adequadas ao evento
+- keywords: array com palavras-chave relevantes ao evento. **OBRIGATÓRIO**: use APENAS palavras EXATAS da lista fornecida abaixo. Se nenhuma palavra-chave da lista fizer sentido para o evento, retorne []. NÃO invente palavras-chave novas.
 - NÃO inclua latitude ou longitude, esses campos serão calculados automaticamente via geocodificação
 
 Categorias válidas: {{CATEGORIES}}
@@ -28,7 +29,12 @@ Categorias válidas: {{CATEGORIES}}
 Subcategorias disponíveis por categoria:
 {{SUBCATEGORIES}}
 
+Palavras-chave disponíveis (USE APENAS ESTAS, ou []):
+{{KEYWORDS}}
+
 Escolha as subcategorias que melhor descrevem o evento com base no seu conteúdo, nome, atrações e descrição. Um evento pode ter subcategorias de diferentes categorias.
+
+Para keywords: analise o nome, descrição e atrações; selecione as palavras da lista que aparecem ou estão diretamente relacionadas ao evento. Exemplo: evento "Encontro de Motos Antigas" → se "moto" estiver na lista, inclua "moto".
 
 Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
 Classifique categoria, categorias e subcategorias com base no contexto, nome, atrações e descrição do evento.
@@ -106,9 +112,10 @@ const AIPromptManager = () => {
         <div className="space-y-3 p-4 rounded-lg bg-[#1c1c1c]">
           <p className="text-xs text-muted-foreground">
             Edite as instruções que a IA usa para extrair eventos de arquivos importados.
-            Use <code className="px-1 rounded bg-background text-primary">{`{{CATEGORIES}}`}</code> e{" "}
-            <code className="px-1 rounded bg-background text-primary">{`{{SUBCATEGORIES}}`}</code> como
-            placeholders — eles serão substituídos automaticamente pelas categorias e subcategorias atuais do app.
+            Use <code className="px-1 rounded bg-background text-primary">{`{{CATEGORIES}}`}</code>,{" "}
+            <code className="px-1 rounded bg-background text-primary">{`{{SUBCATEGORIES}}`}</code> e{" "}
+            <code className="px-1 rounded bg-background text-primary">{`{{KEYWORDS}}`}</code> como
+            placeholders — eles serão substituídos automaticamente pelas categorias, subcategorias e palavras-chave atuais do app.
           </p>
 
           <div className="space-y-2">
