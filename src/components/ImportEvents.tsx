@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin } from "lucide-react";
+import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,61 @@ type ImportStep = "upload" | "processing" | "preview" | "geocoding" | "saving";
 
 const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
+interface ExistingEventLite {
+  id: string;
+  nome: string;
+  cidade: string;
+  data: string;
+  local: string;
+}
+
+const norm = (s: string) =>
+  (s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+// Levenshtein-based similarity ratio (0..1)
+const similarity = (a: string, b: string): number => {
+  if (!a && !b) return 1;
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) / Math.max(m, n) > 0.5) return 0;
+  const dp: number[] = Array(n + 1).fill(0).map((_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j];
+      dp[j] = a[i - 1] === b[j - 1] ? prev : Math.min(prev + 1, dp[j] + 1, dp[j - 1] + 1);
+      prev = tmp;
+    }
+  }
+  return 1 - dp[n] / Math.max(m, n);
+};
+
+const findDuplicate = (ev: ExtractedEvent, existing: ExistingEventLite[]): ExistingEventLite | null => {
+  const evName = norm(ev.nome);
+  const evCity = norm(ev.cidade);
+  const evLocal = norm(ev.local);
+  for (const ex of existing) {
+    const exName = norm(ex.nome);
+    const sim = similarity(evName, exName);
+    const sameDate = ex.data === ev.data;
+    const sameCity = norm(ex.cidade) === evCity && evCity.length > 0;
+    const sameLocal = norm(ex.local) === evLocal && evLocal.length > 0;
+    // Strong duplicate: identical/very similar name AND (same date OR same city/local)
+    if (sim >= 0.85 && (sameDate || sameCity || sameLocal)) return ex;
+    // Exact name match alone is also flagged
+    if (sim === 1 && (sameDate || sameCity)) return ex;
+  }
+  return null;
+};
+
 const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [step, setStep] = useState<ImportStep>("upload");
   const [files, setFiles] = useState<File[]>([]);
@@ -52,12 +108,38 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 });
+  const [existingEvents, setExistingEvents] = useState<ExistingEventLite[]>([]);
+  const [skipDuplicates, setSkipDuplicates] = useState<Set<number>>(new Set());
+  const [showDupConfirm, setShowDupConfirm] = useState(false);
 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   void subVersion;
   const { images: keywordImages } = useKeywordImages();
   const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
+
+  // Load existing events when dialog opens (lightweight fields only)
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error: err } = await supabase
+        .from("events")
+        .select("id, nome, cidade, data, local");
+      if (!cancelled && !err && data) setExistingEvents(data as ExistingEventLite[]);
+    })();
+    return () => { cancelled = true; };
+  }, [open]);
+
+  // Compute duplicates map for current preview
+  const duplicateMap = useMemo(() => {
+    const map = new Map<number, ExistingEventLite>();
+    extractedEvents.forEach((ev, i) => {
+      const dup = findDuplicate(ev, existingEvents);
+      if (dup) map.set(i, dup);
+    });
+    return map;
+  }, [extractedEvents, existingEvents]);
 
   const allCategories = useMemo<EventCategory[]>(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
@@ -70,6 +152,17 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setExtractedEvents([]);
     setEditingIndex(null);
     setError(null);
+    setSkipDuplicates(new Set());
+    setShowDupConfirm(false);
+  };
+
+  const toggleSkipDuplicate = (index: number) => {
+    setSkipDuplicates((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
   };
 
   const handleClose = () => {
@@ -196,20 +289,36 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setExtractedEvents((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const confirmImport = async () => {
+  const handleConfirmClick = () => {
     if (extractedEvents.length === 0) return;
+    // Pending duplicates that aren't yet marked to skip => warn
+    const pendingDups = Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i));
+    if (pendingDups.length > 0) {
+      setShowDupConfirm(true);
+      return;
+    }
+    void confirmImport();
+  };
+
+  const confirmImport = async () => {
+    // Filter out duplicates the admin chose to skip
+    const toImport = extractedEvents.filter((_, i) => !skipDuplicates.has(i));
+    if (toImport.length === 0) {
+      toast.info("Nenhum evento para importar (todos foram marcados como duplicados).");
+      return;
+    }
     setStep("geocoding");
 
     try {
       const geoResults = await geocodeBatch(
-        extractedEvents.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
+        toImport.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
         (current, total) => setGeocodeProgress({ current, total })
       );
 
       setStep("saving");
 
       const { error: insertError } = await supabase.from("events").insert(
-        extractedEvents.map((ev, i) => ({
+        toImport.map((ev, i) => ({
           nome: ev.nome,
           local: ev.local,
           cidade: ev.cidade,
@@ -229,7 +338,10 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
       if (insertError) throw insertError;
 
-      toast.success(`${extractedEvents.length} evento(s) importado(s) com sucesso!`);
+      const skippedCount = extractedEvents.length - toImport.length;
+      toast.success(
+        `${toImport.length} evento(s) importado(s)${skippedCount > 0 ? ` • ${skippedCount} duplicado(s) ignorado(s)` : ""}.`
+      );
       onImported();
       handleClose();
     } catch (err) {
@@ -344,9 +456,33 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                 .flatMap((c) => subcategoryOptions[c as EventCategory] || []);
               const uniqueSubs = [...new Set(availableSubs)];
 
+              const dup = duplicateMap.get(i);
+              const skipped = skipDuplicates.has(i);
+
               return (
-                <Card key={i} className="overflow-hidden">
-                  <CardContent className="p-4">
+                <Card
+                  key={i}
+                  className={`overflow-hidden ${dup ? (skipped ? "border-muted opacity-60" : "border-amber-500/60 ring-1 ring-amber-500/30") : ""}`}
+                >
+                  <CardContent className="p-4 space-y-2">
+                    {dup && (
+                      <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">Possível evento duplicado</p>
+                          <p className="opacity-90 truncate">
+                            Já existe: <span className="font-medium">{dup.nome}</span> — {dup.cidade} • {dup.data}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleSkipDuplicate(i)}
+                            className="mt-1 underline underline-offset-2 hover:text-amber-100"
+                          >
+                            {skipped ? "Importar mesmo assim" : "Não importar este evento"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {editing ? (
                       <div className="space-y-3">
                         <div className="space-y-1.5">
@@ -580,17 +716,27 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
               );
             })}
 
+            {duplicateMap.size > 0 && (
+              <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>
+                  {duplicateMap.size} possível(is) duplicado(s) detectado(s).
+                  {skipDuplicates.size > 0 && ` ${skipDuplicates.size} marcado(s) para ignorar.`}
+                </p>
+              </div>
+            )}
+
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" onClick={() => { setStep("upload"); setExtractedEvents([]); }} className="flex-1">
+              <Button variant="outline" onClick={() => { setStep("upload"); setExtractedEvents([]); setSkipDuplicates(new Set()); }} className="flex-1">
                 Voltar
               </Button>
               <Button
-                onClick={confirmImport}
-                disabled={extractedEvents.length === 0}
+                onClick={handleConfirmClick}
+                disabled={extractedEvents.length === 0 || (extractedEvents.length - skipDuplicates.size) === 0}
                 className="flex-1"
               >
                 <Check className="w-4 h-4 mr-1" />
-                Confirmar importação ({extractedEvents.length})
+                Confirmar importação ({extractedEvents.length - skipDuplicates.size})
               </Button>
             </div>
           </div>
@@ -614,6 +760,33 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           </div>
         )}
       </DialogContent>
+
+      <AlertDialog open={showDupConfirm} onOpenChange={setShowDupConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" />
+              Eventos duplicados detectados
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i)).length} evento(s) na importação parecem
+              já existir no banco. Tem certeza que deseja criá-los mesmo assim? Você pode voltar e marcar individualmente
+              quais ignorar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Voltar e revisar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setShowDupConfirm(false);
+                void confirmImport();
+              }}
+            >
+              Importar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
