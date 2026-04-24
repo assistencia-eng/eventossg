@@ -146,6 +146,7 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         is_featured: form.is_featured,
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
+        keywords: form.keywords,
       });
 
       if (insertError) throw insertError;
