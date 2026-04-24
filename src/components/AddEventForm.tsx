@@ -13,6 +13,8 @@ import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
+import KeywordsInput from "@/components/KeywordsInput";
 import { useMemo } from "react";
 
 interface AddEventFormProps {
@@ -27,6 +29,8 @@ const weekDays = Object.keys(weekDayLabels);
 const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
+  const { images: keywordImages } = useKeywordImages();
+  const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
   const allCategories = useMemo<EventCategory[]>(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
     [catVersion]
@@ -51,10 +55,11 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
     is_featured: false,
     is_recurring: false,
     recurring_days: [] as string[],
+    keywords: [] as string[],
   });
 
   const resetForm = () => {
-    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [] });
+    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [], keywords: [] });
     setImageFile(null);
     setImagePreview(null);
   };
@@ -141,6 +146,7 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         is_featured: form.is_featured,
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
+        keywords: form.keywords,
       });
 
       if (insertError) throw insertError;
@@ -290,6 +296,24 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
           <div className="space-y-2">
             <Label>Atrações (separadas por vírgula)</Label>
             <Input value={form.atracoes} onChange={(e) => setForm({ ...form, atracoes: e.target.value })} placeholder="Ex: Show ao vivo, Degustação" maxLength={500} />
+          </div>
+
+          {/* Keywords */}
+          <div className="space-y-2">
+            <Label>Palavras-chave</Label>
+            <p className="text-xs text-muted-foreground">
+              Digite para buscar tags da biblioteca (máx. 5). A imagem da palavra-chave tem prioridade sobre a subcategoria.
+            </p>
+            {availableKeywords.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Nenhuma palavra-chave cadastrada. Crie em "Meu Perfil → Biblioteca de Palavras".</p>
+            ) : (
+              <KeywordsInput
+                value={form.keywords}
+                onChange={(next) => setForm({ ...form, keywords: next })}
+                available={availableKeywords}
+                max={5}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
