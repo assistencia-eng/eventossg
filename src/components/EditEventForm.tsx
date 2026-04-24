@@ -16,6 +16,7 @@ import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import KeywordsInput from "@/components/KeywordsInput";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
