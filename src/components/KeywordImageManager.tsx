@@ -276,6 +276,8 @@ const KeywordImageManager = () => {
           );
         })}
       </div>
+        </>
+      )}
     </section>
   );
 };
