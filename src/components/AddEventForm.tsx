@@ -13,6 +13,8 @@ import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
+import { useKeywordImages } from "@/hooks/useKeywordImages";
+import KeywordsInput from "@/components/KeywordsInput";
 import { useMemo } from "react";
 
 interface AddEventFormProps {
