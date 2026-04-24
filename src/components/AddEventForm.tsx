@@ -29,6 +29,8 @@ const weekDays = Object.keys(weekDayLabels);
 const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
+  const { images: keywordImages } = useKeywordImages();
+  const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
   const allCategories = useMemo<EventCategory[]>(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
     [catVersion]
