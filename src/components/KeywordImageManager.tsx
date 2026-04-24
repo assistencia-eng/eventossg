@@ -4,7 +4,7 @@ import { useKeywordImages } from "@/hooks/useKeywordImages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Upload, Trash2, Search, Image as ImageIcon, Plus, X } from "lucide-react";
+import { Upload, Trash2, Search, Image as ImageIcon, Plus, X, ChevronDown } from "lucide-react";
 
 const sanitize = (s: string) =>
   s
