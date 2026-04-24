@@ -310,6 +310,8 @@ const SubcategoryImageManager = () => {
           );
         })}
       </div>
+        </>
+      )}
     </section>
   );
 };
