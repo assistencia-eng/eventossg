@@ -55,10 +55,11 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
     is_featured: false,
     is_recurring: false,
     recurring_days: [] as string[],
+    keywords: [] as string[],
   });
 
   const resetForm = () => {
-    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [] });
+    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [], keywords: [] });
     setImageFile(null);
     setImagePreview(null);
   };
