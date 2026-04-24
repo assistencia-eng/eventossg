@@ -298,6 +298,24 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
             <Input value={form.atracoes} onChange={(e) => setForm({ ...form, atracoes: e.target.value })} placeholder="Ex: Show ao vivo, Degustação" maxLength={500} />
           </div>
 
+          {/* Keywords */}
+          <div className="space-y-2">
+            <Label>Palavras-chave</Label>
+            <p className="text-xs text-muted-foreground">
+              Digite para buscar tags da biblioteca (máx. 5). A imagem da palavra-chave tem prioridade sobre a subcategoria.
+            </p>
+            {availableKeywords.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">Nenhuma palavra-chave cadastrada. Crie em "Meu Perfil → Biblioteca de Palavras".</p>
+            ) : (
+              <KeywordsInput
+                value={form.keywords}
+                onChange={(next) => setForm({ ...form, keywords: next })}
+                available={availableKeywords}
+                max={5}
+              />
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label>Imagem de capa (opcional)</Label>
             <label className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
