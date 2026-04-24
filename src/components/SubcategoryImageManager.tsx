@@ -21,6 +21,7 @@ const SubcategoryImageManager = () => {
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadingCat, setUploadingCat] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const allCategories: EventCategory[] = useMemo(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
