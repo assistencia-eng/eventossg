@@ -19,6 +19,7 @@ const KeywordImageManager = () => {
   const [search, setSearch] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const keywords = useMemo(() => {
     const list = Object.keys(images).sort();
