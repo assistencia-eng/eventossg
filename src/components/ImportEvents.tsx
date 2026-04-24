@@ -466,7 +466,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                 >
                   <CardContent className="p-4 space-y-2">
                     {dup && (
-                      <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs">
+                      <div className="flex items-start gap-2 p-2 rounded-md border border-amber-500/30 text-xs text-[#ffe500] bg-[#1c1c1c]">
                         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                         <div className="flex-1 min-w-0">
                           <p className="font-medium">Possível evento duplicado</p>
