@@ -9,7 +9,7 @@ import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategori
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Upload, Trash2, Search, Image as ImageIcon } from "lucide-react";
+import { Upload, Trash2, Search, Image as ImageIcon, ChevronDown } from "lucide-react";
 
 const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
