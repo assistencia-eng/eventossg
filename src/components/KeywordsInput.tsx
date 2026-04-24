@@ -128,7 +128,7 @@ const KeywordsInput = ({
 
       <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
         <span>{value.length}/{max} palavras-chave</span>
-        {reachedMax && <span className="text-amber-500">Limite atingido</span>}
+        {reachedMax && <span className="text-destructive">Limite atingido</span>}
       </div>
 
       {focused && suggestions.length > 0 && !reachedMax && (
