@@ -4,7 +4,7 @@ import { useKeywordImages } from "@/hooks/useKeywordImages";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Upload, Trash2, Search, Image as ImageIcon, Plus, X } from "lucide-react";
+import { Upload, Trash2, Search, Image as ImageIcon, Plus, X, ChevronDown } from "lucide-react";
 
 const sanitize = (s: string) =>
   s
@@ -19,6 +19,7 @@ const KeywordImageManager = () => {
   const [search, setSearch] = useState("");
   const [newKeyword, setNewKeyword] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const keywords = useMemo(() => {
     const list = Object.keys(images).sort();
@@ -138,9 +139,21 @@ const KeywordImageManager = () => {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold font-sans text-neutral-400">
-        Biblioteca de Palavras
-      </h2>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 text-left group"
+        aria-expanded={expanded}
+      >
+        <h2 className="text-lg font-semibold font-sans text-neutral-400 group-hover:text-foreground transition-colors">
+          Biblioteca de Palavras
+        </h2>
+        <ChevronDown
+          className={`w-5 h-5 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+      {expanded && (
+        <>
       <p className="text-xs text-muted-foreground">
         Cadastre palavras-chave e até 3 imagens por palavra. Quando o título do evento contiver
         a palavra, uma dessas imagens será usada com prioridade sobre a imagem da subcategoria.
@@ -263,6 +276,8 @@ const KeywordImageManager = () => {
           );
         })}
       </div>
+        </>
+      )}
     </section>
   );
 };

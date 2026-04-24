@@ -9,7 +9,7 @@ import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategori
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Upload, Trash2, Search, Image as ImageIcon } from "lucide-react";
+import { Upload, Trash2, Search, Image as ImageIcon, ChevronDown } from "lucide-react";
 
 const baseCategories: EventCategory[] = ["musica", "esporte", "alimentacao", "entretenimento", "palestras", "feiras", "festas"];
 
@@ -21,6 +21,7 @@ const SubcategoryImageManager = () => {
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadingCat, setUploadingCat] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const allCategories: EventCategory[] = useMemo(
     () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
@@ -157,7 +158,21 @@ const SubcategoryImageManager = () => {
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold font-sans text-neutral-400">Imagens de Categorias e Subcategorias</h2>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 text-left group"
+        aria-expanded={expanded}
+      >
+        <h2 className="text-lg font-semibold font-sans text-neutral-400 group-hover:text-foreground transition-colors">
+          Imagens de Categorias e Subcategorias
+        </h2>
+        <ChevronDown
+          className={`w-5 h-5 text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+      {expanded && (
+        <>
       <p className="text-xs text-muted-foreground">
         Defina uma imagem geral para cada categoria (usada quando o evento não tiver imagem própria nem da subcategoria) e até 3 imagens para cada subcategoria.
       </p>
@@ -295,6 +310,8 @@ const SubcategoryImageManager = () => {
           );
         })}
       </div>
+        </>
+      )}
     </section>
   );
 };
