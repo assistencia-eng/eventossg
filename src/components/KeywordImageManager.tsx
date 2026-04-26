@@ -87,7 +87,6 @@ const KeywordImageManager = () => {
         if (error) throw error;
       }
 
-      setLocalDrafts((prev) => prev.filter((k) => k !== keyword));
       toast.success(`Imagem ${slotIndex} de "${keyword}" atualizada!`);
       await refetch();
     } catch (err: any) {
