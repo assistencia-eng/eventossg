@@ -24,6 +24,7 @@ interface ExtractedEvent {
   cidade: string;
   endereco: string;
   data: string;
+  data_fim?: string | null;
   horario?: string | null;
   descricao: string;
   atracoes: string[];
