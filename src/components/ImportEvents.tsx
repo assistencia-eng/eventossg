@@ -534,23 +534,13 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Local</Label>
-                            <Input
-                              value={ev.local}
-                              onChange={(e) => updateEvent(i, "local", e.target.value)}
-                              placeholder="Local / venue"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">Horário</Label>
-                            <Input
-                              type="time"
-                              value={ev.horario || ""}
-                              onChange={(e) => updateEvent(i, "horario", e.target.value)}
-                            />
-                          </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Local</Label>
+                          <Input
+                            value={ev.local}
+                            onChange={(e) => updateEvent(i, "local", e.target.value)}
+                            placeholder="Local / venue"
+                          />
                         </div>
 
                         <div className="space-y-1.5">
