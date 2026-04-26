@@ -325,6 +325,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           cidade: ev.cidade,
           endereco: ev.endereco,
           data: ev.data,
+          data_fim: ev.data_fim || null,
           horario: ev.horario || null,
           descricao: ev.descricao,
           atracoes: ev.atracoes,
