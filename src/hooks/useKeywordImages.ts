@@ -19,7 +19,10 @@ export const useKeywordImages = () => {
         const key = (row.keyword || "").toLowerCase().trim();
         if (!key) return;
         if (!map[key]) map[key] = [];
-        map[key].push(row.image_url);
+        // image_index 0 = placeholder (keyword exists but no image yet)
+        if (row.image_index && row.image_index >= 1 && row.image_url) {
+          map[key].push(row.image_url);
+        }
       });
       setImages(map);
     }

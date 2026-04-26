@@ -28,34 +28,27 @@ const KeywordImageManager = () => {
     return list.filter((k) => k.toLowerCase().includes(q));
   }, [images, search]);
 
-  const handleAddKeyword = () => {
+  const handleAddKeyword = async () => {
     const k = newKeyword.trim().toLowerCase();
     if (!k) return;
     if (images[k]) {
       toast.error("Esta palavra-chave já existe");
       return;
     }
-    // Create empty entry locally; persists on first upload
-    refetch();
-    // Trick: just reset input and let user upload images now. We'll persist on upload.
-    setNewKeyword("");
-    // Show ephemeral row by adding key with empty array via a refetch trick is not possible.
-    // Easiest: persist a placeholder row via inserting a temporary marker would dirty data.
-    // Instead, we rely on user uploading at least one image; show feedback here.
-    toast.info(`Pronto! Agora envie até 3 imagens para "${k}".`, { duration: 4000 });
-    // Open a virtual slot by adding to local state
-    setLocalDrafts((prev) => Array.from(new Set([...prev, k])));
+    try {
+      const { error } = await (supabase as any)
+        .from("keyword_images")
+        .insert({ keyword: k, image_url: "", image_index: 0 });
+      if (error) throw error;
+      setNewKeyword("");
+      toast.success(`Palavra-chave "${k}" criada! Envie até 3 imagens.`);
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao criar palavra-chave");
+    }
   };
 
-  // Local-only keyword drafts (not yet persisted because no image uploaded)
-  const [localDrafts, setLocalDrafts] = useState<string[]>([]);
-
-  const allKeywords = useMemo(() => {
-    const set = new Set<string>([...keywords, ...localDrafts.filter((k) =>
-      !search.trim() || k.includes(search.toLowerCase())
-    )]);
-    return Array.from(set).sort();
-  }, [keywords, localDrafts, search]);
+  const allKeywords = useMemo(() => keywords, [keywords]);
 
   const handleUpload = async (keyword: string, slotIndex: number, file: File) => {
     const slotKey = `${keyword}-${slotIndex}`;
@@ -94,7 +87,6 @@ const KeywordImageManager = () => {
         if (error) throw error;
       }
 
-      setLocalDrafts((prev) => prev.filter((k) => k !== keyword));
       toast.success(`Imagem ${slotIndex} de "${keyword}" atualizada!`);
       await refetch();
     } catch (err: any) {
@@ -127,7 +119,6 @@ const KeywordImageManager = () => {
         .delete()
         .eq("keyword", keyword);
       if (error) throw error;
-      setLocalDrafts((prev) => prev.filter((k) => k !== keyword));
       toast.success(`Palavra-chave "${keyword}" removida`);
       await refetch();
     } catch (err: any) {
