@@ -506,11 +506,30 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Data</Label>
+                            <Label className="text-xs">Data início</Label>
                             <Input
                               type="date"
                               value={ev.data}
                               onChange={(e) => updateEvent(i, "data", e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Data fim (opcional)</Label>
+                            <Input
+                              type="date"
+                              value={ev.data_fim || ""}
+                              onChange={(e) => updateEvent(i, "data_fim", e.target.value || null)}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Horário</Label>
+                            <Input
+                              type="time"
+                              value={ev.horario || ""}
+                              onChange={(e) => updateEvent(i, "horario", e.target.value)}
                             />
                           </div>
                         </div>
