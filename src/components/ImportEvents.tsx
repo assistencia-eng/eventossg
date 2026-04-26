@@ -675,7 +675,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                             })}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {ev.cidade} • {ev.data}{ev.horario ? ` • ${ev.horario}` : ""} • {ev.local}
+                            {ev.cidade} • {ev.data}{ev.data_fim ? ` → ${ev.data_fim}` : ""}{ev.horario ? ` • ${ev.horario}` : ""} • {ev.local}
                           </p>
                           {ev.subcategorias?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
