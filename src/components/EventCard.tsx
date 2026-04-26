@@ -77,7 +77,23 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
   const kwTagImg = useMemo(() => pickImageByEventKeywords(event.keywords, keywordImages, event.id), [event.keywords, event.id, keywordImages]);
   const kwImg = useMemo(() => pickKeywordImage(event.nome, keywordImages, event.id), [event.nome, event.id, keywordImages]);
   const subImg = useMemo(() => pickSubcategoryImage(event, subcategoryImages), [event, subcategoryImages]);
-  // Fallback: event image -> explicit event keyword tag image -> title-scanned keyword -> subcategory -> category -> placeholder
+
+  // Manual override: admin chose a specific source (subcategory or keyword)
+  const manualImg = useMemo(() => {
+    if (event.image_source === "subcategory") return subImg;
+    if (event.image_source === "keyword") {
+      const kw = event.image_keyword?.toLowerCase().trim();
+      if (kw && keywordImages?.[kw]?.length) {
+        const imgs = keywordImages[kw];
+        const idx = event.keyword_image_index;
+        if (idx && idx >= 1 && idx <= imgs.length) return imgs[idx - 1];
+        return imgs[0];
+      }
+    }
+    return undefined;
+  }, [event.image_source, event.image_keyword, event.keyword_image_index, keywordImages, subImg]);
+
+  // Fallback: event image -> manual override -> explicit event keyword tag image -> title-scanned keyword -> subcategory -> category -> placeholder
   const cats = event.categorias?.length ? event.categorias : [event.categoria];
   let catImg: string | undefined;
   if (categoryImages) {
@@ -85,7 +101,7 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
       if (categoryImages[c]) { catImg = categoryImages[c]; break; }
     }
   }
-  const imgSrc = event.imagem || kwTagImg || kwImg || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
+  const imgSrc = event.imagem || manualImg || kwTagImg || kwImg || subImg || catImg || categoryPlaceholders[mainCat] || categoryPlaceholders.entretenimento;
 
   return (
     <div
