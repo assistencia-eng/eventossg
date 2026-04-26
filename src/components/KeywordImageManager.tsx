@@ -119,7 +119,6 @@ const KeywordImageManager = () => {
         .delete()
         .eq("keyword", keyword);
       if (error) throw error;
-      setLocalDrafts((prev) => prev.filter((k) => k !== keyword));
       toast.success(`Palavra-chave "${keyword}" removida`);
       await refetch();
     } catch (err: any) {
