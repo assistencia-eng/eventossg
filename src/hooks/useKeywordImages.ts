@@ -9,13 +9,22 @@ export const useKeywordImages = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchImages = async () => {
-    const { data } = await (supabase as any)
-      .from("keyword_images")
-      .select("keyword, image_url, image_index")
-      .order("image_index", { ascending: true });
-    if (data) {
-      const map: KeywordImageMap = {};
-      data.forEach((row: any) => {
+    const [kwRes, subRes] = await Promise.all([
+      (supabase as any)
+        .from("keyword_images")
+        .select("keyword, image_url, image_index")
+        .order("image_index", { ascending: true }),
+      (supabase as any)
+        .from("subcategory_images")
+        .select("subcategory, image_url, image_index")
+        .order("image_index", { ascending: true }),
+    ]);
+
+    const map: KeywordImageMap = {};
+
+    // 1) Real keyword library entries (highest priority — declared by admin)
+    if (kwRes.data) {
+      kwRes.data.forEach((row: any) => {
         const key = (row.keyword || "").toLowerCase().trim();
         if (!key) return;
         if (!map[key]) map[key] = [];
@@ -24,8 +33,30 @@ export const useKeywordImages = () => {
           map[key].push(row.image_url);
         }
       });
-      setImages(map);
     }
+
+    // 2) Auto-derive keywords from subcategories so every existing
+    //    subcategory automatically becomes a usable keyword that reuses
+    //    the subcategory's images. If an admin already declared a keyword
+    //    with the same name and uploaded images, we keep the admin one.
+    if (subRes.data) {
+      const subMap: Record<string, string[]> = {};
+      subRes.data.forEach((row: any) => {
+        const key = (row.subcategory || "").toLowerCase().trim();
+        if (!key || !row.image_url) return;
+        if (!subMap[key]) subMap[key] = [];
+        subMap[key].push(row.image_url);
+      });
+      Object.entries(subMap).forEach(([key, imgs]) => {
+        const existing = map[key];
+        // Only fill if there's no real keyword with images already.
+        if (!existing || existing.length === 0) {
+          map[key] = imgs;
+        }
+      });
+    }
+
+    setImages(map);
     setLoading(false);
   };
 
