@@ -24,6 +24,7 @@ interface ExtractedEvent {
   cidade: string;
   endereco: string;
   data: string;
+  data_fim?: string | null;
   horario?: string | null;
   descricao: string;
   atracoes: string[];
@@ -324,6 +325,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           cidade: ev.cidade,
           endereco: ev.endereco,
           data: ev.data,
+          data_fim: ev.data_fim || null,
           horario: ev.horario || null,
           descricao: ev.descricao,
           atracoes: ev.atracoes,
@@ -504,7 +506,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Data</Label>
+                            <Label className="text-xs">Data início</Label>
                             <Input
                               type="date"
                               value={ev.data}
@@ -515,11 +517,11 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1.5">
-                            <Label className="text-xs">Local</Label>
+                            <Label className="text-xs">Data fim (opcional)</Label>
                             <Input
-                              value={ev.local}
-                              onChange={(e) => updateEvent(i, "local", e.target.value)}
-                              placeholder="Local / venue"
+                              type="date"
+                              value={ev.data_fim || ""}
+                              onChange={(e) => updateEvent(i, "data_fim", e.target.value || null)}
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -530,6 +532,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                               onChange={(e) => updateEvent(i, "horario", e.target.value)}
                             />
                           </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Local</Label>
+                          <Input
+                            value={ev.local}
+                            onChange={(e) => updateEvent(i, "local", e.target.value)}
+                            placeholder="Local / venue"
+                          />
                         </div>
 
                         <div className="space-y-1.5">
@@ -664,7 +675,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                             })}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {ev.cidade} • {ev.data}{ev.horario ? ` • ${ev.horario}` : ""} • {ev.local}
+                            {ev.cidade} • {ev.data}{ev.data_fim ? ` → ${ev.data_fim}` : ""}{ev.horario ? ` • ${ev.horario}` : ""} • {ev.local}
                           </p>
                           {ev.subcategorias?.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
