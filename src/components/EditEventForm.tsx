@@ -62,6 +62,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     recurring_days: [] as string[],
     subcategory_image_index: null as number | null,
     keywords: [] as string[],
+    image_source: "auto" as "auto" | "subcategory" | "keyword",
+    image_keyword: null as string | null,
+    keyword_image_index: null as number | null,
   });
 
   useEffect(() => {
@@ -83,6 +86,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         recurring_days: event.recurring_days || [],
         subcategory_image_index: event.subcategory_image_index ?? null,
         keywords: event.keywords || [],
+        image_source: (event.image_source as any) || "auto",
+        image_keyword: event.image_keyword ?? null,
+        keyword_image_index: event.keyword_image_index ?? null,
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
