@@ -62,6 +62,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     recurring_days: [] as string[],
     subcategory_image_index: null as number | null,
     keywords: [] as string[],
+    image_source: "auto" as "auto" | "subcategory" | "keyword",
+    image_keyword: null as string | null,
+    keyword_image_index: null as number | null,
   });
 
   useEffect(() => {
@@ -83,6 +86,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         recurring_days: event.recurring_days || [],
         subcategory_image_index: event.subcategory_image_index ?? null,
         keywords: event.keywords || [],
+        image_source: (event.image_source as any) || "auto",
+        image_keyword: event.image_keyword ?? null,
+        keyword_image_index: event.keyword_image_index ?? null,
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
@@ -180,7 +186,10 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         recurring_days: form.recurring_days,
         subcategory_image_index: imageFile || event.imagem ? null : form.subcategory_image_index,
         keywords: form.keywords,
-      }).eq("id", event.id);
+        image_source: (imageFile || event.imagem) ? "auto" : form.image_source,
+        image_keyword: form.image_source === "keyword" ? form.image_keyword : null,
+        keyword_image_index: form.image_source === "keyword" ? form.keyword_image_index : null,
+      } as any).eq("id", event.id);
 
       if (updateError) throw updateError;
 
@@ -364,9 +373,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
             </label>
           </div>
 
-          {/* Subcategory image selector - shown when no custom image is used */}
+          {/* Image source selector - shown when no custom image is uploaded */}
           {!imagePreview && !imageFile && (() => {
-            // Find a (categoria, subcategoria) pair that has uploaded images
+            // Find a (categoria, subcategoria) pair with uploaded images
             let subWithImages: string | undefined;
             let catForSub: EventCategory | undefined;
             let subImgs: string[] = [];
@@ -382,57 +391,199 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               }
               if (subWithImages) break;
             }
-            if (!subWithImages || subImgs.length === 0) return null;
+
+            // Available keywords on this event that actually have images
+            const eventKeywordsWithImgs = (form.keywords || []).filter((kw) => {
+              const k = kw.toLowerCase().trim();
+              return keywordImages[k] && keywordImages[k].length > 0;
+            });
+
+            const hasSub = !!subWithImages && subImgs.length > 0;
+            const hasKw = eventKeywordsWithImgs.length > 0;
+            if (!hasSub && !hasKw) return null;
+
+            const currentKeyword = form.image_keyword && eventKeywordsWithImgs.includes(form.image_keyword)
+              ? form.image_keyword
+              : eventKeywordsWithImgs[0];
+            const currentKwImgs = currentKeyword
+              ? (keywordImages[currentKeyword.toLowerCase().trim()] || [])
+              : [];
+
             return (
-              <div className="space-y-2">
-                <Label>Imagem da subcategoria <span className="text-xs text-muted-foreground">({categoryLabels[catForSub!]} → {subWithImages})</span></Label>
-                <p className="text-xs text-muted-foreground">
-                  Como este evento não tem imagem própria, escolha qual das imagens da subcategoria será exibida no card. Deixe em "Automático" para variação.
-                </p>
-                <div className="grid grid-cols-4 gap-2">
+              <div className="space-y-3 p-3 rounded-lg border border-border bg-secondary/20">
+                <div>
+                  <Label>Imagem do card</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Escolha de qual fonte virá a imagem exibida no card deste evento.
+                  </p>
+                </div>
+
+                {/* Source tabs */}
+                <div className="flex gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, subcategory_image_index: null })}
-                    className={`aspect-[4/3] rounded-lg border-2 flex flex-col items-center justify-center text-xs font-medium transition-all ${
-                      form.subcategory_image_index === null
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border bg-secondary text-muted-foreground hover:border-primary/50"
+                    onClick={() => setForm({ ...form, image_source: "auto", subcategory_image_index: null, image_keyword: null, keyword_image_index: null })}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                      form.image_source === "auto"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
                     }`}
                   >
-                    Auto
+                    Automático
                   </button>
-                  {[1, 2, 3].map((slot) => {
-                    const url = subImgs[slot - 1];
-                    if (!url) {
-                      return (
-                        <div
-                          key={slot}
-                          className="aspect-[4/3] rounded-lg border-2 border-dashed border-border bg-secondary/30 flex items-center justify-center text-[10px] text-muted-foreground"
-                        >
-                          Slot {slot}
-                        </div>
-                      );
-                    }
-                    const isSelected = form.subcategory_image_index === slot;
-                    return (
+                  {hasSub && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, image_source: "subcategory", image_keyword: null, keyword_image_index: null })}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                        form.image_source === "subcategory"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                      }`}
+                    >
+                      Subcategoria
+                    </button>
+                  )}
+                  {hasKw && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({
+                        ...form,
+                        image_source: "keyword",
+                        subcategory_image_index: null,
+                        image_keyword: form.image_keyword || eventKeywordsWithImgs[0],
+                      })}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                        form.image_source === "keyword"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                      }`}
+                    >
+                      Palavra-chave
+                    </button>
+                  )}
+                </div>
+
+                {/* Subcategory image picker */}
+                {form.image_source === "subcategory" && hasSub && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      ({categoryLabels[catForSub!]} → {subWithImages}) — escolha qual imagem usar ou deixe em "Auto" para variação.
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
                       <button
-                        key={slot}
                         type="button"
-                        onClick={() => setForm({ ...form, subcategory_image_index: slot })}
-                        className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
-                          isSelected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"
+                        onClick={() => setForm({ ...form, subcategory_image_index: null })}
+                        className={`aspect-[4/3] rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all ${
+                          form.subcategory_image_index === null
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-secondary text-muted-foreground hover:border-primary/50"
                         }`}
                       >
-                        <img src={url} alt={`Imagem ${slot}`} className="w-full h-full object-cover" />
-                        {isSelected && (
-                          <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-primary-foreground" />
-                          </div>
-                        )}
+                        Auto
                       </button>
-                    );
-                  })}
-                </div>
+                      {[1, 2, 3].map((slot) => {
+                        const url = subImgs[slot - 1];
+                        if (!url) {
+                          return (
+                            <div key={slot} className="aspect-[4/3] rounded-lg border-2 border-dashed border-border bg-secondary/30 flex items-center justify-center text-[10px] text-muted-foreground">
+                              Slot {slot}
+                            </div>
+                          );
+                        }
+                        const isSelected = form.subcategory_image_index === slot;
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setForm({ ...form, subcategory_image_index: slot })}
+                            className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
+                              isSelected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <img src={url} alt={`Imagem ${slot}`} className="w-full h-full object-cover" />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                                <Check className="w-5 h-5 text-primary-foreground" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Keyword image picker */}
+                {form.image_source === "keyword" && hasKw && (
+                  <div className="space-y-2">
+                    {eventKeywordsWithImgs.length > 1 && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Escolha a palavra-chave:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {eventKeywordsWithImgs.map((kw) => (
+                            <button
+                              key={kw}
+                              type="button"
+                              onClick={() => setForm({ ...form, image_keyword: kw, keyword_image_index: null })}
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                                currentKeyword === kw
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-secondary text-secondary-foreground border-border hover:border-primary/50"
+                              }`}
+                            >
+                              {kw}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Imagens da palavra-chave <strong>{currentKeyword}</strong>:
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, keyword_image_index: null })}
+                        className={`aspect-[4/3] rounded-lg border-2 flex items-center justify-center text-xs font-medium transition-all ${
+                          form.keyword_image_index === null
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-secondary text-muted-foreground hover:border-primary/50"
+                        }`}
+                      >
+                        Auto
+                      </button>
+                      {[1, 2, 3].map((slot) => {
+                        const url = currentKwImgs[slot - 1];
+                        if (!url) {
+                          return (
+                            <div key={slot} className="aspect-[4/3] rounded-lg border-2 border-dashed border-border bg-secondary/30 flex items-center justify-center text-[10px] text-muted-foreground">
+                              Slot {slot}
+                            </div>
+                          );
+                        }
+                        const isSelected = form.keyword_image_index === slot;
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            onClick={() => setForm({ ...form, keyword_image_index: slot })}
+                            className={`relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all ${
+                              isSelected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <img src={url} alt={`${currentKeyword} ${slot}`} className="w-full h-full object-cover" />
+                            {isSelected && (
+                              <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                                <Check className="w-5 h-5 text-primary-foreground" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}

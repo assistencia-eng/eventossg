@@ -105,6 +105,9 @@ const Index = () => {
           recurring_days: (e as any).recurring_days ?? [],
           subcategory_image_index: (e as any).subcategory_image_index ?? null,
           keywords: (e as any).keywords ?? [],
+          image_source: (e as any).image_source ?? "auto",
+          image_keyword: (e as any).image_keyword ?? null,
+          keyword_image_index: (e as any).keyword_image_index ?? null,
         }))
       );
     }

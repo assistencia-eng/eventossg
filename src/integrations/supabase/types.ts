@@ -177,9 +177,12 @@ export type Database = {
           endereco: string
           horario: string | null
           id: string
+          image_keyword: string | null
+          image_source: string
           imagem: string | null
           is_featured: boolean
           is_recurring: boolean
+          keyword_image_index: number | null
           keywords: string[]
           latitude: number
           local: string
@@ -207,9 +210,12 @@ export type Database = {
           endereco?: string
           horario?: string | null
           id?: string
+          image_keyword?: string | null
+          image_source?: string
           imagem?: string | null
           is_featured?: boolean
           is_recurring?: boolean
+          keyword_image_index?: number | null
           keywords?: string[]
           latitude?: number
           local?: string
@@ -237,9 +243,12 @@ export type Database = {
           endereco?: string
           horario?: string | null
           id?: string
+          image_keyword?: string | null
+          image_source?: string
           imagem?: string | null
           is_featured?: boolean
           is_recurring?: boolean
+          keyword_image_index?: number | null
           keywords?: string[]
           latitude?: number
           local?: string
