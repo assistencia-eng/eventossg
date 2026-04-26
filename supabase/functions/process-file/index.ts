@@ -27,7 +27,8 @@ Para cada evento, retorne um objeto JSON com os seguintes campos:
 - local: nome do local/venue
 - cidade: cidade do evento
 - endereco: endereço completo
-- data: data no formato YYYY-MM-DD (se não tiver ano, use 2026)
+- data: data de INÍCIO no formato YYYY-MM-DD (se não tiver ano, use 2026)
+- data_fim: data de TÉRMINO no formato YYYY-MM-DD. **OBRIGATÓRIO** verificar se o evento dura mais de um dia (ex.: festivais, feiras, exposições com período "de X a Y", "entre X e Y", "X até Y"). Se durar mais de um dia, preencha com a data final. Se for um evento de um único dia, retorne null.
 - horario: horário no formato HH:MM (24h), opcional
 - descricao: descrição do evento
 - atracoes: array de strings com as atrações
