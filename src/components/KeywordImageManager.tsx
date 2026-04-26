@@ -48,15 +48,7 @@ const KeywordImageManager = () => {
     }
   };
 
-  // Local-only keyword drafts (not yet persisted because no image uploaded)
-  const [localDrafts, setLocalDrafts] = useState<string[]>([]);
-
-  const allKeywords = useMemo(() => {
-    const set = new Set<string>([...keywords, ...localDrafts.filter((k) =>
-      !search.trim() || k.includes(search.toLowerCase())
-    )]);
-    return Array.from(set).sort();
-  }, [keywords, localDrafts, search]);
+  const allKeywords = useMemo(() => keywords, [keywords]);
 
   const handleUpload = async (keyword: string, slotIndex: number, file: File) => {
     const slotKey = `${keyword}-${slotIndex}`;
