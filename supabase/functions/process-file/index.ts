@@ -204,6 +204,7 @@ serve(async (req) => {
         cidade: e.cidade || "Não informado",
         endereco: e.endereco || "Não informado",
         data: e.data || new Date().toISOString().split("T")[0],
+        data_fim: typeof e.data_fim === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.data_fim) && e.data_fim !== e.data ? e.data_fim : null,
         horario: typeof e.horario === "string" ? e.horario : null,
         descricao: e.descricao || "Não informado",
         atracoes: Array.isArray(e.atracoes) ? e.atracoes : [],
