@@ -1,6 +1,6 @@
 import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
 import { categoryColors } from "@/data/categoryColors";
-import { Calendar, MapPin, Star, Repeat } from "lucide-react";
+import { Calendar, MapPin, Star, Repeat, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -164,12 +164,20 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
         )}
 
         <div className="space-y-1.5 text-sm">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="text-neutral-300 text-xs">
-              {formattedDate}
-              {formattedEndDate && ` — ${formattedEndDate}`}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-neutral-300 text-xs">
+                {formattedDate}
+                {formattedEndDate && ` — ${formattedEndDate}`}
+              </span>
+            </div>
+            {event.horario && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span className="text-neutral-300 text-xs">{event.horario}</span>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
