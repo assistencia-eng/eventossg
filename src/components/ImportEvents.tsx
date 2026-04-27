@@ -204,7 +204,10 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
       const allEvents: ExtractedEvent[] = [];
 
       for (const file of files) {
-        const content = await extractTextFromFile(file);
+        const isICSFile = file.name.split(".").pop()?.toLowerCase() === "ics";
+        const rawICS = isICSFile ? await file.text() : "";
+        const icsEvents = isICSFile ? parseICSEvents(rawICS) : [];
+        const content = isICSFile ? await extractTextFromFile(file) : await extractTextFromFile(file);
 
         const { data, error: fnError } = await supabase.functions.invoke("process-file", {
           body: { content, fileName: file.name, availableKeywords },
@@ -214,13 +217,20 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         if (data?.error) throw new Error(data.error);
 
         if (data?.events) {
-          // Normalize: ensure keywords is always an array of strings from the library
-          const normalized = (data.events as ExtractedEvent[]).map((ev) => ({
-            ...ev,
-            keywords: Array.isArray(ev.keywords)
-              ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
-              : [],
-          }));
+          // Normalize: ensure keywords is always an array of strings from the library.
+          // For ICS files, force the dates extracted by the deterministic parser so the AI cannot duplicate today's date.
+          const normalized = (data.events as ExtractedEvent[]).map((ev, index) => {
+            const icsEvent = icsEvents[index];
+            return {
+              ...ev,
+              data: icsEvent?.startDate || ev.data,
+              data_fim: icsEvent?.endDate ?? ev.data_fim ?? null,
+              horario: icsEvent?.time ?? ev.horario ?? null,
+              keywords: Array.isArray(ev.keywords)
+                ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
+                : [],
+            };
+          });
           allEvents.push(...normalized);
         }
       }
