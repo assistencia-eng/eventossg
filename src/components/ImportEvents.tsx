@@ -51,6 +51,7 @@ interface ExistingEventLite {
   nome: string;
   cidade: string;
   data: string;
+  data_fim: string | null;
   local: string;
 }
 
