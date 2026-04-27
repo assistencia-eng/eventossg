@@ -51,6 +51,7 @@ interface ExistingEventLite {
   nome: string;
   cidade: string;
   data: string;
+  data_fim: string | null;
   local: string;
 }
 
@@ -101,6 +102,12 @@ const findDuplicate = (ev: ExtractedEvent, existing: ExistingEventLite[]): Exist
   return null;
 };
 
+const datesDiffer = (ev: ExtractedEvent, ex: ExistingEventLite): boolean => {
+  const evFim = ev.data_fim || null;
+  const exFim = ex.data_fim || null;
+  return ex.data !== ev.data || exFim !== evFim;
+};
+
 const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [step, setStep] = useState<ImportStep>("upload");
   const [files, setFiles] = useState<File[]>([]);
@@ -111,6 +118,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 });
   const [existingEvents, setExistingEvents] = useState<ExistingEventLite[]>([]);
   const [skipDuplicates, setSkipDuplicates] = useState<Set<number>>(new Set());
+  const [updateDateDuplicates, setUpdateDateDuplicates] = useState<Set<number>>(new Set());
   const [showDupConfirm, setShowDupConfirm] = useState(false);
 
   const catVersion = useCategoriesVersion();
@@ -126,7 +134,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     (async () => {
       const { data, error: err } = await supabase
         .from("events")
-        .select("id, nome, cidade, data, local");
+        .select("id, nome, cidade, data, data_fim, local");
       if (!cancelled && !err && data) setExistingEvents(data as ExistingEventLite[]);
     })();
     return () => { cancelled = true; };
@@ -154,6 +162,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setEditingIndex(null);
     setError(null);
     setSkipDuplicates(new Set());
+    setUpdateDateDuplicates(new Set());
     setShowDupConfirm(false);
   };
 
@@ -164,7 +173,29 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
       else next.add(index);
       return next;
     });
+    // If marking to skip, can't also be updating date
+    setUpdateDateDuplicates((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   };
+
+  const toggleUpdateDateDuplicate = (index: number) => {
+    setUpdateDateDuplicates((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+    // If marking to update date, can't also be skipping
+    setSkipDuplicates((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+  };
+
 
   const handleClose = () => {
     reset();
@@ -302,8 +333,10 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
   const handleConfirmClick = () => {
     if (extractedEvents.length === 0) return;
-    // Pending duplicates that aren't yet marked to skip => warn
-    const pendingDups = Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i));
+    // Pending duplicates that aren't yet decided (skip OR update-date) => warn
+    const pendingDups = Array.from(duplicateMap.keys()).filter(
+      (i) => !skipDuplicates.has(i) && !updateDateDuplicates.has(i)
+    );
     if (pendingDups.length > 0) {
       setShowDupConfirm(true);
       return;
@@ -312,48 +345,77 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   };
 
   const confirmImport = async () => {
-    // Filter out duplicates the admin chose to skip
-    const toImport = extractedEvents.filter((_, i) => !skipDuplicates.has(i));
-    if (toImport.length === 0) {
+    // Indices to UPDATE (only date) instead of inserting as new event
+    const updateIndices = Array.from(updateDateDuplicates).filter((i) => duplicateMap.has(i));
+    // Indices to insert as brand new events (not skipped, not date-update)
+    const insertIndices = extractedEvents
+      .map((_, i) => i)
+      .filter((i) => !skipDuplicates.has(i) && !updateDateDuplicates.has(i));
+
+    const toInsert = insertIndices.map((i) => extractedEvents[i]);
+    const totalActions = toInsert.length + updateIndices.length;
+
+    if (totalActions === 0) {
       toast.info("Nenhum evento para importar (todos foram marcados como duplicados).");
       return;
     }
+
     setStep("geocoding");
 
     try {
-      const geoResults = await geocodeBatch(
-        toImport.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
-        (current, total) => setGeocodeProgress({ current, total })
-      );
+      const geoResults = toInsert.length > 0
+        ? await geocodeBatch(
+            toInsert.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
+            (current, total) => setGeocodeProgress({ current, total })
+          )
+        : [];
 
       setStep("saving");
 
-      const { error: insertError } = await supabase.from("events").insert(
-        toImport.map((ev, i) => ({
-          nome: ev.nome,
-          local: ev.local,
-          cidade: ev.cidade,
-          endereco: ev.endereco,
-          data: ev.data,
-          data_fim: ev.data_fim || null,
-          horario: ev.horario || null,
-          descricao: ev.descricao,
-          atracoes: ev.atracoes,
-          categoria: ev.categoria,
-          categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
-          subcategorias: ev.subcategorias || [],
-          keywords: ev.keywords || [],
-          latitude: geoResults[i].latitude,
-          longitude: geoResults[i].longitude,
-        }))
-      );
+      // 1) UPDATE date-only for duplicates the admin chose to refresh
+      let updatedCount = 0;
+      for (const idx of updateIndices) {
+        const ev = extractedEvents[idx];
+        const dup = duplicateMap.get(idx);
+        if (!dup) continue;
+        const { error: updateError } = await supabase
+          .from("events")
+          .update({ data: ev.data, data_fim: ev.data_fim || null })
+          .eq("id", dup.id);
+        if (updateError) throw updateError;
+        updatedCount += 1;
+      }
 
-      if (insertError) throw insertError;
+      // 2) INSERT new events
+      if (toInsert.length > 0) {
+        const { error: insertError } = await supabase.from("events").insert(
+          toInsert.map((ev, i) => ({
+            nome: ev.nome,
+            local: ev.local,
+            cidade: ev.cidade,
+            endereco: ev.endereco,
+            data: ev.data,
+            data_fim: ev.data_fim || null,
+            horario: ev.horario || null,
+            descricao: ev.descricao,
+            atracoes: ev.atracoes,
+            categoria: ev.categoria,
+            categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
+            subcategorias: ev.subcategorias || [],
+            keywords: ev.keywords || [],
+            latitude: geoResults[i].latitude,
+            longitude: geoResults[i].longitude,
+          }))
+        );
+        if (insertError) throw insertError;
+      }
 
-      const skippedCount = extractedEvents.length - toImport.length;
-      toast.success(
-        `${toImport.length} evento(s) importado(s)${skippedCount > 0 ? ` • ${skippedCount} duplicado(s) ignorado(s)` : ""}.`
-      );
+      const skippedCount = skipDuplicates.size;
+      const parts: string[] = [];
+      if (toInsert.length > 0) parts.push(`${toInsert.length} importado(s)`);
+      if (updatedCount > 0) parts.push(`${updatedCount} atualizado(s)`);
+      if (skippedCount > 0) parts.push(`${skippedCount} ignorado(s)`);
+      toast.success(parts.join(" • ") || "Importação concluída.");
       onImported();
       handleClose();
     } catch (err) {
@@ -470,11 +532,13 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
               const dup = duplicateMap.get(i);
               const skipped = skipDuplicates.has(i);
+              const willUpdateDate = updateDateDuplicates.has(i);
+              const dateChanged = dup ? datesDiffer(ev, dup) : false;
 
               return (
                 <Card
                   key={i}
-                  className={`overflow-hidden ${dup ? (skipped ? "border-muted opacity-60" : "border-amber-500/60 ring-1 ring-amber-500/30") : ""}`}
+                  className={`overflow-hidden ${dup ? (skipped ? "border-muted opacity-60" : willUpdateDate ? "border-primary/60 ring-1 ring-primary/30" : "border-amber-500/60 ring-1 ring-amber-500/30") : ""}`}
                 >
                   <CardContent className="p-4 space-y-2">
                     {dup && (
@@ -484,14 +548,36 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                           <p className="font-medium">Possível evento duplicado</p>
                           <p className="opacity-90 truncate">
                             Já existe: <span className="font-medium">{dup.nome}</span> — {dup.cidade} • {dup.data}
+                            {dup.data_fim ? ` → ${dup.data_fim}` : ""}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => toggleSkipDuplicate(i)}
-                            className="mt-1 underline underline-offset-2 hover:text-amber-100"
-                          >
-                            {skipped ? "Importar mesmo assim" : "Não importar este evento"}
-                          </button>
+                          {dateChanged && (
+                            <p className="mt-1 opacity-90">
+                              Nova data detectada: <span className="font-medium">{ev.data}{ev.data_fim ? ` → ${ev.data_fim}` : ""}</span>
+                            </p>
+                          )}
+                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                            {dateChanged && (
+                              <button
+                                type="button"
+                                onClick={() => toggleUpdateDateDuplicate(i)}
+                                className="underline underline-offset-2 hover:text-amber-100"
+                              >
+                                {willUpdateDate ? "Cancelar atualização de data" : "Atualizar apenas a data do evento existente"}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => toggleSkipDuplicate(i)}
+                              className="underline underline-offset-2 hover:text-amber-100"
+                            >
+                              {skipped ? "Importar mesmo assim" : "Não importar este evento"}
+                            </button>
+                          </div>
+                          {willUpdateDate && (
+                            <p className="mt-1 text-primary font-medium">
+                              ✓ A data do evento existente será atualizada (nenhum evento novo será criado).
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
