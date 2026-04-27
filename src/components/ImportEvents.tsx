@@ -532,11 +532,13 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
               const dup = duplicateMap.get(i);
               const skipped = skipDuplicates.has(i);
+              const willUpdateDate = updateDateDuplicates.has(i);
+              const dateChanged = dup ? datesDiffer(ev, dup) : false;
 
               return (
                 <Card
                   key={i}
-                  className={`overflow-hidden ${dup ? (skipped ? "border-muted opacity-60" : "border-amber-500/60 ring-1 ring-amber-500/30") : ""}`}
+                  className={`overflow-hidden ${dup ? (skipped ? "border-muted opacity-60" : willUpdateDate ? "border-primary/60 ring-1 ring-primary/30" : "border-amber-500/60 ring-1 ring-amber-500/30") : ""}`}
                 >
                   <CardContent className="p-4 space-y-2">
                     {dup && (
@@ -546,14 +548,36 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                           <p className="font-medium">Possível evento duplicado</p>
                           <p className="opacity-90 truncate">
                             Já existe: <span className="font-medium">{dup.nome}</span> — {dup.cidade} • {dup.data}
+                            {dup.data_fim ? ` → ${dup.data_fim}` : ""}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => toggleSkipDuplicate(i)}
-                            className="mt-1 underline underline-offset-2 hover:text-amber-100"
-                          >
-                            {skipped ? "Importar mesmo assim" : "Não importar este evento"}
-                          </button>
+                          {dateChanged && (
+                            <p className="mt-1 opacity-90">
+                              Nova data detectada: <span className="font-medium">{ev.data}{ev.data_fim ? ` → ${ev.data_fim}` : ""}</span>
+                            </p>
+                          )}
+                          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                            {dateChanged && (
+                              <button
+                                type="button"
+                                onClick={() => toggleUpdateDateDuplicate(i)}
+                                className="underline underline-offset-2 hover:text-amber-100"
+                              >
+                                {willUpdateDate ? "Cancelar atualização de data" : "Atualizar apenas a data do evento existente"}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => toggleSkipDuplicate(i)}
+                              className="underline underline-offset-2 hover:text-amber-100"
+                            >
+                              {skipped ? "Importar mesmo assim" : "Não importar este evento"}
+                            </button>
+                          </div>
+                          {willUpdateDate && (
+                            <p className="mt-1 text-primary font-medium">
+                              ✓ A data do evento existente será atualizada (nenhum evento novo será criado).
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
