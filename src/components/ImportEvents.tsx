@@ -333,8 +333,10 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
   const handleConfirmClick = () => {
     if (extractedEvents.length === 0) return;
-    // Pending duplicates that aren't yet marked to skip => warn
-    const pendingDups = Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i));
+    // Pending duplicates that aren't yet decided (skip OR update-date) => warn
+    const pendingDups = Array.from(duplicateMap.keys()).filter(
+      (i) => !skipDuplicates.has(i) && !updateDateDuplicates.has(i)
+    );
     if (pendingDups.length > 0) {
       setShowDupConfirm(true);
       return;
@@ -343,48 +345,77 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   };
 
   const confirmImport = async () => {
-    // Filter out duplicates the admin chose to skip
-    const toImport = extractedEvents.filter((_, i) => !skipDuplicates.has(i));
-    if (toImport.length === 0) {
+    // Indices to UPDATE (only date) instead of inserting as new event
+    const updateIndices = Array.from(updateDateDuplicates).filter((i) => duplicateMap.has(i));
+    // Indices to insert as brand new events (not skipped, not date-update)
+    const insertIndices = extractedEvents
+      .map((_, i) => i)
+      .filter((i) => !skipDuplicates.has(i) && !updateDateDuplicates.has(i));
+
+    const toInsert = insertIndices.map((i) => extractedEvents[i]);
+    const totalActions = toInsert.length + updateIndices.length;
+
+    if (totalActions === 0) {
       toast.info("Nenhum evento para importar (todos foram marcados como duplicados).");
       return;
     }
+
     setStep("geocoding");
 
     try {
-      const geoResults = await geocodeBatch(
-        toImport.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
-        (current, total) => setGeocodeProgress({ current, total })
-      );
+      const geoResults = toInsert.length > 0
+        ? await geocodeBatch(
+            toInsert.map((ev) => ({ endereco: ev.endereco, cidade: ev.cidade })),
+            (current, total) => setGeocodeProgress({ current, total })
+          )
+        : [];
 
       setStep("saving");
 
-      const { error: insertError } = await supabase.from("events").insert(
-        toImport.map((ev, i) => ({
-          nome: ev.nome,
-          local: ev.local,
-          cidade: ev.cidade,
-          endereco: ev.endereco,
-          data: ev.data,
-          data_fim: ev.data_fim || null,
-          horario: ev.horario || null,
-          descricao: ev.descricao,
-          atracoes: ev.atracoes,
-          categoria: ev.categoria,
-          categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
-          subcategorias: ev.subcategorias || [],
-          keywords: ev.keywords || [],
-          latitude: geoResults[i].latitude,
-          longitude: geoResults[i].longitude,
-        }))
-      );
+      // 1) UPDATE date-only for duplicates the admin chose to refresh
+      let updatedCount = 0;
+      for (const idx of updateIndices) {
+        const ev = extractedEvents[idx];
+        const dup = duplicateMap.get(idx);
+        if (!dup) continue;
+        const { error: updateError } = await supabase
+          .from("events")
+          .update({ data: ev.data, data_fim: ev.data_fim || null })
+          .eq("id", dup.id);
+        if (updateError) throw updateError;
+        updatedCount += 1;
+      }
 
-      if (insertError) throw insertError;
+      // 2) INSERT new events
+      if (toInsert.length > 0) {
+        const { error: insertError } = await supabase.from("events").insert(
+          toInsert.map((ev, i) => ({
+            nome: ev.nome,
+            local: ev.local,
+            cidade: ev.cidade,
+            endereco: ev.endereco,
+            data: ev.data,
+            data_fim: ev.data_fim || null,
+            horario: ev.horario || null,
+            descricao: ev.descricao,
+            atracoes: ev.atracoes,
+            categoria: ev.categoria,
+            categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
+            subcategorias: ev.subcategorias || [],
+            keywords: ev.keywords || [],
+            latitude: geoResults[i].latitude,
+            longitude: geoResults[i].longitude,
+          }))
+        );
+        if (insertError) throw insertError;
+      }
 
-      const skippedCount = extractedEvents.length - toImport.length;
-      toast.success(
-        `${toImport.length} evento(s) importado(s)${skippedCount > 0 ? ` • ${skippedCount} duplicado(s) ignorado(s)` : ""}.`
-      );
+      const skippedCount = skipDuplicates.size;
+      const parts: string[] = [];
+      if (toInsert.length > 0) parts.push(`${toInsert.length} importado(s)`);
+      if (updatedCount > 0) parts.push(`${updatedCount} atualizado(s)`);
+      if (skippedCount > 0) parts.push(`${skippedCount} ignorado(s)`);
+      toast.success(parts.join(" • ") || "Importação concluída.");
       onImported();
       handleClose();
     } catch (err) {
