@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { extractTextFromFile, isFileSupported } from "@/lib/fileParser";
+import { extractTextFromFile, isFileSupported, parseICSEvents } from "@/lib/fileParser";
 import { categoryLabels, categoryIcons, subcategoryOptions, type EventCategory } from "@/data/events";
 import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeBatch } from "@/lib/geocode";
