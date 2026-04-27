@@ -102,6 +102,12 @@ const findDuplicate = (ev: ExtractedEvent, existing: ExistingEventLite[]): Exist
   return null;
 };
 
+const datesDiffer = (ev: ExtractedEvent, ex: ExistingEventLite): boolean => {
+  const evFim = ev.data_fim || null;
+  const exFim = ex.data_fim || null;
+  return ex.data !== ev.data || exFim !== evFim;
+};
+
 const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [step, setStep] = useState<ImportStep>("upload");
   const [files, setFiles] = useState<File[]>([]);
