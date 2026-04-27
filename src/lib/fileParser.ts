@@ -1,71 +1,102 @@
 import * as XLSX from "xlsx";
 
+export interface ParsedICSEvent {
+  summary: string;
+  startDate: string;
+  endDate: string | null;
+  time: string | null;
+  location: string;
+  description: string;
+}
+
+const isValidICSDateValue = (raw: string) => /^\d{8}(?:T\d{4,6}Z?)?$/.test(raw);
+
+const unfoldICS = (text: string) => text.replace(/\r?\n[ \t]/g, "");
+
+const cleanICSValue = (value: string) =>
+  value
+    .trim()
+    .replace(/\\n/gi, " ")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";")
+    .replace(/\\\\/g, "\\");
+
+const getICSProp = (block: string, key: string): { value: string; params: string } => {
+  const re = new RegExp(`^${key}(;[^:\\r\\n]*)?:(.*)$`, "m");
+  const match = block.match(re);
+  if (!match) return { value: "", params: "" };
+  return { value: cleanICSValue(match[2]), params: match[1] || "" };
+};
+
+const parseICSDateValue = (raw: string): { date: string; time: string | null } => {
+  if (!isValidICSDateValue(raw)) return { date: "", time: null };
+
+  const date = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
+  const timeMatch = raw.match(/T(\d{2})(\d{2})/);
+
+  return {
+    date,
+    time: timeMatch ? `${timeMatch[1]}:${timeMatch[2]}` : null,
+  };
+};
+
+const subtractOneUTCDate = (date: string) => {
+  const [year, month, day] = date.split("-").map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day));
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
+
+export function parseICSEvents(text: string): ParsedICSEvent[] {
+  const unfolded = unfoldICS(text);
+  const blocks = unfolded.split("BEGIN:VEVENT").slice(1);
+
+  return blocks
+    .map((rawBlock) => {
+      const block = rawBlock.split("END:VEVENT")[0];
+      const dtStart = getICSProp(block, "DTSTART");
+      const dtEnd = getICSProp(block, "DTEND");
+      const start = parseICSDateValue(dtStart.value);
+      const end = parseICSDateValue(dtEnd.value);
+
+      const startIsAllDay = dtStart.params.includes("VALUE=DATE") || dtStart.value.length === 8;
+      const endIsAllDay = dtEnd.params.includes("VALUE=DATE") || dtEnd.value.length === 8;
+      let endDate = end.date || null;
+
+      if (startIsAllDay && endIsAllDay && endDate && endDate !== start.date) {
+        endDate = subtractOneUTCDate(endDate);
+      }
+
+      return {
+        summary: getICSProp(block, "SUMMARY").value,
+        startDate: start.date,
+        endDate: endDate && endDate !== start.date ? endDate : null,
+        time: start.time,
+        location: getICSProp(block, "LOCATION").value,
+        description: getICSProp(block, "DESCRIPTION").value,
+      };
+    })
+    .filter((event) => event.summary || event.startDate || event.location || event.description);
+}
+
 function parseICS(text: string): string {
-  // Unfold ICS lines (RFC 5545: continuation lines start with space/tab)
-  const unfolded = text.replace(/\r?\n[ \t]/g, "");
-  const events: string[] = [];
-  const blocks = unfolded.split("BEGIN:VEVENT");
-
-  // Extracts a property value, supporting parameters like DTSTART;TZID=...:value or DTSTART;VALUE=DATE:value
-  const getProp = (block: string, key: string): { value: string; params: string } => {
-    // Match start of line: KEY (optionally followed by ;params) then : then value (until end of line)
-    const re = new RegExp(`^${key}(;[^:\\r\\n]*)?:(.*)$`, "m");
-    const match = block.match(re);
-    if (!match) return { value: "", params: "" };
-    return {
-      value: match[2].trim().replace(/\\n/gi, " ").replace(/\\,/g, ",").replace(/\\;/g, ";"),
-      params: match[1] || "",
-    };
-  };
-
-  // Convert ICS date/datetime (YYYYMMDD or YYYYMMDDTHHMMSSZ) to { date: YYYY-MM-DD, time: HH:MM | "" }
-  const parseICSDate = (raw: string): { date: string; time: string } => {
-    if (!raw || raw.length < 8) return { date: "", time: "" };
-    const date = `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
-    let time = "";
-    // Datetime form: 20260315T193000Z or 20260315T193000
-    const tMatch = raw.match(/T(\d{2})(\d{2})/);
-    if (tMatch) time = `${tMatch[1]}:${tMatch[2]}`;
-    return { date, time };
-  };
-
-  for (let i = 1; i < blocks.length; i++) {
-    const block = blocks[i].split("END:VEVENT")[0];
-
-    const summary = getProp(block, "SUMMARY").value;
-    const location = getProp(block, "LOCATION").value;
-    const description = getProp(block, "DESCRIPTION").value;
-    const dtStartRaw = getProp(block, "DTSTART").value;
-    const dtEndRaw = getProp(block, "DTEND").value;
-
-    const start = parseICSDate(dtStartRaw);
-    const end = parseICSDate(dtEndRaw);
-
-    // For all-day events, DTEND in ICS is exclusive (next day). Subtract 1 day to get the real last day.
-    let endDate = end.date;
-    const isAllDay = dtStartRaw.length === 8 && dtEndRaw.length === 8;
-    if (isAllDay && endDate && endDate !== start.date) {
-      const d = new Date(`${endDate}T00:00:00Z`);
-      d.setUTCDate(d.getUTCDate() - 1);
-      endDate = d.toISOString().slice(0, 10);
-    }
-
-    const lines = [
-      `Evento: ${summary}`,
-      `Data de início (YYYY-MM-DD): ${start.date}`,
-    ];
-    if (endDate && endDate !== start.date) {
-      lines.push(`Data de término (YYYY-MM-DD): ${endDate}`);
-    }
-    if (start.time) lines.push(`Horário: ${start.time}`);
-    if (location) lines.push(`Local: ${location}`);
-    if (description) lines.push(`Descrição: ${description}`);
-
-    events.push(lines.join("\n"));
-  }
+  const events = parseICSEvents(text);
 
   return events.length > 0
-    ? `[Arquivo ICS — ${events.length} evento(s) encontrado(s). IMPORTANTE: use EXATAMENTE as datas indicadas em cada evento abaixo. NUNCA substitua pela data de hoje.]\n\n${events.join("\n---\n\n")}`
+    ? `[Arquivo ICS — ${events.length} evento(s) encontrado(s). IMPORTANTE: cada evento abaixo tem sua própria Data de início. Use EXATAMENTE a Data de início e Data de término indicada em cada bloco, na mesma ordem dos eventos. NUNCA substitua pela data de hoje nem copie a data de um evento para outro.]\n\n${events
+        .map((event, index) => {
+          const lines = [
+            `#${index + 1}`,
+            `Evento: ${event.summary}`,
+            `Data de início (YYYY-MM-DD): ${event.startDate}`,
+          ];
+          if (event.endDate) lines.push(`Data de término (YYYY-MM-DD): ${event.endDate}`);
+          if (event.time) lines.push(`Horário: ${event.time}`);
+          if (event.location) lines.push(`Local: ${event.location}`);
+          if (event.description) lines.push(`Descrição: ${event.description}`);
+          return lines.join("\n");
+        })
+        .join("\n---\n\n")}`
     : text;
 }
 

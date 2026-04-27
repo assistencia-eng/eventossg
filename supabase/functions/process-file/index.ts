@@ -53,6 +53,8 @@ Para keywords: analise o nome, descrição e atrações; selecione as palavras d
 Se algum campo estiver ausente, use "Não informado" para strings e [] para arrays.
 Classifique categoria, categorias e subcategorias com base no contexto, nome, atrações e descrição do evento.
 
+IMPORTANTE PARA ARQUIVOS ICS: cada bloco de evento possui sua própria linha "Data de início (YYYY-MM-DD): ...". Preserve a data de cada bloco individualmente, na mesma ordem do arquivo. Não copie a data do primeiro evento para os demais e nunca substitua por hoje.
+
 IMPORTANTE: Responda APENAS com um JSON válido no formato:
 { "events": [ { ...evento1 }, { ...evento2 } ] }`;
 
