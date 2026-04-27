@@ -118,6 +118,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [geocodeProgress, setGeocodeProgress] = useState({ current: 0, total: 0 });
   const [existingEvents, setExistingEvents] = useState<ExistingEventLite[]>([]);
   const [skipDuplicates, setSkipDuplicates] = useState<Set<number>>(new Set());
+  const [updateDateDuplicates, setUpdateDateDuplicates] = useState<Set<number>>(new Set());
   const [showDupConfirm, setShowDupConfirm] = useState(false);
 
   const catVersion = useCategoriesVersion();
@@ -133,7 +134,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     (async () => {
       const { data, error: err } = await supabase
         .from("events")
-        .select("id, nome, cidade, data, local");
+        .select("id, nome, cidade, data, data_fim, local");
       if (!cancelled && !err && data) setExistingEvents(data as ExistingEventLite[]);
     })();
     return () => { cancelled = true; };
@@ -161,7 +162,38 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setEditingIndex(null);
     setError(null);
     setSkipDuplicates(new Set());
+    setUpdateDateDuplicates(new Set());
     setShowDupConfirm(false);
+  };
+
+  const toggleSkipDuplicate = (index: number) => {
+    setSkipDuplicates((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+    // If marking to skip, can't also be updating date
+    setUpdateDateDuplicates((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
+  };
+
+  const toggleUpdateDateDuplicate = (index: number) => {
+    setUpdateDateDuplicates((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+    // If marking to update date, can't also be skipping
+    setSkipDuplicates((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
   };
 
   const toggleSkipDuplicate = (index: number) => {
