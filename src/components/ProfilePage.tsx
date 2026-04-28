@@ -31,6 +31,8 @@ interface ProfilePageProps {
   onImportEvents?: () => void;
   onOutdoorSettings?: () => void;
   onDeleteAll?: () => void;
+  onDeleteFiltered?: () => void;
+  availableCities?: string[];
   allEventsCount?: number;
 }
 
@@ -48,6 +50,8 @@ const ProfilePage = ({
   onImportEvents,
   onOutdoorSettings,
   onDeleteAll,
+  onDeleteFiltered,
+  availableCities,
   allEventsCount = 0,
 }: ProfilePageProps) => {
   const { user, profile, isAdmin, refreshProfile } = useAuth();
@@ -159,6 +163,11 @@ const ProfilePage = ({
             {onOutdoorSettings && (
               <Button variant="outline" size="sm" onClick={onOutdoorSettings} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
                 <Settings className="w-4 h-4 mr-1.5" /> Outdoor
+              </Button>
+            )}
+            {onDeleteFiltered && allEventsCount > 0 && (
+              <Button variant="outline" size="sm" onClick={onDeleteFiltered} className="text-destructive border-destructive/30 bg-[#303030]">
+                <Trash2 className="w-4 h-4 mr-1.5" /> Excluir por filtro
               </Button>
             )}
             {onDeleteAll && allEventsCount > 0 && (

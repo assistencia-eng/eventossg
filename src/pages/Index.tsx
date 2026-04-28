@@ -31,6 +31,7 @@ import { useUserInterests } from "@/hooks/useUserInterests";
 import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 import { useCategoryImages } from "@/hooks/useCategoryImages";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import { buildRecurrenceMap } from "@/lib/recurrence";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -52,6 +53,9 @@ const Index = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteFilteredOpen, setDeleteFilteredOpen] = useState(false);
+  const [deleteFilterMonth, setDeleteFilterMonth] = useState<string>(""); // YYYY-MM
+  const [deleteFilterCity, setDeleteFilterCity] = useState<string>("");
   const [searchCity, setSearchCity] = useState("");
   const [filterMonth, setFilterMonth] = useState(new Date());
   const [allDates, setAllDates] = useState(true);
@@ -117,6 +121,7 @@ const Index = () => {
 
   const allEvents = useMemo(() => dbEvents, [dbEvents]);
   const featuredEvents = useMemo(() => allEvents.filter((e) => e.is_featured), [allEvents]);
+  const recurrenceMap = useMemo(() => buildRecurrenceMap(allEvents), [allEvents]);
 
   const availableCities = useMemo(() => {
     const cities = new Set(allEvents.map((e) => e.cidade));
@@ -222,13 +227,25 @@ const Index = () => {
     return results;
   }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
 
-  const upcomingEvents = useMemo(
-    () => filteredEvents.filter(({ event }) => {
+  const upcomingEvents = useMemo(() => {
+    const list = filteredEvents.filter(({ event }) => {
       const end = event.data_fim ? new Date(event.data_fim) : new Date(event.data);
       return end >= today;
-    }),
-    [filteredEvents, today]
-  );
+    });
+    // Collapse recurring groups to only the next upcoming occurrence per name.
+    const seenRecurring = new Set<string>();
+    const collapsed: typeof list = [];
+    const normName = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    for (const item of list) {
+      if (recurrenceMap.has(item.event.id)) {
+        const key = normName(item.event.nome);
+        if (seenRecurring.has(key)) continue;
+        seenRecurring.add(key);
+      }
+      collapsed.push(item);
+    }
+    return collapsed;
+  }, [filteredEvents, today, recurrenceMap]);
 
   const pastEvents = useMemo(
     () => filteredEvents.filter(({ event }) => {
@@ -291,6 +308,37 @@ const Index = () => {
     setDeleteAllOpen(false);
   };
 
+  const filteredForDeletion = useMemo(() => {
+    return allEvents.filter((e) => {
+      if (deleteFilterMonth) {
+        // YYYY-MM matches start date OR end date OR spans the month
+        const ymStart = e.data?.slice(0, 7);
+        const ymEnd = e.data_fim?.slice(0, 7);
+        if (ymStart !== deleteFilterMonth && ymEnd !== deleteFilterMonth) return false;
+      }
+      if (deleteFilterCity && e.cidade !== deleteFilterCity) return false;
+      return true;
+    });
+  }, [allEvents, deleteFilterMonth, deleteFilterCity]);
+
+  const handleDeleteFiltered = async () => {
+    const ids = filteredForDeletion.map((e) => e.id);
+    if (ids.length === 0) {
+      toast.info("Nenhum evento corresponde aos filtros.");
+      return;
+    }
+    const { error } = await supabase.from("events").delete().in("id", ids);
+    if (error) toast.error("Erro ao excluir.");
+    else {
+      toast.success(`${ids.length} evento(s) excluído(s)!`);
+      setSelectedIds(new Set());
+      setDeleteFilterMonth("");
+      setDeleteFilterCity("");
+      fetchDbEvents();
+    }
+    setDeleteFilteredOpen(false);
+  };
+
   const userInitials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() || "?";
@@ -310,7 +358,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#151414] pb-20">
       {/* User header bar */}
-      <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md">
+      <div className="sticky top-0 z-40 bg-[#7e0127]">
         <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
           <h1 className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin">Serra Eventos</h1>
           <div className="flex items-center gap-3">
@@ -408,6 +456,7 @@ const Index = () => {
                     subcategoryImages={subcategoryImages}
                     categoryImages={categoryImages}
                     keywordImages={keywordImages}
+                    recurrenceLabel={recurrenceMap.get(event.id)?.label || null}
                   />
                 ))}
               </div>
@@ -472,6 +521,8 @@ const Index = () => {
           onImportEvents={() => setImportOpen(true)}
           onOutdoorSettings={() => setOutdoorSettingsOpen(true)}
           onDeleteAll={() => setDeleteAllOpen(true)}
+          onDeleteFiltered={() => setDeleteFilteredOpen(true)}
+          availableCities={availableCities}
           allEventsCount={allEvents.length}
         />
       )}
@@ -520,6 +571,56 @@ const Index = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir todos</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete by filter (month / city) */}
+      <AlertDialog open={deleteFilteredOpen} onOpenChange={setDeleteFilteredOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir eventos por filtro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione um mês e/ou uma cidade. Apenas eventos que correspondem aos filtros serão excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Mês</label>
+              <Input
+                type="month"
+                value={deleteFilterMonth}
+                onChange={(e) => setDeleteFilterMonth(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Cidade</label>
+              <select
+                value={deleteFilterCity}
+                onChange={(e) => setDeleteFilterCity(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                <option value="">Todas as cidades</option>
+                {availableCities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {filteredForDeletion.length} evento(s) corresponde(m) aos filtros.
+            </p>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteFiltered}
+              disabled={filteredForDeletion.length === 0}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir {filteredForDeletion.length}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
