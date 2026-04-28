@@ -310,7 +310,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#151414] pb-20">
       {/* User header bar */}
-      <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md">
+      <div className="sticky top-0 z-40 bg-[#7e0127]">
         <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
           <h1 className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin">Serra Eventos</h1>
           <div className="flex items-center gap-3">
