@@ -296,6 +296,37 @@ const Index = () => {
     setDeleteAllOpen(false);
   };
 
+  const filteredForDeletion = useMemo(() => {
+    return allEvents.filter((e) => {
+      if (deleteFilterMonth) {
+        // YYYY-MM matches start date OR end date OR spans the month
+        const ymStart = e.data?.slice(0, 7);
+        const ymEnd = e.data_fim?.slice(0, 7);
+        if (ymStart !== deleteFilterMonth && ymEnd !== deleteFilterMonth) return false;
+      }
+      if (deleteFilterCity && e.cidade !== deleteFilterCity) return false;
+      return true;
+    });
+  }, [allEvents, deleteFilterMonth, deleteFilterCity]);
+
+  const handleDeleteFiltered = async () => {
+    const ids = filteredForDeletion.map((e) => e.id);
+    if (ids.length === 0) {
+      toast.info("Nenhum evento corresponde aos filtros.");
+      return;
+    }
+    const { error } = await supabase.from("events").delete().in("id", ids);
+    if (error) toast.error("Erro ao excluir.");
+    else {
+      toast.success(`${ids.length} evento(s) excluído(s)!`);
+      setSelectedIds(new Set());
+      setDeleteFilterMonth("");
+      setDeleteFilterCity("");
+      fetchDbEvents();
+    }
+    setDeleteFilteredOpen(false);
+  };
+
   const userInitials = profile?.full_name
     ? profile.full_name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase()
     : user?.email?.[0]?.toUpperCase() || "?";
