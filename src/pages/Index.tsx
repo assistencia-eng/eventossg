@@ -227,13 +227,25 @@ const Index = () => {
     return results;
   }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
 
-  const upcomingEvents = useMemo(
-    () => filteredEvents.filter(({ event }) => {
+  const upcomingEvents = useMemo(() => {
+    const list = filteredEvents.filter(({ event }) => {
       const end = event.data_fim ? new Date(event.data_fim) : new Date(event.data);
       return end >= today;
-    }),
-    [filteredEvents, today]
-  );
+    });
+    // Collapse recurring groups to only the next upcoming occurrence per name.
+    const seenRecurring = new Set<string>();
+    const collapsed: typeof list = [];
+    const normName = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    for (const item of list) {
+      if (recurrenceMap.has(item.event.id)) {
+        const key = normName(item.event.nome);
+        if (seenRecurring.has(key)) continue;
+        seenRecurring.add(key);
+      }
+      collapsed.push(item);
+    }
+    return collapsed;
+  }, [filteredEvents, today, recurrenceMap]);
 
   const pastEvents = useMemo(
     () => filteredEvents.filter(({ event }) => {
@@ -444,6 +456,7 @@ const Index = () => {
                     subcategoryImages={subcategoryImages}
                     categoryImages={categoryImages}
                     keywordImages={keywordImages}
+                    recurrenceLabel={recurrenceMap.get(event.id)?.label || null}
                   />
                 ))}
               </div>
