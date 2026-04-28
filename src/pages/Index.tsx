@@ -574,6 +574,56 @@ const Index = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete by filter (month / city) */}
+      <AlertDialog open={deleteFilteredOpen} onOpenChange={setDeleteFilteredOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir eventos por filtro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione um mês e/ou uma cidade. Apenas eventos que correspondem aos filtros serão excluídos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Mês</label>
+              <Input
+                type="month"
+                value={deleteFilterMonth}
+                onChange={(e) => setDeleteFilterMonth(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Cidade</label>
+              <select
+                value={deleteFilterCity}
+                onChange={(e) => setDeleteFilterCity(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+              >
+                <option value="">Todas as cidades</option>
+                {availableCities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {filteredForDeletion.length} evento(s) corresponde(m) aos filtros.
+            </p>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteFiltered}
+              disabled={filteredForDeletion.length === 0}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir {filteredForDeletion.length}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
