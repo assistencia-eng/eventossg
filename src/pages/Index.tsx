@@ -31,6 +31,7 @@ import { useUserInterests } from "@/hooks/useUserInterests";
 import { useSubcategoryImages } from "@/hooks/useSubcategoryImages";
 import { useCategoryImages } from "@/hooks/useCategoryImages";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import { buildRecurrenceMap } from "@/lib/recurrence";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
@@ -52,6 +53,9 @@ const Index = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteFilteredOpen, setDeleteFilteredOpen] = useState(false);
+  const [deleteFilterMonth, setDeleteFilterMonth] = useState<string>(""); // YYYY-MM
+  const [deleteFilterCity, setDeleteFilterCity] = useState<string>("");
   const [searchCity, setSearchCity] = useState("");
   const [filterMonth, setFilterMonth] = useState(new Date());
   const [allDates, setAllDates] = useState(true);
@@ -117,6 +121,7 @@ const Index = () => {
 
   const allEvents = useMemo(() => dbEvents, [dbEvents]);
   const featuredEvents = useMemo(() => allEvents.filter((e) => e.is_featured), [allEvents]);
+  const recurrenceMap = useMemo(() => buildRecurrenceMap(allEvents), [allEvents]);
 
   const availableCities = useMemo(() => {
     const cities = new Set(allEvents.map((e) => e.cidade));
