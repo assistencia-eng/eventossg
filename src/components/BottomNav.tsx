@@ -7,8 +7,8 @@ interface BottomNavProps {
 
 const BottomNav = ({ active, onChange }: BottomNavProps) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md safe-area-bottom">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto text-wine-dark bg-[#151414]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#151414] safe-area-bottom">
+      <div className="flex items-center justify-around h-16 w-full mx-auto text-wine-dark bg-[#151414]">
         <button
           onClick={() => onChange("events")}
           className={`flex flex-col items-center gap-1 px-6 py-2 transition-colors ${
