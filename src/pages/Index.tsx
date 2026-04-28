@@ -521,6 +521,8 @@ const Index = () => {
           onImportEvents={() => setImportOpen(true)}
           onOutdoorSettings={() => setOutdoorSettingsOpen(true)}
           onDeleteAll={() => setDeleteAllOpen(true)}
+          onDeleteFiltered={() => setDeleteFilteredOpen(true)}
+          availableCities={availableCities}
           allEventsCount={allEvents.length}
         />
       )}
