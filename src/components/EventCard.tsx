@@ -21,6 +21,7 @@ interface EventCardProps {
   subcategoryImages?: SubcategoryImageMap;
   categoryImages?: CategoryImageMap;
   keywordImages?: KeywordImageMap;
+  recurrenceLabel?: string | null;
 }
 
 const categoryPlaceholders: Record<string, string> = {
@@ -68,7 +69,7 @@ function pickSubcategoryImage(
   return undefined;
 }
 
-const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages, categoryImages, keywordImages }: EventCardProps) => {
+const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorite, onToggleFavorite, isAdmin, subcategoryImages, categoryImages, keywordImages, recurrenceLabel }: EventCardProps) => {
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM, yyyy", { locale: ptBR }) : null;
   const mainCat = event.categorias?.[0] || event.categoria;
@@ -156,21 +157,29 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
           {event.nome}
         </h3>
 
-        {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
+        {(event.is_recurring || recurrenceLabel) && (
           <div className="flex items-center gap-1.5 text-xs text-primary">
             <Repeat className="w-3 h-3" />
-            <span>{event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}</span>
+            <span>
+              {recurrenceLabel
+                ? recurrenceLabel
+                : event.recurring_days && event.recurring_days.length > 0
+                  ? event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")
+                  : "Recorrente"}
+            </span>
           </div>
         )}
 
         <div className="space-y-1.5 text-sm">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="text-neutral-300 text-xs">
-              {formattedDate}
-              {formattedEndDate && ` — ${formattedEndDate}`}
-            </span>
-          </div>
+          {!recurrenceLabel && (
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-neutral-300 text-xs">
+                {formattedDate}
+                {formattedEndDate && ` — ${formattedEndDate}`}
+              </span>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
             <span className="text-neutral-400 text-xs truncate">
