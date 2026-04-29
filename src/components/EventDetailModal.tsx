@@ -19,6 +19,7 @@ interface EventDetailModalProps {
 }
 
 const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: EventDetailModalProps) => {
+  const { contacts } = useEventContacts(event?.id, event?.venue_id, event?.custom_contacts);
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null;
