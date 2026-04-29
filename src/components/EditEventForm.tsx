@@ -627,6 +627,23 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
             );
           })()}
 
+          {/* Contatos do evento */}
+          <div className="space-y-2 p-3 rounded-lg border border-border bg-secondary/20">
+            {venueContactsPreview.length > 0 && form.custom_contacts.length === 0 && (
+              <div className="p-2 rounded-md bg-primary/5 border border-primary/20">
+                <p className="text-xs text-muted-foreground">
+                  Este evento herda <strong>{venueContactsPreview.length}</strong> contato{venueContactsPreview.length === 1 ? "" : "s"} do local "{form.local}". Edite o local em "Meu Perfil → Locais" para alterá-los, ou adicione contatos personalizados abaixo (eles substituirão os do local apenas para este evento).
+                </p>
+              </div>
+            )}
+            <ContactsEditor
+              contacts={form.custom_contacts}
+              onChange={(next) => setForm({ ...form, custom_contacts: next })}
+              title="Contatos do evento (personalizados)"
+              description="Se preenchidos, sobrescrevem os contatos herdados do local apenas para este evento."
+            />
+          </div>
+
           {/* Featured checkbox - admin only */}
           {isAdmin && (
             <div className="flex items-center gap-2">
