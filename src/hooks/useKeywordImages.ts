@@ -118,8 +118,8 @@ export function pickImageByEventKeywords(
     const nk = normalize(kw);
     const matchKey = Object.keys(keywordImages).find((k) => normalize(k) === nk);
     if (matchKey) {
-      const imgs = keywordImages[matchKey];
-      if (imgs && imgs.length > 0) {
+      const imgs = (keywordImages[matchKey] || []).filter(Boolean) as string[];
+      if (imgs.length > 0) {
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
           hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
