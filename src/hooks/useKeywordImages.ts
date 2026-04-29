@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Maps lowercase keyword -> array of image URLs (up to 3)
-export type KeywordImageMap = Record<string, string[]>;
+// Maps lowercase keyword -> sparse array of image URLs indexed by slot
+// (index 0 = slot 1, index 1 = slot 2, index 2 = slot 3). Empty slots are undefined.
+export type KeywordImageMap = Record<string, (string | undefined)[]>;
 
 export const useKeywordImages = () => {
   const [images, setImages] = useState<KeywordImageMap>({});
@@ -29,8 +30,8 @@ export const useKeywordImages = () => {
         if (!key) return;
         if (!map[key]) map[key] = [];
         // image_index 0 = placeholder (keyword exists but no image yet)
-        if (row.image_index && row.image_index >= 1 && row.image_url) {
-          map[key].push(row.image_url);
+        if (row.image_index && row.image_index >= 1 && row.image_index <= 3 && row.image_url) {
+          map[key][row.image_index - 1] = row.image_url;
         }
       });
     }
@@ -50,7 +51,8 @@ export const useKeywordImages = () => {
       Object.entries(subMap).forEach(([key, imgs]) => {
         const existing = map[key];
         // Only fill if there's no real keyword with images already.
-        if (!existing || existing.length === 0) {
+        const hasReal = existing && existing.filter(Boolean).length > 0;
+        if (!hasReal) {
           map[key] = imgs;
         }
       });
@@ -89,8 +91,8 @@ export function pickKeywordImage(
     const nk = normalize(k);
     if (!nk) continue;
     if (haystack.includes(nk)) {
-      const imgs = keywordImages[k];
-      if (imgs && imgs.length > 0) {
+      const imgs = (keywordImages[k] || []).filter(Boolean) as string[];
+      if (imgs.length > 0) {
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
           hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
@@ -116,8 +118,8 @@ export function pickImageByEventKeywords(
     const nk = normalize(kw);
     const matchKey = Object.keys(keywordImages).find((k) => normalize(k) === nk);
     if (matchKey) {
-      const imgs = keywordImages[matchKey];
-      if (imgs && imgs.length > 0) {
+      const imgs = (keywordImages[matchKey] || []).filter(Boolean) as string[];
+      if (imgs.length > 0) {
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
           hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
