@@ -91,8 +91,8 @@ export function pickKeywordImage(
     const nk = normalize(k);
     if (!nk) continue;
     if (haystack.includes(nk)) {
-      const imgs = keywordImages[k];
-      if (imgs && imgs.length > 0) {
+      const imgs = (keywordImages[k] || []).filter(Boolean) as string[];
+      if (imgs.length > 0) {
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
           hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
