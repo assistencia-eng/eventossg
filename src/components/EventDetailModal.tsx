@@ -1,4 +1,5 @@
-import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
+import { EventData, categoryLabels, categoryIcons } from "@/data/events";
+import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2 } from "lucide-react";
