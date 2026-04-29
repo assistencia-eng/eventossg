@@ -130,6 +130,8 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
             </div>
           )}
 
+          {contacts.length > 0 && <ContactsDisplay contacts={contacts} />}
+
           {/* Disclaimer */}
           <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
