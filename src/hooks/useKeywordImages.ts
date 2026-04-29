@@ -30,8 +30,8 @@ export const useKeywordImages = () => {
         if (!key) return;
         if (!map[key]) map[key] = [];
         // image_index 0 = placeholder (keyword exists but no image yet)
-        if (row.image_index && row.image_index >= 1 && row.image_url) {
-          map[key].push(row.image_url);
+        if (row.image_index && row.image_index >= 1 && row.image_index <= 3 && row.image_url) {
+          map[key][row.image_index - 1] = row.image_url;
         }
       });
     }
