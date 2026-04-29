@@ -1,4 +1,5 @@
-import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
+import { EventData, categoryLabels, categoryIcons } from "@/data/events";
+import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Calendar, MapPin, Star, Repeat } from "lucide-react";
 import { format, parseISO } from "date-fns";
