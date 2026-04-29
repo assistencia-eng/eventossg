@@ -397,8 +397,38 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         updatedCount += 1;
       }
 
-      // 2) INSERT new events
+      // 2) INSERT new events — com vínculo de venue e contatos
       if (toInsert.length > 0) {
+        // Resolve (ou cria) venues para cada evento e popula contatos detectados nos novos venues
+        const venueIds: (string | null)[] = [];
+        for (let i = 0; i < toInsert.length; i++) {
+          const ev = toInsert[i];
+          if (!ev.local || ev.local === "Não informado") {
+            venueIds.push(null);
+            continue;
+          }
+          const venueId = await getOrCreateVenue(ev.local, ev.cidade);
+          venueIds.push(venueId);
+
+          // Se há contatos detectados e o venue ainda não tem nenhum, popula
+          if (venueId && ev.detected_contacts && ev.detected_contacts.length > 0) {
+            const { count } = await supabase
+              .from("venue_contacts")
+              .select("id", { count: "exact", head: true })
+              .eq("venue_id", venueId);
+            if (!count) {
+              const rows = ev.detected_contacts.map((c) => ({
+                venue_id: venueId,
+                nome: c.nome?.trim() || null,
+                whatsapp: c.whatsapp?.trim() || null,
+                instagram: c.instagram?.trim() || null,
+                facebook: c.facebook?.trim() || null,
+              }));
+              await supabase.from("venue_contacts").insert(rows);
+            }
+          }
+        }
+
         const { error: insertError } = await supabase.from("events").insert(
           toInsert.map((ev, i) => ({
             nome: ev.nome,
@@ -416,6 +446,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             keywords: ev.keywords || [],
             latitude: geoResults[i].latitude,
             longitude: geoResults[i].longitude,
+            venue_id: venueIds[i],
+            custom_contacts: [],
           }))
         );
         if (insertError) throw insertError;
