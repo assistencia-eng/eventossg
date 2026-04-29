@@ -94,9 +94,22 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         image_source: (event.image_source as any) || "auto",
         image_keyword: event.image_keyword ?? null,
         keyword_image_index: event.keyword_image_index ?? null,
+        custom_contacts: Array.isArray(event.custom_contacts) ? event.custom_contacts : [],
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
+      // Pré-visualiza contatos do venue (somente leitura, se evento não tem custom)
+      (async () => {
+        if (event.venue_id && (!event.custom_contacts || event.custom_contacts.length === 0)) {
+          const { data } = await supabase
+            .from("venue_contacts")
+            .select("id, nome, whatsapp, instagram, facebook")
+            .eq("venue_id", event.venue_id);
+          setVenueContactsPreview((data || []) as VenueContact[]);
+        } else {
+          setVenueContactsPreview([]);
+        }
+      })();
     }
   }, [event]);
 
