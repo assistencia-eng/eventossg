@@ -17,6 +17,8 @@ import { geocodeBatch } from "@/lib/geocode";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import { detectContactsInText, type VenueContact } from "@/types/contact";
+import { getOrCreateVenue } from "@/hooks/useVenues";
 
 interface ExtractedEvent {
   nome: string;
@@ -34,6 +36,7 @@ interface ExtractedEvent {
   keywords: string[];
   latitude: number;
   longitude: number;
+  detected_contacts?: VenueContact[];
 }
 
 interface ImportEventsProps {
