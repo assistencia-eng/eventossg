@@ -183,6 +183,25 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
       const geo = await geocodeAddress(form.endereco.trim() || "Não informado", form.cidade.trim());
       setGeocoding(false);
 
+      // Resolve venue: se o nome do local mudou ou ainda não há venue_id, busca/cria
+      let venueId = event.venue_id ?? null;
+      const localName = form.local.trim();
+      if (localName && (event.local !== localName || !venueId)) {
+        venueId = await getOrCreateVenue(localName, form.cidade.trim());
+      } else if (!localName) {
+        venueId = null;
+      }
+
+      // Sanitiza custom_contacts (mantém apenas com algum dado)
+      const sanitizedContacts = form.custom_contacts
+        .map((c) => ({
+          nome: c.nome?.trim() || null,
+          whatsapp: c.whatsapp?.trim() || null,
+          instagram: c.instagram?.trim() || null,
+          facebook: c.facebook?.trim() || null,
+        }))
+        .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook);
+
       const { error: updateError } = await supabase.from("events").update({
         nome: form.nome.trim(),
         categoria: form.categorias[0],
@@ -207,6 +226,8 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         image_source: (imageFile || event.imagem) ? "auto" : form.image_source,
         image_keyword: form.image_source === "keyword" ? form.image_keyword : null,
         keyword_image_index: form.image_source === "keyword" ? form.keyword_image_index : null,
+        venue_id: venueId,
+        custom_contacts: sanitizedContacts,
       } as any).eq("id", event.id);
 
       if (updateError) throw updateError;
