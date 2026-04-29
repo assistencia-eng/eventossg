@@ -11,6 +11,46 @@ export type RecurrencePattern =
 const WEEKDAY_KEYS = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
 const WEEKDAY_LABELS_SHORT = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
+// Mapeia chaves variadas (com/sem acento, com/sem "-feira") para o índice 0..6
+const WEEKDAY_KEY_TO_INDEX: Record<string, number> = {
+  domingo: 0,
+  segunda: 1, "segunda-feira": 1,
+  terca: 2, "terça": 2, "terca-feira": 2, "terça-feira": 2,
+  quarta: 3, "quarta-feira": 3,
+  quinta: 4, "quinta-feira": 4,
+  sexta: 5, "sexta-feira": 5,
+  sabado: 6, "sábado": 6,
+};
+
+/**
+ * Formata uma lista de dias da semana em linguagem natural.
+ * Ex.: ["segunda","quarta"] -> "toda segunda e quarta"
+ *      ["segunda","quarta","sexta"] -> "toda segunda, quarta e sexta"
+ *      todos os 7 dias -> "todos os dias"
+ *      ["segunda"] -> "toda segunda"
+ */
+export const formatRecurringDays = (days: string[] | undefined | null): string => {
+  if (!days || days.length === 0) return "Recorrente";
+  const idxs = Array.from(
+    new Set(
+      days
+        .map((d) => WEEKDAY_KEY_TO_INDEX[(d || "").toLowerCase().trim()])
+        .filter((n): n is number => typeof n === "number")
+    )
+  ).sort((a, b) => a - b);
+
+  if (idxs.length === 0) return "Recorrente";
+  if (idxs.length === 7) return "todos os dias";
+
+  const names = idxs.map((i) => WEEKDAY_LABELS_SHORT[i].toLowerCase());
+  let list: string;
+  if (names.length === 1) list = names[0];
+  else if (names.length === 2) list = `${names[0]} e ${names[1]}`;
+  else list = `${names.slice(0, -1).join(", ")} e ${names[names.length - 1]}`;
+
+  return `toda ${list}`;
+};
+
 const parseLocal = (iso: string): Date => {
   const [y, m, d] = iso.split("-").map(Number);
   return new Date(y, (m || 1) - 1, d || 1);
@@ -35,7 +75,7 @@ export const detectRecurrence = (dates: string[]): RecurrencePattern => {
     if (dayDiff(valid[i - 1], valid[i]) !== 1) { consecutive = false; break; }
   }
   if (consecutive && valid.length >= 3) {
-    return { type: "daily", label: "Todo dia" };
+    return { type: "daily", label: "todos os dias" };
   }
 
   // --- MONTHLY: same day-of-month each month ---
@@ -65,11 +105,7 @@ export const detectRecurrence = (dates: string[]): RecurrencePattern => {
     const allRepeat = weekdays.every((wd) => (counts.get(wd) || 0) >= 2);
     if (allRepeat) {
       const dayKeys = weekdays.map((wd) => WEEKDAY_KEYS[wd]);
-      const labels = weekdays.map((wd) => WEEKDAY_LABELS_SHORT[wd]);
-      let label: string;
-      if (weekdays.length === 1) label = `Todo ${labels[0].toLowerCase()}`;
-      else if (weekdays.length === 7) label = "Todo dia";
-      else label = labels.join(" e ");
+      const label = formatRecurringDays(dayKeys);
       return { type: "weekly", days: dayKeys, label };
     }
   }

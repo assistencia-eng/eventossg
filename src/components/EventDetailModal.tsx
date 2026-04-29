@@ -1,4 +1,5 @@
-import { EventData, categoryLabels, categoryIcons, weekDayLabels } from "@/data/events";
+import { EventData, categoryLabels, categoryIcons } from "@/data/events";
+import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2 } from "lucide-react";
@@ -80,7 +81,7 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
               <div className="flex items-center gap-2">
                 <Repeat className="w-4 h-4 text-primary" />
                 <span className="font-medium">
-                  Recorrente: {event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")}
+                  Recorrente: {formatRecurringDays(event.recurring_days)}
                 </span>
               </div>
             )}
