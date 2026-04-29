@@ -253,8 +253,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         if (data?.events) {
           // Normalize: ensure keywords is always an array of strings from the library.
           // For ICS files, force the dates extracted by the deterministic parser so the AI cannot duplicate today's date.
+          // Detecta contatos do conteúdo do arquivo (fallback global)
+          const fileContacts = detectContactsInText(content);
+
           const normalized = (data.events as ExtractedEvent[]).map((ev, index) => {
             const icsEvent = icsEvents[index];
+            // Tenta detectar nos campos textuais do próprio evento
+            const evText = [ev.descricao, ev.local, ev.endereco, (ev.atracoes || []).join(" ")].join(" ");
+            const evContacts = detectContactsInText(evText);
+            const detected = evContacts.length > 0 ? evContacts : fileContacts;
             return {
               ...ev,
               data: icsEvent?.startDate || ev.data,
@@ -263,6 +270,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
               keywords: Array.isArray(ev.keywords)
                 ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
                 : [],
+              detected_contacts: detected,
             };
           });
           allEvents.push(...normalized);
