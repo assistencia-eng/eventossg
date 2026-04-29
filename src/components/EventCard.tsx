@@ -165,7 +165,7 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
               {recurrenceLabel
                 ? recurrenceLabel
                 : event.recurring_days && event.recurring_days.length > 0
-                  ? event.recurring_days.map(d => weekDayLabels[d] || d).join(", ")
+                  ? formatRecurringDays(event.recurring_days)
                   : "Recorrente"}
             </span>
           </div>
