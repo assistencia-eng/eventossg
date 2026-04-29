@@ -128,6 +128,8 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
       const geo = await geocodeAddress(form.endereco.trim() || "Não informado", form.cidade.trim());
       setGeocoding(false);
 
+      const venueId = form.local.trim() ? await getOrCreateVenue(form.local.trim(), form.cidade.trim()) : null;
+
       const { error: insertError } = await supabase.from("events").insert({
         nome: form.nome.trim(),
         categoria: form.categorias[0],
@@ -148,7 +150,9 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
         keywords: form.keywords,
-      });
+        venue_id: venueId,
+        custom_contacts: [],
+      } as any);
 
       if (insertError) throw insertError;
 
