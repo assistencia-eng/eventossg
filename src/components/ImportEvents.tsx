@@ -17,6 +17,8 @@ import { geocodeBatch } from "@/lib/geocode";
 import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import { detectContactsInText, type VenueContact } from "@/types/contact";
+import { getOrCreateVenue } from "@/hooks/useVenues";
 
 interface ExtractedEvent {
   nome: string;
@@ -34,6 +36,7 @@ interface ExtractedEvent {
   keywords: string[];
   latitude: number;
   longitude: number;
+  detected_contacts?: VenueContact[];
 }
 
 interface ImportEventsProps {
@@ -250,8 +253,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         if (data?.events) {
           // Normalize: ensure keywords is always an array of strings from the library.
           // For ICS files, force the dates extracted by the deterministic parser so the AI cannot duplicate today's date.
+          // Detecta contatos do conteúdo do arquivo (fallback global)
+          const fileContacts = detectContactsInText(content);
+
           const normalized = (data.events as ExtractedEvent[]).map((ev, index) => {
             const icsEvent = icsEvents[index];
+            // Tenta detectar nos campos textuais do próprio evento
+            const evText = [ev.descricao, ev.local, ev.endereco, (ev.atracoes || []).join(" ")].join(" ");
+            const evContacts = detectContactsInText(evText);
+            const detected = evContacts.length > 0 ? evContacts : fileContacts;
             return {
               ...ev,
               data: icsEvent?.startDate || ev.data,
@@ -260,6 +270,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
               keywords: Array.isArray(ev.keywords)
                 ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
                 : [],
+              detected_contacts: detected,
             };
           });
           allEvents.push(...normalized);
@@ -386,8 +397,38 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         updatedCount += 1;
       }
 
-      // 2) INSERT new events
+      // 2) INSERT new events — com vínculo de venue e contatos
       if (toInsert.length > 0) {
+        // Resolve (ou cria) venues para cada evento e popula contatos detectados nos novos venues
+        const venueIds: (string | null)[] = [];
+        for (let i = 0; i < toInsert.length; i++) {
+          const ev = toInsert[i];
+          if (!ev.local || ev.local === "Não informado") {
+            venueIds.push(null);
+            continue;
+          }
+          const venueId = await getOrCreateVenue(ev.local, ev.cidade);
+          venueIds.push(venueId);
+
+          // Se há contatos detectados e o venue ainda não tem nenhum, popula
+          if (venueId && ev.detected_contacts && ev.detected_contacts.length > 0) {
+            const { count } = await supabase
+              .from("venue_contacts")
+              .select("id", { count: "exact", head: true })
+              .eq("venue_id", venueId);
+            if (!count) {
+              const rows = ev.detected_contacts.map((c) => ({
+                venue_id: venueId,
+                nome: c.nome?.trim() || null,
+                whatsapp: c.whatsapp?.trim() || null,
+                instagram: c.instagram?.trim() || null,
+                facebook: c.facebook?.trim() || null,
+              }));
+              await supabase.from("venue_contacts").insert(rows);
+            }
+          }
+        }
+
         const { error: insertError } = await supabase.from("events").insert(
           toInsert.map((ev, i) => ({
             nome: ev.nome,
@@ -405,6 +446,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             keywords: ev.keywords || [],
             latitude: geoResults[i].latitude,
             longitude: geoResults[i].longitude,
+            venue_id: venueIds[i],
+            custom_contacts: [],
           }))
         );
         if (insertError) throw insertError;

@@ -17,6 +17,9 @@ import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategori
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
+import ContactsEditor from "@/components/ContactsEditor";
+import type { VenueContact } from "@/types/contact";
+import { getOrCreateVenue } from "@/hooks/useVenues";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
@@ -65,7 +68,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     image_source: "auto" as "auto" | "subcategory" | "keyword",
     image_keyword: null as string | null,
     keyword_image_index: null as number | null,
+    custom_contacts: [] as VenueContact[],
   });
+  const [venueContactsPreview, setVenueContactsPreview] = useState<VenueContact[]>([]);
 
   useEffect(() => {
     if (event) {
@@ -89,9 +94,22 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         image_source: (event.image_source as any) || "auto",
         image_keyword: event.image_keyword ?? null,
         keyword_image_index: event.keyword_image_index ?? null,
+        custom_contacts: Array.isArray(event.custom_contacts) ? event.custom_contacts : [],
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
+      // Pré-visualiza contatos do venue (somente leitura, se evento não tem custom)
+      (async () => {
+        if (event.venue_id && (!event.custom_contacts || event.custom_contacts.length === 0)) {
+          const { data } = await supabase
+            .from("venue_contacts")
+            .select("id, nome, whatsapp, instagram, facebook")
+            .eq("venue_id", event.venue_id);
+          setVenueContactsPreview((data || []) as VenueContact[]);
+        } else {
+          setVenueContactsPreview([]);
+        }
+      })();
     }
   }, [event]);
 
@@ -165,6 +183,25 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
       const geo = await geocodeAddress(form.endereco.trim() || "Não informado", form.cidade.trim());
       setGeocoding(false);
 
+      // Resolve venue: se o nome do local mudou ou ainda não há venue_id, busca/cria
+      let venueId = event.venue_id ?? null;
+      const localName = form.local.trim();
+      if (localName && (event.local !== localName || !venueId)) {
+        venueId = await getOrCreateVenue(localName, form.cidade.trim());
+      } else if (!localName) {
+        venueId = null;
+      }
+
+      // Sanitiza custom_contacts (mantém apenas com algum dado)
+      const sanitizedContacts = form.custom_contacts
+        .map((c) => ({
+          nome: c.nome?.trim() || null,
+          whatsapp: c.whatsapp?.trim() || null,
+          instagram: c.instagram?.trim() || null,
+          facebook: c.facebook?.trim() || null,
+        }))
+        .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook);
+
       const { error: updateError } = await supabase.from("events").update({
         nome: form.nome.trim(),
         categoria: form.categorias[0],
@@ -189,6 +226,8 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         image_source: (imageFile || event.imagem) ? "auto" : form.image_source,
         image_keyword: form.image_source === "keyword" ? form.image_keyword : null,
         keyword_image_index: form.image_source === "keyword" ? form.keyword_image_index : null,
+        venue_id: venueId,
+        custom_contacts: sanitizedContacts,
       } as any).eq("id", event.id);
 
       if (updateError) throw updateError;
@@ -587,6 +626,23 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               </div>
             );
           })()}
+
+          {/* Contatos do evento */}
+          <div className="space-y-2 p-3 rounded-lg border border-border bg-secondary/20">
+            {venueContactsPreview.length > 0 && form.custom_contacts.length === 0 && (
+              <div className="p-2 rounded-md bg-primary/5 border border-primary/20">
+                <p className="text-xs text-muted-foreground">
+                  Este evento herda <strong>{venueContactsPreview.length}</strong> contato{venueContactsPreview.length === 1 ? "" : "s"} do local "{form.local}". Edite o local em "Meu Perfil → Locais" para alterá-los, ou adicione contatos personalizados abaixo (eles substituirão os do local apenas para este evento).
+                </p>
+              </div>
+            )}
+            <ContactsEditor
+              contacts={form.custom_contacts}
+              onChange={(next) => setForm({ ...form, custom_contacts: next })}
+              title="Contatos do evento (personalizados)"
+              description="Se preenchidos, sobrescrevem os contatos herdados do local apenas para este evento."
+            />
+          </div>
 
           {/* Featured checkbox - admin only */}
           {isAdmin && (

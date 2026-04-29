@@ -6,6 +6,8 @@ import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2 } from "lu
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ShareButton from "@/components/ShareButton";
+import ContactsDisplay from "@/components/ContactsDisplay";
+import { useEventContacts } from "@/hooks/useEventContacts";
 
 interface EventDetailModalProps {
   event: EventData | null;
@@ -17,6 +19,7 @@ interface EventDetailModalProps {
 }
 
 const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: EventDetailModalProps) => {
+  const { contacts } = useEventContacts(event?.id, event?.venue_id, event?.custom_contacts);
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null;
@@ -126,6 +129,8 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
               </ul>
             </div>
           )}
+
+          {contacts.length > 0 && <ContactsDisplay contacts={contacts} />}
 
           {/* Disclaimer */}
           <div className="rounded-lg bg-muted/50 border border-border p-3 flex items-start gap-2">

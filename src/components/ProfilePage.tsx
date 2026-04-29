@@ -9,6 +9,8 @@ import CategoryManagement from "@/components/CategoryManagement";
 import SubcategoryImageManager from "@/components/SubcategoryImageManager";
 import KeywordImageManager from "@/components/KeywordImageManager";
 import AIPromptManager from "@/components/AIPromptManager";
+import VenueManagement from "@/components/VenueManagement";
+import CityManagement from "@/components/CityManagement";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,6 +290,8 @@ const ProfilePage = ({
       </section>
 
       {/* Admin sections */}
+      {isAdmin && <CityManagement />}
+      {isAdmin && <VenueManagement />}
       {isAdmin && <AIPromptManager />}
       {isAdmin && <KeywordImageManager />}
       {isAdmin && <SubcategoryImageManager />}

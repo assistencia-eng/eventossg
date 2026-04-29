@@ -31,6 +31,8 @@ export interface EventData {
   image_source?: "auto" | "subcategory" | "keyword" | null;
   image_keyword?: string | null;
   keyword_image_index?: number | null;
+  venue_id?: string | null;
+  custom_contacts?: import("@/types/contact").VenueContact[];
 }
 
 export const categoryLabels: Record<EventCategory, string> = {
