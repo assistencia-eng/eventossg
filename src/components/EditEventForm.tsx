@@ -17,6 +17,9 @@ import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategori
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
+import ContactsEditor from "@/components/ContactsEditor";
+import type { VenueContact } from "@/types/contact";
+import { getOrCreateVenue } from "@/hooks/useVenues";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
