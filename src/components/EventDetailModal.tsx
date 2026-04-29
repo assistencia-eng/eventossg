@@ -6,6 +6,8 @@ import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2 } from "lu
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ShareButton from "@/components/ShareButton";
+import ContactsDisplay from "@/components/ContactsDisplay";
+import { useEventContacts } from "@/hooks/useEventContacts";
 
 interface EventDetailModalProps {
   event: EventData | null;
