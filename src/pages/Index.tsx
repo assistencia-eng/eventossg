@@ -112,6 +112,8 @@ const Index = () => {
           image_source: (e as any).image_source ?? "auto",
           image_keyword: (e as any).image_keyword ?? null,
           keyword_image_index: (e as any).keyword_image_index ?? null,
+          venue_id: (e as any).venue_id ?? null,
+          custom_contacts: Array.isArray((e as any).custom_contacts) ? (e as any).custom_contacts : [],
         }))
       );
     }
