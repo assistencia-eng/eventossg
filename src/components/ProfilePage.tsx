@@ -290,6 +290,8 @@ const ProfilePage = ({
       </section>
 
       {/* Admin sections */}
+      {isAdmin && <CityManagement />}
+      {isAdmin && <VenueManagement />}
       {isAdmin && <AIPromptManager />}
       {isAdmin && <KeywordImageManager />}
       {isAdmin && <SubcategoryImageManager />}
