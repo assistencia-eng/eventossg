@@ -24,7 +24,8 @@ export const useSubcategoryImages = () => {
       data.forEach((row: any) => {
         const key = subImgKey(row.categoria, row.subcategory);
         if (!map[key]) map[key] = [];
-        map[key].push(row.image_url);
+        const slot = (row.image_index || 1) - 1; // image_index 1..3 -> array index 0..2
+        if (slot >= 0 && slot <= 2) map[key][slot] = row.image_url;
       });
       setImages(map);
     }
