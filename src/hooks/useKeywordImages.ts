@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Maps lowercase keyword -> array of image URLs (up to 3)
-export type KeywordImageMap = Record<string, string[]>;
+// Maps lowercase keyword -> sparse array of image URLs indexed by slot
+// (index 0 = slot 1, index 1 = slot 2, index 2 = slot 3). Empty slots are undefined.
+export type KeywordImageMap = Record<string, (string | undefined)[]>;
 
 export const useKeywordImages = () => {
   const [images, setImages] = useState<KeywordImageMap>({});
