@@ -75,7 +75,7 @@ export const detectRecurrence = (dates: string[]): RecurrencePattern => {
     if (dayDiff(valid[i - 1], valid[i]) !== 1) { consecutive = false; break; }
   }
   if (consecutive && valid.length >= 3) {
-    return { type: "daily", label: "Todo dia" };
+    return { type: "daily", label: "todos os dias" };
   }
 
   // --- MONTHLY: same day-of-month each month ---
