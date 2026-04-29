@@ -171,6 +171,7 @@ export type Database = {
           categorias: string[]
           cidade: string
           created_at: string
+          custom_contacts: Json
           data: string
           data_fim: string | null
           descricao: string
@@ -197,6 +198,7 @@ export type Database = {
           subcategorias: string[]
           subcategory_image_index: number | null
           updated_at: string
+          venue_id: string | null
         }
         Insert: {
           atracoes?: string[]
@@ -204,6 +206,7 @@ export type Database = {
           categorias?: string[]
           cidade?: string
           created_at?: string
+          custom_contacts?: Json
           data: string
           data_fim?: string | null
           descricao?: string
@@ -230,6 +233,7 @@ export type Database = {
           subcategorias?: string[]
           subcategory_image_index?: number | null
           updated_at?: string
+          venue_id?: string | null
         }
         Update: {
           atracoes?: string[]
@@ -237,6 +241,7 @@ export type Database = {
           categorias?: string[]
           cidade?: string
           created_at?: string
+          custom_contacts?: Json
           data?: string
           data_fim?: string | null
           descricao?: string
@@ -263,8 +268,17 @@ export type Database = {
           subcategorias?: string[]
           subcategory_image_index?: number | null
           updated_at?: string
+          venue_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       keyword_images: {
         Row: {
@@ -382,6 +396,71 @@ export type Database = {
           image_index?: number
           image_url?: string
           subcategory?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      venue_contacts: {
+        Row: {
+          created_at: string
+          facebook: string | null
+          id: string
+          instagram: string | null
+          nome: string | null
+          updated_at: string
+          venue_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          created_at?: string
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          nome?: string | null
+          updated_at?: string
+          venue_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          created_at?: string
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          nome?: string | null
+          updated_at?: string
+          venue_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_contacts_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
           updated_at?: string
         }
         Relationships: []
