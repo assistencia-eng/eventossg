@@ -105,11 +105,7 @@ export const detectRecurrence = (dates: string[]): RecurrencePattern => {
     const allRepeat = weekdays.every((wd) => (counts.get(wd) || 0) >= 2);
     if (allRepeat) {
       const dayKeys = weekdays.map((wd) => WEEKDAY_KEYS[wd]);
-      const labels = weekdays.map((wd) => WEEKDAY_LABELS_SHORT[wd]);
-      let label: string;
-      if (weekdays.length === 1) label = `Todo ${labels[0].toLowerCase()}`;
-      else if (weekdays.length === 7) label = "Todo dia";
-      else label = labels.join(" e ");
+      const label = formatRecurringDays(dayKeys);
       return { type: "weekly", days: dayKeys, label };
     }
   }
