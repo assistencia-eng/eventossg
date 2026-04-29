@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-// Maps "categoria::subcategoria" -> array of image URLs (up to 3)
+// Maps "categoria::subcategoria" -> sparse array of image URLs indexed by slot
+// (index 0 = slot 1, index 1 = slot 2, index 2 = slot 3). Empty slots are undefined.
 // Using a composite key prevents subcategories with the same name in different
 // categories (e.g. "tecnologia" in feiras and palestras) from sharing images.
-export type SubcategoryImageMap = Record<string, string[]>;
+export type SubcategoryImageMap = Record<string, (string | undefined)[]>;
 
 export const subImgKey = (categoria: string | undefined | null, subcategory: string) =>
   `${categoria || ""}::${subcategory}`;
