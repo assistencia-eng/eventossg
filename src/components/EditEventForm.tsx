@@ -68,7 +68,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     image_source: "auto" as "auto" | "subcategory" | "keyword",
     image_keyword: null as string | null,
     keyword_image_index: null as number | null,
+    custom_contacts: [] as VenueContact[],
   });
+  const [venueContactsPreview, setVenueContactsPreview] = useState<VenueContact[]>([]);
 
   useEffect(() => {
     if (event) {
