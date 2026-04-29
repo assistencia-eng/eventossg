@@ -51,7 +51,8 @@ export const useKeywordImages = () => {
       Object.entries(subMap).forEach(([key, imgs]) => {
         const existing = map[key];
         // Only fill if there's no real keyword with images already.
-        if (!existing || existing.length === 0) {
+        const hasReal = existing && existing.filter(Boolean).length > 0;
+        if (!hasReal) {
           map[key] = imgs;
         }
       });
