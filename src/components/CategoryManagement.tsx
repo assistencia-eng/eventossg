@@ -10,6 +10,7 @@ import {
   refreshCategories,
   useCategoriesVersion,
   getCustomCategoryKeys,
+  getRemovedDefaultCategoryKeys,
 } from "@/hooks/useCategoriesSync";
 import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp, Palette } from "lucide-react";
 
