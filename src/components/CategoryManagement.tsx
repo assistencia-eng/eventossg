@@ -46,7 +46,11 @@ const CategoryManagement = () => {
   const [savingCat, setSavingCat] = useState(false);
 
   const customCategories = getCustomCategoryKeys();
-  const displayCategories = [...allCategories, ...customCategories];
+  const removedDefaults = new Set(getRemovedDefaultCategoryKeys());
+  const displayCategories = [
+    ...allCategories.filter((c) => !removedDefaults.has(c)),
+    ...customCategories,
+  ];
   const isCustomCategory = (cat: EventCategory) => customCategories.includes(cat);
 
   /**
