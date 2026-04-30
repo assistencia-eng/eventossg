@@ -13,7 +13,7 @@ import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Save, MapPin, ImagePlus, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
