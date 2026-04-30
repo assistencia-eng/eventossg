@@ -78,6 +78,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     custom_contacts: [] as VenueContact[],
   });
   const [venueContactsPreview, setVenueContactsPreview] = useState<VenueContact[]>([]);
+  const [syncContactsToVenueFlag, setSyncContactsToVenueFlag] = useState(true);
 
   useEffect(() => {
     if (event) {
