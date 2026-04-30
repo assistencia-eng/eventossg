@@ -123,18 +123,7 @@ const CategoryManagement = () => {
     setShowNewCatForm(false);
   };
 
-  const handleDeleteCustomCategory = async (cat: EventCategory) => {
-    if (!confirm(`Excluir a categoria "${categoryLabels[cat]}"? As subcategorias dela também serão removidas.`)) return;
-    const { error } = await supabase.from("custom_categories").delete().eq("key", cat);
-    if (error) {
-      toast.error("Erro ao excluir: " + error.message);
-      return;
-    }
-    await supabase.from("custom_subcategories").delete().eq("categoria", cat);
-    await refreshCategories();
-    await refreshSubcategories();
-    toast.success("Categoria excluída.");
-  };
+  const handleDeleteCustomCategory = handleDeleteCategory; // backward-compat alias
 
   const handleEditCategory = (cat: EventCategory) => {
     setEditingCat(cat);
