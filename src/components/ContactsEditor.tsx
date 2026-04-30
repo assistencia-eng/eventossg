@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import type { VenueContact } from "@/types/contact";
 
@@ -9,6 +10,9 @@ interface ContactsEditorProps {
   onChange: (next: VenueContact[]) => void;
   title?: string;
   description?: string;
+  syncToVenue?: boolean;
+  onSyncToVenueChange?: (next: boolean) => void;
+  showSyncToggle?: boolean;
 }
 
 const empty = (): VenueContact => ({ nome: "", whatsapp: "", instagram: "", facebook: "" });
