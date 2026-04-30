@@ -386,7 +386,7 @@ const CategoryManagement = () => {
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                   )}
-                  {!isEditing && isCustomCategory(cat) && (
+                  {!isEditing && (
                     <Button
                       size="icon"
                       variant="ghost"
