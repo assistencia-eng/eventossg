@@ -20,6 +20,7 @@ import KeywordsInput from "@/components/KeywordsInput";
 import ContactsEditor from "@/components/ContactsEditor";
 import type { VenueContact } from "@/types/contact";
 import { getOrCreateVenue } from "@/hooks/useVenues";
+import { syncContactsToVenue } from "@/lib/syncVenueContacts";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
