@@ -240,7 +240,19 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
 
       if (updateError) throw updateError;
 
-      toast.success("Evento atualizado!");
+      // Sincroniza contatos personalizados do evento com o venue (sem sobrescrever)
+      if (venueId && sanitizedContacts.length > 0 && syncContactsToVenueFlag) {
+        const { inserted, merged } = await syncContactsToVenue(venueId, sanitizedContacts);
+        if (inserted > 0 || merged > 0) {
+          toast.success(
+            `Evento atualizado! ${inserted} contato(s) novo(s) e ${merged} mesclado(s) no local.`
+          );
+        } else {
+          toast.success("Evento atualizado!");
+        }
+      } else {
+        toast.success("Evento atualizado!");
+      }
       onUpdated();
       onClose();
     } catch (err) {
