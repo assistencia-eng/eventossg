@@ -65,7 +65,11 @@ const FilterBar = ({
 
   const categories = useMemo<EventCategory[]>(() => {
     const customs = getCustomCategoryKeys();
-    return [...defaultCategories, ...customs.filter((c) => !defaultCategories.includes(c))];
+    const removed = new Set(getRemovedDefaultCategoryKeys());
+    return [
+      ...defaultCategories.filter((c) => !removed.has(c)),
+      ...customs.filter((c) => !defaultCategories.includes(c)),
+    ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catsVersion]);
 
