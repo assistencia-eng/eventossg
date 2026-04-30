@@ -661,6 +661,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               onChange={(next) => setForm({ ...form, custom_contacts: next })}
               title="Contatos do evento (personalizados)"
               description="Se preenchidos, sobrescrevem os contatos herdados do local apenas para este evento."
+              showSyncToggle={!!form.local.trim()}
+              syncToVenue={syncContactsToVenueFlag}
+              onSyncToVenueChange={setSyncContactsToVenueFlag}
             />
           </div>
 
