@@ -19,9 +19,15 @@ const defaultColors: Record<string, string> = Object.fromEntries(
 
 // Track custom categories we've added so we can keep state consistent
 let customCategoryKeys: string[] = [];
+// Track default categories admins have hidden
+let removedDefaultCategoryKeys: string[] = [];
 
 export function getCustomCategoryKeys(): EventCategory[] {
   return customCategoryKeys as EventCategory[];
+}
+
+export function getRemovedDefaultCategoryKeys(): EventCategory[] {
+  return removedDefaultCategoryKeys as EventCategory[];
 }
 
 export function emitCategoriesSynced() {
