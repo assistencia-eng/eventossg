@@ -24,7 +24,13 @@ const SubcategoryImageManager = () => {
   const [expanded, setExpanded] = useState(false);
 
   const allCategories: EventCategory[] = useMemo(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
 

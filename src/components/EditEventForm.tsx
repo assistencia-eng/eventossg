@@ -36,7 +36,13 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
   void subVersion;

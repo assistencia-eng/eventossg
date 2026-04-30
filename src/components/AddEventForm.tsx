@@ -33,7 +33,13 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   const { images: keywordImages } = useKeywordImages();
   const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
   const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
   void subVersion;
