@@ -48,6 +48,48 @@ const CategoryManagement = () => {
   const displayCategories = [...allCategories, ...customCategories];
   const isCustomCategory = (cat: EventCategory) => customCategories.includes(cat);
 
+  /**
+   * Excluir qualquer categoria (default ou custom).
+   * - Verifica se há eventos vinculados; se sim, exige confirmação extra.
+   * - Default: insere em `removed_default_categories` para esconder.
+   * - Custom: deleta de `custom_categories` + suas subcategorias.
+   */
+  const handleDeleteCategory = async (cat: EventCategory) => {
+    // Quantos eventos referenciam essa categoria?
+    const { count: linkedCount } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .or(`categoria.eq.${cat},categorias.cs.{${cat}}`);
+
+    const linked = linkedCount || 0;
+    const baseMsg = `Excluir a categoria "${categoryLabels[cat]}"?`;
+    const linkMsg = linked > 0
+      ? `\n\n⚠️ Existem ${linked} evento(s) vinculados a esta categoria. Eles continuarão existindo, mas perderão a associação com ela. Deseja continuar?`
+      : "\n\nAs subcategorias dela também serão removidas.";
+    if (!confirm(baseMsg + linkMsg)) return;
+
+    if (isCustomCategory(cat)) {
+      const { error } = await supabase.from("custom_categories").delete().eq("key", cat);
+      if (error) {
+        toast.error("Erro ao excluir: " + error.message);
+        return;
+      }
+      await supabase.from("custom_subcategories").delete().eq("categoria", cat);
+    } else {
+      // Default: marca como removida (soft hide)
+      const { error } = await supabase
+        .from("removed_default_categories")
+        .insert({ categoria: cat });
+      if (error && error.code !== "23505") {
+        toast.error("Erro ao excluir: " + error.message);
+        return;
+      }
+    }
+    await refreshCategories();
+    await refreshSubcategories();
+    toast.success("Categoria excluída.");
+  };
+
   const handleCreateCategory = async () => {
     const key = newCatKey.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
     if (!key || !newCatLabel.trim()) {
