@@ -62,10 +62,13 @@ const ProfilePage = ({
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
 
-  const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
-    [catVersion]
-  );
+  const allCategories = useMemo<EventCategory[]>(() => {
+    const removed = new Set(getRemovedDefaultCategoryKeys());
+    return [
+      ...baseCategories.filter((c) => !removed.has(c)),
+      ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+    ];
+  }, [catVersion]);
 
   // touch subVersion to re-render when subcategoryOptions changes
   void subVersion;
