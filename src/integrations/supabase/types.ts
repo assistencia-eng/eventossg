@@ -349,6 +349,24 @@ export type Database = {
         }
         Relationships: []
       }
+      removed_default_categories: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       removed_default_subcategories: {
         Row: {
           categoria: string
