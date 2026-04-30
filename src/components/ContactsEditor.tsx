@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
 import type { VenueContact } from "@/types/contact";
 
@@ -9,11 +10,22 @@ interface ContactsEditorProps {
   onChange: (next: VenueContact[]) => void;
   title?: string;
   description?: string;
+  syncToVenue?: boolean;
+  onSyncToVenueChange?: (next: boolean) => void;
+  showSyncToggle?: boolean;
 }
 
 const empty = (): VenueContact => ({ nome: "", whatsapp: "", instagram: "", facebook: "" });
 
-const ContactsEditor = ({ contacts, onChange, title = "Contatos", description }: ContactsEditorProps) => {
+const ContactsEditor = ({
+  contacts,
+  onChange,
+  title = "Contatos",
+  description,
+  syncToVenue,
+  onSyncToVenueChange,
+  showSyncToggle = false,
+}: ContactsEditorProps) => {
   const update = (idx: number, patch: Partial<VenueContact>) => {
     onChange(contacts.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
   };
@@ -31,6 +43,22 @@ const ContactsEditor = ({ contacts, onChange, title = "Contatos", description }:
           <Plus className="w-3.5 h-3.5 mr-1" /> Adicionar
         </Button>
       </div>
+
+      {showSyncToggle && contacts.length > 0 && (
+        <label className="flex items-start gap-2 p-2 rounded-md bg-primary/5 border border-primary/20 cursor-pointer">
+          <Checkbox
+            checked={!!syncToVenue}
+            onCheckedChange={(checked) => onSyncToVenueChange?.(!!checked)}
+            className="mt-0.5"
+          />
+          <div className="flex-1">
+            <span className="text-xs font-medium">Sincronizar com o local</span>
+            <p className="text-[11px] text-muted-foreground">
+              Ao salvar, adiciona estes contatos à biblioteca do local (sem sobrescrever os existentes), para reaproveitar em outros eventos. Os contatos personalizados continuam valendo como exceção apenas para este evento.
+            </p>
+          </div>
+        </label>
+      )}
 
       {contacts.length === 0 && (
         <p className="text-xs text-muted-foreground italic">Nenhum contato cadastrado.</p>

@@ -20,6 +20,7 @@ import KeywordsInput from "@/components/KeywordsInput";
 import ContactsEditor from "@/components/ContactsEditor";
 import type { VenueContact } from "@/types/contact";
 import { getOrCreateVenue } from "@/hooks/useVenues";
+import { syncContactsToVenue } from "@/lib/syncVenueContacts";
 import { useMemo } from "react";
 
 interface EditEventFormProps {
@@ -77,6 +78,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     custom_contacts: [] as VenueContact[],
   });
   const [venueContactsPreview, setVenueContactsPreview] = useState<VenueContact[]>([]);
+  const [syncContactsToVenueFlag, setSyncContactsToVenueFlag] = useState(true);
 
   useEffect(() => {
     if (event) {
@@ -238,7 +240,19 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
 
       if (updateError) throw updateError;
 
-      toast.success("Evento atualizado!");
+      // Sincroniza contatos personalizados do evento com o venue (sem sobrescrever)
+      if (venueId && sanitizedContacts.length > 0 && syncContactsToVenueFlag) {
+        const { inserted, merged } = await syncContactsToVenue(venueId, sanitizedContacts);
+        if (inserted > 0 || merged > 0) {
+          toast.success(
+            `Evento atualizado! ${inserted} contato(s) novo(s) e ${merged} mesclado(s) no local.`
+          );
+        } else {
+          toast.success("Evento atualizado!");
+        }
+      } else {
+        toast.success("Evento atualizado!");
+      }
       onUpdated();
       onClose();
     } catch (err) {
@@ -647,6 +661,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               onChange={(next) => setForm({ ...form, custom_contacts: next })}
               title="Contatos do evento (personalizados)"
               description="Se preenchidos, sobrescrevem os contatos herdados do local apenas para este evento."
+              showSyncToggle={!!form.local.trim()}
+              syncToVenue={syncContactsToVenueFlag}
+              onSyncToVenueChange={setSyncContactsToVenueFlag}
             />
           </div>
 
