@@ -10,6 +10,7 @@ import {
   refreshCategories,
   useCategoriesVersion,
   getCustomCategoryKeys,
+  getRemovedDefaultCategoryKeys,
 } from "@/hooks/useCategoriesSync";
 import { Tags, Plus, Trash2, Pencil, Check, X, ChevronDown, ChevronUp, Palette } from "lucide-react";
 
@@ -45,8 +46,54 @@ const CategoryManagement = () => {
   const [savingCat, setSavingCat] = useState(false);
 
   const customCategories = getCustomCategoryKeys();
-  const displayCategories = [...allCategories, ...customCategories];
+  const removedDefaults = new Set(getRemovedDefaultCategoryKeys());
+  const displayCategories = [
+    ...allCategories.filter((c) => !removedDefaults.has(c)),
+    ...customCategories,
+  ];
   const isCustomCategory = (cat: EventCategory) => customCategories.includes(cat);
+
+  /**
+   * Excluir qualquer categoria (default ou custom).
+   * - Verifica se há eventos vinculados; se sim, exige confirmação extra.
+   * - Default: insere em `removed_default_categories` para esconder.
+   * - Custom: deleta de `custom_categories` + suas subcategorias.
+   */
+  const handleDeleteCategory = async (cat: EventCategory) => {
+    // Quantos eventos referenciam essa categoria?
+    const { count: linkedCount } = await supabase
+      .from("events")
+      .select("id", { count: "exact", head: true })
+      .or(`categoria.eq.${cat},categorias.cs.{${cat}}`);
+
+    const linked = linkedCount || 0;
+    const baseMsg = `Excluir a categoria "${categoryLabels[cat]}"?`;
+    const linkMsg = linked > 0
+      ? `\n\n⚠️ Existem ${linked} evento(s) vinculados a esta categoria. Eles continuarão existindo, mas perderão a associação com ela. Deseja continuar?`
+      : "\n\nAs subcategorias dela também serão removidas.";
+    if (!confirm(baseMsg + linkMsg)) return;
+
+    if (isCustomCategory(cat)) {
+      const { error } = await supabase.from("custom_categories").delete().eq("key", cat);
+      if (error) {
+        toast.error("Erro ao excluir: " + error.message);
+        return;
+      }
+      await supabase.from("custom_subcategories").delete().eq("categoria", cat);
+    } else {
+      // Default: marca como removida (soft hide)
+      const { error } = await supabase
+        .from("removed_default_categories")
+        .insert({ categoria: cat });
+      if (error && error.code !== "23505") {
+        toast.error("Erro ao excluir: " + error.message);
+        return;
+      }
+    }
+    await refreshCategories();
+    await refreshSubcategories();
+    toast.success("Categoria excluída.");
+  };
 
   const handleCreateCategory = async () => {
     const key = newCatKey.trim().toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
@@ -81,18 +128,7 @@ const CategoryManagement = () => {
     setShowNewCatForm(false);
   };
 
-  const handleDeleteCustomCategory = async (cat: EventCategory) => {
-    if (!confirm(`Excluir a categoria "${categoryLabels[cat]}"? As subcategorias dela também serão removidas.`)) return;
-    const { error } = await supabase.from("custom_categories").delete().eq("key", cat);
-    if (error) {
-      toast.error("Erro ao excluir: " + error.message);
-      return;
-    }
-    await supabase.from("custom_subcategories").delete().eq("categoria", cat);
-    await refreshCategories();
-    await refreshSubcategories();
-    toast.success("Categoria excluída.");
-  };
+  const handleDeleteCustomCategory = handleDeleteCategory; // backward-compat alias
 
   const handleEditCategory = (cat: EventCategory) => {
     setEditingCat(cat);
@@ -355,12 +391,12 @@ const CategoryManagement = () => {
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
                     </Button>
                   )}
-                  {!isEditing && isCustomCategory(cat) && (
+                  {!isEditing && (
                     <Button
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => handleDeleteCustomCategory(cat)}
+                      onClick={() => handleDeleteCategory(cat)}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>

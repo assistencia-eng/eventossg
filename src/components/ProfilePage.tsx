@@ -11,6 +11,7 @@ import KeywordImageManager from "@/components/KeywordImageManager";
 import AIPromptManager from "@/components/AIPromptManager";
 import VenueManagement from "@/components/VenueManagement";
 import CityManagement from "@/components/CityManagement";
+import AdminSection from "@/components/AdminSection";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2 } from "lucide-react";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
 interface ProfilePageProps {
@@ -62,10 +63,13 @@ const ProfilePage = ({
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
 
-  const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
-    [catVersion]
-  );
+  const allCategories = useMemo<EventCategory[]>(() => {
+    const removed = new Set(getRemovedDefaultCategoryKeys());
+    return [
+      ...baseCategories.filter((c) => !removed.has(c)),
+      ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+    ];
+  }, [catVersion]);
 
   // touch subVersion to re-render when subcategoryOptions changes
   void subVersion;

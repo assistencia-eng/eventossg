@@ -8,7 +8,7 @@ import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
 interface FilterBarProps {
@@ -65,7 +65,11 @@ const FilterBar = ({
 
   const categories = useMemo<EventCategory[]>(() => {
     const customs = getCustomCategoryKeys();
-    return [...defaultCategories, ...customs.filter((c) => !defaultCategories.includes(c))];
+    const removed = new Set(getRemovedDefaultCategoryKeys());
+    return [
+      ...defaultCategories.filter((c) => !removed.has(c)),
+      ...customs.filter((c) => !defaultCategories.includes(c)),
+    ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catsVersion]);
 

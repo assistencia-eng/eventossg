@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { useCategoryImages } from "@/hooks/useCategoryImages";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -24,7 +24,13 @@ const SubcategoryImageManager = () => {
   const [expanded, setExpanded] = useState(false);
 
   const allCategories: EventCategory[] = useMemo(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
 

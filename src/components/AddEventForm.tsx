@@ -11,7 +11,7 @@ import { categoryLabels, categoryIcons, subcategoryOptions, weekDayLabels, type 
 import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Plus, ImagePlus, MapPin } from "lucide-react";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
@@ -33,7 +33,13 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   const { images: keywordImages } = useKeywordImages();
   const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
   const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
   void subVersion;

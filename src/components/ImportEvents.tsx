@@ -14,7 +14,7 @@ import { extractTextFromFile, isFileSupported, parseICSEvents } from "@/lib/file
 import { categoryLabels, categoryIcons, subcategoryOptions, type EventCategory } from "@/data/events";
 import { categoryColors, generateMutedColor } from "@/data/categoryColors";
 import { geocodeBatch } from "@/lib/geocode";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import { detectContactsInText, type VenueContact } from "@/types/contact";
@@ -154,7 +154,13 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   }, [extractedEvents, existingEvents]);
 
   const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
 

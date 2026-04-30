@@ -19,9 +19,15 @@ const defaultColors: Record<string, string> = Object.fromEntries(
 
 // Track custom categories we've added so we can keep state consistent
 let customCategoryKeys: string[] = [];
+// Track default categories admins have hidden
+let removedDefaultCategoryKeys: string[] = [];
 
 export function getCustomCategoryKeys(): EventCategory[] {
   return customCategoryKeys as EventCategory[];
+}
+
+export function getRemovedDefaultCategoryKeys(): EventCategory[] {
+  return removedDefaultCategoryKeys as EventCategory[];
 }
 
 export function emitCategoriesSynced() {
@@ -29,10 +35,13 @@ export function emitCategoriesSynced() {
 }
 
 async function loadAndMerge() {
-  const [customRes, overridesRes] = await Promise.all([
+  const [customRes, overridesRes, removedRes] = await Promise.all([
     supabase.from("custom_categories").select("key, label, icon, color_vibrant"),
     supabase.from("category_overrides").select("key, label, icon, color_vibrant"),
+    supabase.from("removed_default_categories").select("categoria"),
   ]);
+
+  removedDefaultCategoryKeys = (removedRes.data || []).map((r: any) => r.categoria);
 
   // Reset defaults first
   Object.keys(defaultLabels).forEach((k) => {

@@ -13,7 +13,7 @@ import { geocodeAddress } from "@/lib/geocode";
 import { Loader2, Save, MapPin, ImagePlus, Check } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
-import { useCategoriesVersion, getCustomCategoryKeys } from "@/hooks/useCategoriesSync";
+import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
@@ -36,7 +36,13 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   const allCategories = useMemo<EventCategory[]>(
-    () => [...baseCategories, ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c))],
+    () => {
+      const removed = new Set(getRemovedDefaultCategoryKeys());
+      return [
+        ...baseCategories.filter((c) => !removed.has(c)),
+        ...getCustomCategoryKeys().filter((c) => !baseCategories.includes(c)),
+      ];
+    },
     [catVersion]
   );
   void subVersion;
