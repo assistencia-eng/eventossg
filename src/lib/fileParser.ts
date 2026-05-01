@@ -152,7 +152,7 @@ const normalizeDateValue = (val: unknown): { date: string | null; time: string |
 
 const collectEventObjects = (data: unknown): Record<string, unknown>[] => {
   if (Array.isArray(data)) {
-    return data.filter((x): x is Record<string, unknown> => x !== null && typeof x === "object" && !Array.isArray(x));
+    return data.flatMap((item) => collectEventObjects(item));
   }
   if (data && typeof data === "object") {
     const obj = data as Record<string, unknown>;
@@ -160,7 +160,7 @@ const collectEventObjects = (data: unknown): Record<string, unknown>[] => {
     for (const key of ["events", "eventos", "items", "data", "results"]) {
       const v = obj[key];
       if (Array.isArray(v)) {
-        const arr = v.filter((x): x is Record<string, unknown> => x !== null && typeof x === "object" && !Array.isArray(x));
+        const arr = v.flatMap((item) => collectEventObjects(item));
         if (arr.length > 0) return arr;
       }
     }
