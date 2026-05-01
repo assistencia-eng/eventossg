@@ -123,6 +123,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [skipDuplicates, setSkipDuplicates] = useState<Set<number>>(new Set());
   const [updateDateDuplicates, setUpdateDateDuplicates] = useState<Set<number>>(new Set());
   const [showDupConfirm, setShowDupConfirm] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState<string>("Extraindo eventos dos arquivos...");
 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
