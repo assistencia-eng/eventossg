@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle } from "lucide-react";
+import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle, Sparkles } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,6 +123,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [skipDuplicates, setSkipDuplicates] = useState<Set<number>>(new Set());
   const [updateDateDuplicates, setUpdateDateDuplicates] = useState<Set<number>>(new Set());
   const [showDupConfirm, setShowDupConfirm] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState<string>("Extraindo eventos dos arquivos...");
 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
@@ -235,15 +236,70 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const processFiles = async () => {
-    if (files.length === 0) return;
+  const fetchFromN8n = async () => {
     setStep("processing");
+    setProcessingMessage(
+      "Buscando eventos novos nos sites da região... Isso pode levar entre 30 e 240 segundos. Aguarde."
+    );
+    setError(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 240_000);
+
+    try {
+      const response = await fetch(
+        "https://lufati-n8n.l2zlkg.easypanel.host/webhook/f6456203-1f11-47e6-9731-3229f6e77a58",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "scrape_eventos_serra",
+            source: "n8n_automation",
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Erro do servidor n8n (${response.status})`);
+      }
+
+      const payload = await response.json();
+      const jsonString = JSON.stringify(payload);
+      const syntheticFile = new File([jsonString], "n8n-events.json", {
+        type: "application/json",
+      });
+
+      setProcessingMessage("Processando eventos recebidos com IA...");
+      await processFiles([syntheticFile]);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.error("n8n fetch error:", err);
+      const isAbort = err instanceof DOMException && err.name === "AbortError";
+      const message = isAbort
+        ? "Tempo limite excedido (240s). Tente novamente."
+        : err instanceof Error
+        ? err.message
+        : "Erro ao buscar eventos automaticamente.";
+      setError(message);
+      toast.error(message);
+      setStep("upload");
+    }
+  };
+
+  const processFiles = async (filesArg?: File[]) => {
+    const filesToProcess = filesArg ?? files;
+    if (filesToProcess.length === 0) return;
+    setStep("processing");
+    setProcessingMessage("Extraindo eventos dos arquivos...");
     setError(null);
 
     try {
       const allEvents: ExtractedEvent[] = [];
 
-      for (const file of files) {
+      for (const file of filesToProcess) {
         const ext = file.name.split(".").pop()?.toLowerCase();
         const isICSFile = ext === "ics";
         const isJSONFile = ext === "json";
@@ -561,11 +617,30 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             )}
 
             <Button
-              onClick={processFiles}
+              onClick={() => void processFiles()}
               disabled={files.length === 0}
               className="w-full"
             >
               Processar com IA
+            </Button>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => void fetchFromN8n()}
+              className="w-full gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Buscar Eventos Automaticamente
             </Button>
           </div>
         )}
@@ -574,8 +649,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         {step === "processing" && (
           <div className="flex flex-col items-center py-12 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
-              Extraindo eventos dos arquivos...
+            <p className="text-sm text-muted-foreground text-center max-w-sm">
+              {processingMessage}
             </p>
           </div>
         )}
