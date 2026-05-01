@@ -269,14 +269,19 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           const normalized = (data.events as ExtractedEvent[]).map((ev, index) => {
             const icsEvent = icsEvents[index];
             const jsonEvent = jsonEvents[index];
+            const hasDeterministicDates = Boolean(icsEvent || jsonEvent);
+            const startDate = icsEvent?.startDate || jsonEvent?.startDate || ev.data;
+            const endDate = hasDeterministicDates
+              ? (icsEvent ? icsEvent.endDate : jsonEvent?.endDate ?? null)
+              : ev.data_fim ?? null;
             // Tenta detectar nos campos textuais do próprio evento
             const evText = [ev.descricao, ev.local, ev.endereco, (ev.atracoes || []).join(" ")].join(" ");
             const evContacts = detectContactsInText(evText);
             const detected = evContacts.length > 0 ? evContacts : fileContacts;
             return {
               ...ev,
-              data: icsEvent?.startDate || jsonEvent?.startDate || ev.data,
-              data_fim: icsEvent?.endDate ?? jsonEvent?.endDate ?? ev.data_fim ?? null,
+              data: startDate,
+              data_fim: endDate && endDate !== startDate ? endDate : null,
               horario: icsEvent?.time ?? jsonEvent?.time ?? ev.horario ?? null,
               keywords: Array.isArray(ev.keywords)
                 ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
