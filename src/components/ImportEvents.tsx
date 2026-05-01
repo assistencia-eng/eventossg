@@ -564,11 +564,30 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             )}
 
             <Button
-              onClick={processFiles}
+              onClick={() => void processFiles()}
               disabled={files.length === 0}
               className="w-full"
             >
               Processar com IA
+            </Button>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou</span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => void fetchFromN8n()}
+              className="w-full gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              Buscar Eventos Automaticamente
             </Button>
           </div>
         )}
@@ -577,8 +596,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         {step === "processing" && (
           <div className="flex flex-col items-center py-12 gap-4">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">
-              Extraindo eventos dos arquivos...
+            <p className="text-sm text-muted-foreground text-center max-w-sm">
+              {processingMessage}
             </p>
           </div>
         )}
