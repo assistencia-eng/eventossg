@@ -244,10 +244,14 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
       const allEvents: ExtractedEvent[] = [];
 
       for (const file of files) {
-        const isICSFile = file.name.split(".").pop()?.toLowerCase() === "ics";
+        const ext = file.name.split(".").pop()?.toLowerCase();
+        const isICSFile = ext === "ics";
+        const isJSONFile = ext === "json";
         const rawICS = isICSFile ? await file.text() : "";
         const icsEvents = isICSFile ? parseICSEvents(rawICS) : [];
-        const content = isICSFile ? await extractTextFromFile(file) : await extractTextFromFile(file);
+        const rawJSON = isJSONFile ? await file.text() : "";
+        const jsonEvents = isJSONFile ? parseJSONEvents(rawJSON) : [];
+        const content = await extractTextFromFile(file);
 
         const { data, error: fnError } = await supabase.functions.invoke("process-file", {
           body: { content, fileName: file.name, availableKeywords },
@@ -258,21 +262,22 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
 
         if (data?.events) {
           // Normalize: ensure keywords is always an array of strings from the library.
-          // For ICS files, force the dates extracted by the deterministic parser so the AI cannot duplicate today's date.
+          // For ICS/JSON files, force the dates extracted by the deterministic parser so the AI cannot duplicate today's date.
           // Detecta contatos do conteúdo do arquivo (fallback global)
           const fileContacts = detectContactsInText(content);
 
           const normalized = (data.events as ExtractedEvent[]).map((ev, index) => {
             const icsEvent = icsEvents[index];
+            const jsonEvent = jsonEvents[index];
             // Tenta detectar nos campos textuais do próprio evento
             const evText = [ev.descricao, ev.local, ev.endereco, (ev.atracoes || []).join(" ")].join(" ");
             const evContacts = detectContactsInText(evText);
             const detected = evContacts.length > 0 ? evContacts : fileContacts;
             return {
               ...ev,
-              data: icsEvent?.startDate || ev.data,
-              data_fim: icsEvent?.endDate ?? ev.data_fim ?? null,
-              horario: icsEvent?.time ?? ev.horario ?? null,
+              data: icsEvent?.startDate || jsonEvent?.startDate || ev.data,
+              data_fim: icsEvent?.endDate ?? jsonEvent?.endDate ?? ev.data_fim ?? null,
+              horario: icsEvent?.time ?? jsonEvent?.time ?? ev.horario ?? null,
               keywords: Array.isArray(ev.keywords)
                 ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
                 : [],
