@@ -225,12 +225,7 @@ export async function extractTextFromFile(file: File): Promise<string> {
 
   if (ext === "json") {
     const text = await file.text();
-    try {
-      const data = JSON.parse(text);
-      return JSON.stringify(data, null, 2);
-    } catch {
-      return text;
-    }
+    return annotateJSON(text);
   }
 
   if (ext === "xlsx" || ext === "xls") {
