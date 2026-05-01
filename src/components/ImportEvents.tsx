@@ -236,6 +236,59 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const fetchFromN8n = async () => {
+    setStep("processing");
+    setProcessingMessage(
+      "Buscando eventos novos nos sites da região... Isso pode levar entre 30 e 240 segundos. Aguarde."
+    );
+    setError(null);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 240_000);
+
+    try {
+      const response = await fetch(
+        "https://lufati-n8n.l2zlkg.easypanel.host/webhook/f6456203-1f11-47e6-9731-3229f6e77a58",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "scrape_eventos_serra",
+            source: "n8n_automation",
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Erro do servidor n8n (${response.status})`);
+      }
+
+      const payload = await response.json();
+      const jsonString = JSON.stringify(payload);
+      const syntheticFile = new File([jsonString], "n8n-events.json", {
+        type: "application/json",
+      });
+
+      setProcessingMessage("Processando eventos recebidos com IA...");
+      await processFiles([syntheticFile]);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.error("n8n fetch error:", err);
+      const isAbort = err instanceof DOMException && err.name === "AbortError";
+      const message = isAbort
+        ? "Tempo limite excedido (240s). Tente novamente."
+        : err instanceof Error
+        ? err.message
+        : "Erro ao buscar eventos automaticamente.";
+      setError(message);
+      toast.error(message);
+      setStep("upload");
+    }
+  };
+
   const processFiles = async (filesArg?: File[]) => {
     const filesToProcess = filesArg ?? files;
     if (filesToProcess.length === 0) return;
