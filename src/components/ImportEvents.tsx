@@ -246,7 +246,7 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     try {
       const allEvents: ExtractedEvent[] = [];
 
-      for (const file of files) {
+      for (const file of filesToProcess) {
         const ext = file.name.split(".").pop()?.toLowerCase();
         const isICSFile = ext === "ics";
         const isJSONFile = ext === "json";
