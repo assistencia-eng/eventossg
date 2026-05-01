@@ -236,9 +236,11 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const processFiles = async () => {
-    if (files.length === 0) return;
+  const processFiles = async (filesArg?: File[]) => {
+    const filesToProcess = filesArg ?? files;
+    if (filesToProcess.length === 0) return;
     setStep("processing");
+    setProcessingMessage("Extraindo eventos dos arquivos...");
     setError(null);
 
     try {
