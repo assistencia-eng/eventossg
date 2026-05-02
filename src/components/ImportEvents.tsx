@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle, Sparkles } from "lucide-react";
+import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle, Sparkles, ImagePlus, Star } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +18,10 @@ import { geocodeBatch } from "@/lib/geocode";
 import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { detectContactsInText, type VenueContact } from "@/types/contact";
 import { getOrCreateVenue } from "@/hooks/useVenues";
+import ContactsEditor from "@/components/ContactsEditor";
 
 interface ExtractedEvent {
   nome: string;
@@ -37,6 +40,12 @@ interface ExtractedEvent {
   latitude: number;
   longitude: number;
   detected_contacts?: VenueContact[];
+  custom_contacts?: VenueContact[];
+  is_featured?: boolean;
+  image_source?: "auto" | "subcategory" | "keyword";
+  image_keyword?: string | null;
+  keyword_image_index?: number | null;
+  subcategory_image_index?: number | null;
 }
 
 interface ImportEventsProps {
@@ -165,11 +174,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [updateDateDuplicates, setUpdateDateDuplicates] = useState<Set<number>>(new Set());
   const [showDupConfirm, setShowDupConfirm] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>("Extraindo eventos dos arquivos...");
+  // Per-event uploaded cover images (index -> File). Previews use object URLs.
+  const [imageFiles, setImageFiles] = useState<Record<number, File>>({});
+  const [imagePreviews, setImagePreviews] = useState<Record<number, string>>({});
 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   void subVersion;
   const { images: keywordImages } = useKeywordImages();
+  const { images: subcategoryImages } = useSubcategoryImages();
   const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
 
   // Load existing events when dialog opens (lightweight fields only)
@@ -215,6 +228,12 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setSkipDuplicates(new Set());
     setUpdateDateDuplicates(new Set());
     setShowDupConfirm(false);
+    // Revoke any preview object URLs
+    Object.values(imagePreviews).forEach((u) => {
+      try { URL.revokeObjectURL(u); } catch { /* ignore */ }
+    });
+    setImageFiles({});
+    setImagePreviews({});
   };
 
   const toggleSkipDuplicate = (index: number) => {
@@ -384,19 +403,46 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                 ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
                 : [],
               detected_contacts: detected,
+              custom_contacts: detected.length > 0 ? detected.map((c) => ({ ...c })) : [],
+              is_featured: ev.is_featured ?? false,
+              image_source: (ev.image_source as ExtractedEvent["image_source"]) ?? "auto",
+              image_keyword: ev.image_keyword ?? null,
+              keyword_image_index: ev.keyword_image_index ?? null,
+              subcategory_image_index: ev.subcategory_image_index ?? null,
             };
           });
           allEvents.push(...normalized);
         }
       }
 
-      if (allEvents.length === 0) {
-        setError("Nenhum evento encontrado nos arquivos enviados.");
+      // Filtra eventos passados: descarta apenas se data_fim (ou data, se não houver fim) já passou.
+      // Eventos multi-dia em andamento permanecem.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString().slice(0, 10);
+      const totalBefore = allEvents.length;
+      const futureEvents = allEvents.filter((ev) => {
+        const endRef = ev.data_fim || ev.data;
+        if (!endRef) return true; // sem data — mantém para o admin decidir
+        return endRef >= todayISO;
+      });
+      const droppedPast = totalBefore - futureEvents.length;
+
+      if (futureEvents.length === 0) {
+        setError(
+          totalBefore > 0
+            ? `Nenhum evento futuro encontrado (${totalBefore} evento(s) descartado(s) por já terem ocorrido).`
+            : "Nenhum evento encontrado nos arquivos enviados."
+        );
         setStep("upload");
         return;
       }
 
-      setExtractedEvents(allEvents);
+      if (droppedPast > 0) {
+        toast.info(`${droppedPast} evento(s) passado(s) descartado(s) automaticamente.`);
+      }
+
+      setExtractedEvents(futureEvents);
       setStep("preview");
     } catch (err) {
       console.error("Processing error:", err);
@@ -514,6 +560,27 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
       if (toInsert.length > 0) {
         // Resolve (ou cria) venues para cada evento e popula contatos detectados nos novos venues
         const venueIds: (string | null)[] = [];
+        // Upload das imagens de capa enviadas manualmente (se houver)
+        const uploadedImageUrls: (string | null)[] = [];
+        for (let i = 0; i < toInsert.length; i++) {
+          const originalIndex = insertIndices[i];
+          const file = imageFiles[originalIndex];
+          if (!file) {
+            uploadedImageUrls.push(null);
+            continue;
+          }
+          try {
+            const ext = file.name.split(".").pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { error: upErr } = await supabase.storage.from("event-images").upload(fileName, file);
+            if (upErr) throw upErr;
+            const { data: urlData } = supabase.storage.from("event-images").getPublicUrl(fileName);
+            uploadedImageUrls.push(urlData.publicUrl);
+          } catch (e) {
+            console.error("Image upload failed:", e);
+            uploadedImageUrls.push(null);
+          }
+        }
         for (let i = 0; i < toInsert.length; i++) {
           const ev = toInsert[i];
           if (!ev.local || ev.local === "Não informado") {
@@ -523,45 +590,69 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           const venueId = await getOrCreateVenue(ev.local, ev.cidade);
           venueIds.push(venueId);
 
-          // Se há contatos detectados e o venue ainda não tem nenhum, popula
-          if (venueId && ev.detected_contacts && ev.detected_contacts.length > 0) {
+          // Se há contatos (custom ou detectados) e o venue ainda não tem nenhum, popula
+          const contactsForVenue = (ev.custom_contacts && ev.custom_contacts.length > 0)
+            ? ev.custom_contacts
+            : (ev.detected_contacts || []);
+          if (venueId && contactsForVenue.length > 0) {
             const { count } = await supabase
               .from("venue_contacts")
               .select("id", { count: "exact", head: true })
               .eq("venue_id", venueId);
             if (!count) {
-              const rows = ev.detected_contacts.map((c) => ({
-                venue_id: venueId,
-                nome: c.nome?.trim() || null,
-                whatsapp: c.whatsapp?.trim() || null,
-                instagram: c.instagram?.trim() || null,
-                facebook: c.facebook?.trim() || null,
-              }));
-              await supabase.from("venue_contacts").insert(rows);
+              const rows = contactsForVenue
+                .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook)
+                .map((c) => ({
+                  venue_id: venueId,
+                  nome: c.nome?.trim() || null,
+                  whatsapp: c.whatsapp?.trim() || null,
+                  instagram: c.instagram?.trim() || null,
+                  facebook: c.facebook?.trim() || null,
+                }));
+              if (rows.length > 0) {
+                await supabase.from("venue_contacts").insert(rows);
+              }
             }
           }
         }
 
         const { error: insertError } = await supabase.from("events").insert(
-          toInsert.map((ev, i) => ({
-            nome: ev.nome,
-            local: ev.local,
-            cidade: ev.cidade,
-            endereco: ev.endereco,
-            data: ev.data,
-            data_fim: ev.data_fim || null,
-            horario: ev.horario || null,
-            descricao: ev.descricao,
-            atracoes: ev.atracoes,
-            categoria: ev.categoria,
-            categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
-            subcategorias: ev.subcategorias || [],
-            keywords: ev.keywords || [],
-            latitude: geoResults[i].latitude,
-            longitude: geoResults[i].longitude,
-            venue_id: venueIds[i],
-            custom_contacts: [],
-          }))
+          toInsert.map((ev, i) => {
+            const uploadedUrl = uploadedImageUrls[i];
+            const sanitizedContacts = (ev.custom_contacts || [])
+              .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook)
+              .map((c) => ({
+                nome: c.nome?.trim() || null,
+                whatsapp: c.whatsapp?.trim() || null,
+                instagram: c.instagram?.trim() || null,
+                facebook: c.facebook?.trim() || null,
+              }));
+            return {
+              nome: ev.nome,
+              local: ev.local,
+              cidade: ev.cidade,
+              endereco: ev.endereco,
+              data: ev.data,
+              data_fim: ev.data_fim || null,
+              horario: ev.horario || null,
+              descricao: ev.descricao,
+              atracoes: ev.atracoes,
+              categoria: ev.categoria,
+              categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
+              subcategorias: ev.subcategorias || [],
+              keywords: ev.keywords || [],
+              latitude: (typeof ev.latitude === "number" && ev.latitude !== 0) ? ev.latitude : geoResults[i].latitude,
+              longitude: (typeof ev.longitude === "number" && ev.longitude !== 0) ? ev.longitude : geoResults[i].longitude,
+              venue_id: venueIds[i],
+              custom_contacts: sanitizedContacts,
+              imagem: uploadedUrl,
+              is_featured: ev.is_featured ?? false,
+              image_source: uploadedUrl ? "auto" : (ev.image_source || "auto"),
+              image_keyword: ev.image_source === "keyword" ? (ev.image_keyword ?? null) : null,
+              keyword_image_index: ev.image_source === "keyword" ? (ev.keyword_image_index ?? null) : null,
+              subcategory_image_index: ev.image_source === "subcategory" ? (ev.subcategory_image_index ?? null) : null,
+            };
+          })
         );
         if (insertError) throw insertError;
       }
@@ -920,6 +1011,234 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                             }
                             placeholder="Ex: Show ao vivo, Degustação"
                           />
+                        </div>
+
+                        {/* Contatos do evento */}
+                        <div className="space-y-1.5 pt-1 border-t border-border">
+                          <ContactsEditor
+                            contacts={ev.custom_contacts || []}
+                            onChange={(next) => updateEvent(i, "custom_contacts", next)}
+                            title="Contatos"
+                            description="Os contatos serão sincronizados com o local vinculado quando o evento for criado."
+                          />
+                        </div>
+
+                        {/* Imagem de capa (upload manual) */}
+                        <div className="space-y-1.5 pt-1 border-t border-border">
+                          <Label className="text-xs">Imagem de capa</Label>
+                          <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border rounded-xl cursor-pointer hover:border-primary/50 transition-colors">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0];
+                                if (!f) return;
+                                if (f.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB."); return; }
+                                const url = URL.createObjectURL(f);
+                                setImageFiles((prev) => ({ ...prev, [i]: f }));
+                                setImagePreviews((prev) => {
+                                  const old = prev[i];
+                                  if (old) { try { URL.revokeObjectURL(old); } catch {} }
+                                  return { ...prev, [i]: url };
+                                });
+                              }}
+                            />
+                            {imagePreviews[i] ? (
+                              <img src={imagePreviews[i]} alt="Preview" className="w-full h-28 object-cover rounded-lg" />
+                            ) : (
+                              <div className="text-center text-muted-foreground">
+                                <ImagePlus className="w-6 h-6 mx-auto mb-1" />
+                                <span className="text-xs">Selecionar imagem (opcional)</span>
+                              </div>
+                            )}
+                          </label>
+                          {imagePreviews[i] && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setImageFiles((prev) => { const n = { ...prev }; delete n[i]; return n; });
+                                setImagePreviews((prev) => {
+                                  const n = { ...prev };
+                                  if (n[i]) { try { URL.revokeObjectURL(n[i]); } catch {} }
+                                  delete n[i];
+                                  return n;
+                                });
+                              }}
+                              className="text-xs text-destructive underline"
+                            >
+                              Remover imagem
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Image source picker (somente quando não há upload manual) */}
+                        {!imagePreviews[i] && (() => {
+                          const cats = ev.categorias.length > 0 ? ev.categorias : [ev.categoria];
+                          let subWithImages: string | undefined;
+                          let catForSub: string | undefined;
+                          let subImgs: string[] = [];
+                          for (const sub of ev.subcategorias) {
+                            for (const cat of cats) {
+                              const imgs = subcategoryImages[subImgKey(cat as EventCategory, sub)] || [];
+                              if (imgs.length > 0) {
+                                subWithImages = sub;
+                                catForSub = cat;
+                                subImgs = imgs;
+                                break;
+                              }
+                            }
+                            if (subWithImages) break;
+                          }
+                          const eventKwsWithImgs = (ev.keywords || []).filter((kw) => {
+                            const k = kw.toLowerCase().trim();
+                            return keywordImages[k] && keywordImages[k].length > 0;
+                          });
+                          const hasSub = !!subWithImages && subImgs.length > 0;
+                          const hasKw = eventKwsWithImgs.length > 0;
+                          if (!hasSub && !hasKw) return null;
+                          const currentKw = ev.image_keyword && eventKwsWithImgs.includes(ev.image_keyword)
+                            ? ev.image_keyword
+                            : eventKwsWithImgs[0];
+                          const currentKwImgs = currentKw ? (keywordImages[currentKw.toLowerCase().trim()] || []) : [];
+                          return (
+                            <div className="space-y-2 p-2.5 rounded-lg border border-border bg-secondary/20">
+                              <Label className="text-xs">Imagem do card</Label>
+                              <div className="flex gap-1.5 flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    updateEvent(i, "image_source", "auto");
+                                    updateEvent(i, "subcategory_image_index", null);
+                                    updateEvent(i, "image_keyword", null);
+                                    updateEvent(i, "keyword_image_index", null);
+                                  }}
+                                  className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                    (ev.image_source || "auto") === "auto"
+                                      ? "bg-primary text-primary-foreground border-primary"
+                                      : "bg-secondary text-secondary-foreground border-border"
+                                  }`}
+                                >Automático</button>
+                                {hasSub && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      updateEvent(i, "image_source", "subcategory");
+                                      updateEvent(i, "image_keyword", null);
+                                      updateEvent(i, "keyword_image_index", null);
+                                    }}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                      ev.image_source === "subcategory"
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-secondary text-secondary-foreground border-border"
+                                    }`}
+                                  >Subcategoria</button>
+                                )}
+                                {hasKw && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      updateEvent(i, "image_source", "keyword");
+                                      updateEvent(i, "subcategory_image_index", null);
+                                      updateEvent(i, "image_keyword", ev.image_keyword || eventKwsWithImgs[0]);
+                                    }}
+                                    className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                                      ev.image_source === "keyword"
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-secondary text-secondary-foreground border-border"
+                                    }`}
+                                  >Palavra-chave</button>
+                                )}
+                              </div>
+
+                              {ev.image_source === "subcategory" && hasSub && (
+                                <div className="space-y-1.5">
+                                  <p className="text-[11px] text-muted-foreground">{catForSub} → {subWithImages}</p>
+                                  <div className="grid grid-cols-4 gap-1.5">
+                                    <button type="button" onClick={() => updateEvent(i, "subcategory_image_index", null)}
+                                      className={`aspect-[4/3] rounded-md border-2 flex items-center justify-center text-[10px] ${ev.subcategory_image_index == null ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>Auto</button>
+                                    {[1, 2, 3].map((slot) => {
+                                      const url = subImgs[slot - 1];
+                                      if (!url) return <div key={slot} className="aspect-[4/3] rounded-md border-2 border-dashed border-border" />;
+                                      const sel = ev.subcategory_image_index === slot;
+                                      return (
+                                        <button key={slot} type="button" onClick={() => updateEvent(i, "subcategory_image_index", slot)}
+                                          className={`relative aspect-[4/3] rounded-md overflow-hidden border-2 ${sel ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
+                                          <img src={url} alt={`${slot}`} className="w-full h-full object-cover" />
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {ev.image_source === "keyword" && hasKw && (
+                                <div className="space-y-1.5">
+                                  {eventKwsWithImgs.length > 1 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {eventKwsWithImgs.map((kw) => (
+                                        <button key={kw} type="button"
+                                          onClick={() => { updateEvent(i, "image_keyword", kw); updateEvent(i, "keyword_image_index", null); }}
+                                          className={`px-2 py-0.5 rounded-full text-[11px] border ${currentKw === kw ? "bg-primary text-primary-foreground border-primary" : "bg-secondary border-border"}`}>{kw}</button>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <p className="text-[11px] text-muted-foreground">Imagens de <strong>{currentKw}</strong></p>
+                                  <div className="grid grid-cols-4 gap-1.5">
+                                    <button type="button" onClick={() => updateEvent(i, "keyword_image_index", null)}
+                                      className={`aspect-[4/3] rounded-md border-2 flex items-center justify-center text-[10px] ${ev.keyword_image_index == null ? "border-primary bg-primary/10 text-primary" : "border-border"}`}>Auto</button>
+                                    {[1, 2, 3].map((slot) => {
+                                      const url = currentKwImgs[slot - 1];
+                                      if (!url) return <div key={slot} className="aspect-[4/3] rounded-md border-2 border-dashed border-border" />;
+                                      const sel = ev.keyword_image_index === slot;
+                                      return (
+                                        <button key={slot} type="button" onClick={() => updateEvent(i, "keyword_image_index", slot)}
+                                          className={`relative aspect-[4/3] rounded-md overflow-hidden border-2 ${sel ? "border-primary ring-2 ring-primary/40" : "border-border"}`}>
+                                          <img src={url} alt={`${slot}`} className="w-full h-full object-cover" />
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Featured toggle */}
+                        <div className="flex items-center justify-between pt-1 border-t border-border">
+                          <Label htmlFor={`featured-${i}`} className="text-xs flex items-center gap-1.5 cursor-pointer">
+                            <Star className="w-3.5 h-3.5" /> Evento em destaque (Outdoor)
+                          </Label>
+                          <Switch
+                            id={`featured-${i}`}
+                            checked={!!ev.is_featured}
+                            onCheckedChange={(v) => updateEvent(i, "is_featured", v)}
+                          />
+                        </div>
+
+                        {/* Localização (lat/lng) — opcional, sobrescreve geocoding */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Latitude (opcional)</Label>
+                            <Input
+                              type="number"
+                              step="0.000001"
+                              value={ev.latitude || ""}
+                              onChange={(e) => updateEvent(i, "latitude", parseFloat(e.target.value) || 0)}
+                              placeholder="Auto"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Longitude (opcional)</Label>
+                            <Input
+                              type="number"
+                              step="0.000001"
+                              value={ev.longitude || ""}
+                              onChange={(e) => updateEvent(i, "longitude", parseFloat(e.target.value) || 0)}
+                              placeholder="Auto"
+                            />
+                          </div>
                         </div>
 
                         <Button size="sm" onClick={() => setEditingIndex(null)}>

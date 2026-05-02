@@ -11,13 +11,22 @@ import {
 } from "@/components/ui/dialog";
 import { Pencil, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import AdminSection from "@/components/AdminSection";
 
 interface CityRow {
   cidade: string;
   count: number;
 }
 
-const CityManagement = () => {
+interface CityManagementProps {
+  expanded?: boolean;
+  onToggle?: () => void;
+}
+
+const CityManagement = ({ expanded: expandedProp, onToggle }: CityManagementProps) => {
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = expandedProp ?? internalExpanded;
+  const handleToggle = onToggle ?? (() => setInternalExpanded((v) => !v));
   const [cities, setCities] = useState<CityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
@@ -79,30 +88,34 @@ const CityManagement = () => {
   };
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-neutral-400 font-sans flex items-center gap-2">
-        <MapPin className="w-5 h-5" /> Cidades cadastradas ({cities.length})
-      </h2>
-
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
-      ) : cities.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">Nenhuma cidade com eventos.</p>
-      ) : (
-        <div className="space-y-2">
-          {cities.map((c) => (
-            <div key={c.cidade} className="flex items-center justify-between p-3 rounded-lg bg-[#1c1c1c] border border-border">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-neutral-200 truncate">{c.cidade}</p>
-                <p className="text-xs text-muted-foreground">{c.count} evento{c.count === 1 ? "" : "s"}</p>
+    <>
+      <AdminSection
+        title="Cidades cadastradas"
+        icon={<MapPin className="w-5 h-5" />}
+        expanded={expanded}
+        onToggle={handleToggle}
+        count={cities.length}
+      >
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : cities.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">Nenhuma cidade com eventos.</p>
+        ) : (
+          <div className="space-y-2">
+            {cities.map((c) => (
+              <div key={c.cidade} className="flex items-center justify-between p-3 rounded-lg bg-[#1c1c1c] border border-border">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-neutral-200 truncate">{c.cidade}</p>
+                  <p className="text-xs text-muted-foreground">{c.count} evento{c.count === 1 ? "" : "s"}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c.cidade)}>
+                  <Pencil className="w-4 h-4" />
+                </Button>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c.cidade)}>
-                <Pencil className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </AdminSection>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-md">
@@ -125,7 +138,7 @@ const CityManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </section>
+    </>
   );
 };
 
