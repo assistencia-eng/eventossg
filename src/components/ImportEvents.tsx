@@ -560,6 +560,27 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
       if (toInsert.length > 0) {
         // Resolve (ou cria) venues para cada evento e popula contatos detectados nos novos venues
         const venueIds: (string | null)[] = [];
+        // Upload das imagens de capa enviadas manualmente (se houver)
+        const uploadedImageUrls: (string | null)[] = [];
+        for (let i = 0; i < toInsert.length; i++) {
+          const originalIndex = insertIndices[i];
+          const file = imageFiles[originalIndex];
+          if (!file) {
+            uploadedImageUrls.push(null);
+            continue;
+          }
+          try {
+            const ext = file.name.split(".").pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { error: upErr } = await supabase.storage.from("event-images").upload(fileName, file);
+            if (upErr) throw upErr;
+            const { data: urlData } = supabase.storage.from("event-images").getPublicUrl(fileName);
+            uploadedImageUrls.push(urlData.publicUrl);
+          } catch (e) {
+            console.error("Image upload failed:", e);
+            uploadedImageUrls.push(null);
+          }
+        }
         for (let i = 0; i < toInsert.length; i++) {
           const ev = toInsert[i];
           if (!ev.local || ev.local === "Não informado") {
@@ -569,45 +590,69 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           const venueId = await getOrCreateVenue(ev.local, ev.cidade);
           venueIds.push(venueId);
 
-          // Se há contatos detectados e o venue ainda não tem nenhum, popula
-          if (venueId && ev.detected_contacts && ev.detected_contacts.length > 0) {
+          // Se há contatos (custom ou detectados) e o venue ainda não tem nenhum, popula
+          const contactsForVenue = (ev.custom_contacts && ev.custom_contacts.length > 0)
+            ? ev.custom_contacts
+            : (ev.detected_contacts || []);
+          if (venueId && contactsForVenue.length > 0) {
             const { count } = await supabase
               .from("venue_contacts")
               .select("id", { count: "exact", head: true })
               .eq("venue_id", venueId);
             if (!count) {
-              const rows = ev.detected_contacts.map((c) => ({
-                venue_id: venueId,
-                nome: c.nome?.trim() || null,
-                whatsapp: c.whatsapp?.trim() || null,
-                instagram: c.instagram?.trim() || null,
-                facebook: c.facebook?.trim() || null,
-              }));
-              await supabase.from("venue_contacts").insert(rows);
+              const rows = contactsForVenue
+                .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook)
+                .map((c) => ({
+                  venue_id: venueId,
+                  nome: c.nome?.trim() || null,
+                  whatsapp: c.whatsapp?.trim() || null,
+                  instagram: c.instagram?.trim() || null,
+                  facebook: c.facebook?.trim() || null,
+                }));
+              if (rows.length > 0) {
+                await supabase.from("venue_contacts").insert(rows);
+              }
             }
           }
         }
 
         const { error: insertError } = await supabase.from("events").insert(
-          toInsert.map((ev, i) => ({
-            nome: ev.nome,
-            local: ev.local,
-            cidade: ev.cidade,
-            endereco: ev.endereco,
-            data: ev.data,
-            data_fim: ev.data_fim || null,
-            horario: ev.horario || null,
-            descricao: ev.descricao,
-            atracoes: ev.atracoes,
-            categoria: ev.categoria,
-            categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
-            subcategorias: ev.subcategorias || [],
-            keywords: ev.keywords || [],
-            latitude: geoResults[i].latitude,
-            longitude: geoResults[i].longitude,
-            venue_id: venueIds[i],
-            custom_contacts: [],
-          }))
+          toInsert.map((ev, i) => {
+            const uploadedUrl = uploadedImageUrls[i];
+            const sanitizedContacts = (ev.custom_contacts || [])
+              .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook)
+              .map((c) => ({
+                nome: c.nome?.trim() || null,
+                whatsapp: c.whatsapp?.trim() || null,
+                instagram: c.instagram?.trim() || null,
+                facebook: c.facebook?.trim() || null,
+              }));
+            return {
+              nome: ev.nome,
+              local: ev.local,
+              cidade: ev.cidade,
+              endereco: ev.endereco,
+              data: ev.data,
+              data_fim: ev.data_fim || null,
+              horario: ev.horario || null,
+              descricao: ev.descricao,
+              atracoes: ev.atracoes,
+              categoria: ev.categoria,
+              categorias: (ev.categorias && ev.categorias.length > 0 ? ev.categorias : [ev.categoria]),
+              subcategorias: ev.subcategorias || [],
+              keywords: ev.keywords || [],
+              latitude: geoResults[i].latitude,
+              longitude: geoResults[i].longitude,
+              venue_id: venueIds[i],
+              custom_contacts: sanitizedContacts,
+              imagem: uploadedUrl,
+              is_featured: ev.is_featured ?? false,
+              image_source: uploadedUrl ? "auto" : (ev.image_source || "auto"),
+              image_keyword: ev.image_source === "keyword" ? (ev.image_keyword ?? null) : null,
+              keyword_image_index: ev.image_source === "keyword" ? (ev.keyword_image_index ?? null) : null,
+              subcategory_image_index: ev.image_source === "subcategory" ? (ev.subcategory_image_index ?? null) : null,
+            };
+          })
         );
         if (insertError) throw insertError;
       }
