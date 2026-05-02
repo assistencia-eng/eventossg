@@ -403,6 +403,22 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
                 ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
                 : [],
               detected_contacts: detected,
+              custom_contacts: detected.length > 0 ? detected.map((c) => ({ ...c })) : [],
+              is_featured: ev.is_featured ?? false,
+              image_source: (ev.image_source as ExtractedEvent["image_source"]) ?? "auto",
+              image_keyword: ev.image_keyword ?? null,
+              keyword_image_index: ev.keyword_image_index ?? null,
+              subcategory_image_index: ev.subcategory_image_index ?? null,
+            };
+          });
+              ...ev,
+              data: startDate,
+              data_fim: endDate && endDate !== startDate ? endDate : null,
+              horario: icsEvent?.time ?? jsonEvent?.time ?? ev.horario ?? null,
+              keywords: Array.isArray(ev.keywords)
+                ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
+                : [],
+              detected_contacts: detected,
             };
           });
           allEvents.push(...normalized);
