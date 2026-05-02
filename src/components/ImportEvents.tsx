@@ -228,6 +228,12 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
     setSkipDuplicates(new Set());
     setUpdateDateDuplicates(new Set());
     setShowDupConfirm(false);
+    // Revoke any preview object URLs
+    Object.values(imagePreviews).forEach((u) => {
+      try { URL.revokeObjectURL(u); } catch { /* ignore */ }
+    });
+    setImageFiles({});
+    setImagePreviews({});
   };
 
   const toggleSkipDuplicate = (index: number) => {
