@@ -15,8 +15,14 @@ import { Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ContactsEditor from "./ContactsEditor";
 import type { VenueContact } from "@/types/contact";
+import AdminSection from "@/components/AdminSection";
 
-const VenueManagement = () => {
+interface VenueManagementProps {
+  expanded?: boolean;
+  onToggle?: () => void;
+}
+
+const VenueManagement = ({ expanded = false, onToggle }: VenueManagementProps) => {
   const { venues, loading, refresh } = useVenues();
   const [editing, setEditing] = useState<Venue | null>(null);
   const [editName, setEditName] = useState("");
@@ -37,7 +43,6 @@ const VenueManagement = () => {
     }
     setSaving(true);
     try {
-      // 1. Atualiza nome do venue se mudou
       if (editName.trim() !== editing.nome) {
         const { error } = await supabase
           .from("venues")
@@ -46,7 +51,6 @@ const VenueManagement = () => {
         if (error) throw error;
       }
 
-      // 2. Sincroniza contatos: deleta todos e reinsere (mais simples e consistente)
       const { error: delErr } = await supabase
         .from("venue_contacts")
         .delete()
@@ -91,38 +95,42 @@ const VenueManagement = () => {
   };
 
   return (
-    <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-neutral-400 font-sans flex items-center gap-2">
-        <MapPin className="w-5 h-5" /> Locais ({venues.length})
-      </h2>
-
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando...</p>
-      ) : venues.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">Nenhum local cadastrado ainda. Locais são criados automaticamente ao importar eventos.</p>
-      ) : (
-        <div className="space-y-2">
-          {venues.map((v) => (
-            <div key={v.id} className="flex items-center justify-between p-3 rounded-lg bg-[#1c1c1c] border border-border">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-neutral-200 truncate">{v.nome}</p>
-                <p className="text-xs text-muted-foreground">
-                  {v.contacts.length} contato{v.contacts.length === 1 ? "" : "s"}
-                  {v.cidade ? ` • ${v.cidade}` : ""}
-                </p>
+    <>
+      <AdminSection
+        title="Locais"
+        icon={<MapPin className="w-5 h-5" />}
+        expanded={expanded}
+        onToggle={onToggle ?? (() => {})}
+        count={venues.length}
+      >
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Carregando...</p>
+        ) : venues.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">Nenhum local cadastrado ainda. Locais são criados automaticamente ao importar eventos.</p>
+        ) : (
+          <div className="space-y-2">
+            {venues.map((v) => (
+              <div key={v.id} className="flex items-center justify-between p-3 rounded-lg bg-[#1c1c1c] border border-border">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-neutral-200 truncate">{v.nome}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {v.contacts.length} contato{v.contacts.length === 1 ? "" : "s"}
+                    {v.cidade ? ` • ${v.cidade}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(v)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(v)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(v)}>
-                  <Pencil className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(v)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </AdminSection>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
@@ -149,7 +157,7 @@ const VenueManagement = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </section>
+    </>
   );
 };
 
