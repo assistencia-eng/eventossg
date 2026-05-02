@@ -23,7 +23,10 @@ interface CityManagementProps {
   onToggle?: () => void;
 }
 
-const CityManagement = ({ expanded = false, onToggle }: CityManagementProps) => {
+const CityManagement = ({ expanded: expandedProp, onToggle }: CityManagementProps) => {
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = expandedProp ?? internalExpanded;
+  const handleToggle = onToggle ?? (() => setInternalExpanded((v) => !v));
   const [cities, setCities] = useState<CityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
@@ -90,7 +93,7 @@ const CityManagement = ({ expanded = false, onToggle }: CityManagementProps) => 
         title="Cidades cadastradas"
         icon={<MapPin className="w-5 h-5" />}
         expanded={expanded}
-        onToggle={onToggle ?? (() => {})}
+        onToggle={handleToggle}
         count={cities.length}
       >
         {loading ? (

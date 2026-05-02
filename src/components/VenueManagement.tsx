@@ -22,7 +22,10 @@ interface VenueManagementProps {
   onToggle?: () => void;
 }
 
-const VenueManagement = ({ expanded = false, onToggle }: VenueManagementProps) => {
+const VenueManagement = ({ expanded: expandedProp, onToggle }: VenueManagementProps) => {
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = expandedProp ?? internalExpanded;
+  const handleToggle = onToggle ?? (() => setInternalExpanded((v) => !v));
   const { venues, loading, refresh } = useVenues();
   const [editing, setEditing] = useState<Venue | null>(null);
   const [editName, setEditName] = useState("");
@@ -100,7 +103,7 @@ const VenueManagement = ({ expanded = false, onToggle }: VenueManagementProps) =
         title="Locais"
         icon={<MapPin className="w-5 h-5" />}
         expanded={expanded}
-        onToggle={onToggle ?? (() => {})}
+        onToggle={handleToggle}
         count={venues.length}
       >
         {loading ? (
