@@ -87,22 +87,63 @@ const similarity = (a: string, b: string): number => {
   return 1 - dp[n] / Math.max(m, n);
 };
 
+// Stop-words irrelevantes para comparação de nomes de eventos
+const NAME_STOPWORDS = new Set([
+  "show","shows","de","da","do","das","dos","e","em","no","na","nos","nas","a","o","as","os",
+  "com","para","por","the","feat","ft","apresenta","apresentacao","evento","festa","festival",
+  "live","tour","sertanejo","rock","pop","pagode","funk","mpb","gauchesco","gauchesca","serra",
+  "noite","matine","especial","unico","ao","vivo"
+]);
+
+const tokenize = (s: string): Set<string> => {
+  const tokens = norm(s).split(" ").filter((t) => t.length >= 3 && !NAME_STOPWORDS.has(t));
+  return new Set(tokens);
+};
+
+const jaccard = (a: Set<string>, b: Set<string>): number => {
+  if (a.size === 0 && b.size === 0) return 0;
+  let inter = 0;
+  a.forEach((t) => { if (b.has(t)) inter++; });
+  const union = a.size + b.size - inter;
+  return union === 0 ? 0 : inter / union;
+};
+
 const findDuplicate = (ev: ExtractedEvent, existing: ExistingEventLite[]): ExistingEventLite | null => {
   const evName = norm(ev.nome);
   const evCity = norm(ev.cidade);
   const evLocal = norm(ev.local);
+  const evTokens = tokenize(`${ev.nome} ${(ev.atracoes || []).join(" ")}`);
+
+  let bestMatch: ExistingEventLite | null = null;
+  let bestScore = 0;
+
   for (const ex of existing) {
     const exName = norm(ex.nome);
     const sim = similarity(evName, exName);
     const sameDate = ex.data === ev.data;
     const sameCity = norm(ex.cidade) === evCity && evCity.length > 0;
     const sameLocal = norm(ex.local) === evLocal && evLocal.length > 0;
-    // Strong duplicate: identical/very similar name AND (same date OR same city/local)
-    if (sim >= 0.85 && (sameDate || sameCity || sameLocal)) return ex;
-    // Exact name match alone is also flagged
-    if (sim === 1 && (sameDate || sameCity)) return ex;
+    const exTokens = tokenize(ex.nome);
+    const tokenOverlap = jaccard(evTokens, exTokens);
+
+    // Heurísticas de duplicação (qualquer uma marca como possível duplicado):
+    // 1) Nome quase idêntico + (mesma data OU mesma cidade OU mesmo local)
+    // 2) Nome idêntico + (mesma data OU mesma cidade)
+    // 3) Mesma data + mesmo local (forte sinal espaço-temporal)
+    // 4) Mesma data + mesma cidade + (similaridade moderada de nome OU tokens significativos em comum — ex.: nome do artista)
+    let score = 0;
+    if (sim >= 0.85 && (sameDate || sameCity || sameLocal)) score = Math.max(score, 0.9);
+    if (sim === 1 && (sameDate || sameCity)) score = Math.max(score, 1);
+    if (sameDate && sameLocal) score = Math.max(score, 0.85);
+    if (sameDate && sameCity && (sim >= 0.55 || tokenOverlap >= 0.4)) score = Math.max(score, 0.75);
+    if (sameDate && sameCity && tokenOverlap >= 0.5) score = Math.max(score, 0.8);
+
+    if (score > 0 && score > bestScore) {
+      bestScore = score;
+      bestMatch = ex;
+    }
   }
-  return null;
+  return bestMatch;
 };
 
 const datesDiffer = (ev: ExtractedEvent, ex: ExistingEventLite): boolean => {
@@ -958,12 +999,32 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             })}
 
             {duplicateMap.size > 0 && (
-              <div className="flex items-start gap-2 p-2 rounded-md border border-amber-500/30 text-xs text-[#ffe500] bg-[#1c1c1c]">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <p>
-                  {duplicateMap.size} possível(is) duplicado(s) detectado(s).
-                  {skipDuplicates.size > 0 && ` ${skipDuplicates.size} marcado(s) para ignorar.`}
-                </p>
+              <div className="flex flex-col gap-2 p-3 rounded-md border border-amber-500/30 text-xs text-[#ffe500] bg-[#1c1c1c]">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="flex-1">
+                    <span className="font-medium">{duplicateMap.size}</span> possível(is) duplicado(s) detectado(s).
+                    {skipDuplicates.size > 0 && ` ${skipDuplicates.size} marcado(s) para ignorar.`}
+                    {updateDateDuplicates.size > 0 && ` ${updateDateDuplicates.size} marcado(s) para atualizar a data.`}
+                  </p>
+                </div>
+                {Array.from(duplicateMap.keys()).some((i) => !skipDuplicates.has(i)) && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => {
+                      const allDupIdx = Array.from(duplicateMap.keys());
+                      setSkipDuplicates(new Set(allDupIdx));
+                      setUpdateDateDuplicates(new Set());
+                      toast.success(`${allDupIdx.length} duplicado(s) marcados para exclusão da importação.`);
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Excluir duplicados ({Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i)).length})
+                  </Button>
+                )}
               </div>
             )}
 
