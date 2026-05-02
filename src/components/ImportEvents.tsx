@@ -174,11 +174,15 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
   const [updateDateDuplicates, setUpdateDateDuplicates] = useState<Set<number>>(new Set());
   const [showDupConfirm, setShowDupConfirm] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>("Extraindo eventos dos arquivos...");
+  // Per-event uploaded cover images (index -> File). Previews use object URLs.
+  const [imageFiles, setImageFiles] = useState<Record<number, File>>({});
+  const [imagePreviews, setImagePreviews] = useState<Record<number, string>>({});
 
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   void subVersion;
   const { images: keywordImages } = useKeywordImages();
+  const { images: subcategoryImages } = useSubcategoryImages();
   const availableKeywords = useMemo(() => Object.keys(keywordImages).sort(), [keywordImages]);
 
   // Load existing events when dialog opens (lightweight fields only)
