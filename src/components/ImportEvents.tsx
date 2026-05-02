@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle, Sparkles } from "lucide-react";
+import { Upload, FileText, X, Loader2, Check, AlertCircle, Pencil, MapPin, AlertTriangle, Sparkles, ImagePlus, Star } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,8 +18,10 @@ import { geocodeBatch } from "@/lib/geocode";
 import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
+import { useSubcategoryImages, subImgKey } from "@/hooks/useSubcategoryImages";
 import { detectContactsInText, type VenueContact } from "@/types/contact";
 import { getOrCreateVenue } from "@/hooks/useVenues";
+import ContactsEditor from "@/components/ContactsEditor";
 
 interface ExtractedEvent {
   nome: string;
