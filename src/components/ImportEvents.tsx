@@ -999,12 +999,32 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
             })}
 
             {duplicateMap.size > 0 && (
-              <div className="flex items-start gap-2 p-2 rounded-md border border-amber-500/30 text-xs text-[#ffe500] bg-[#1c1c1c]">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                <p>
-                  {duplicateMap.size} possível(is) duplicado(s) detectado(s).
-                  {skipDuplicates.size > 0 && ` ${skipDuplicates.size} marcado(s) para ignorar.`}
-                </p>
+              <div className="flex flex-col gap-2 p-3 rounded-md border border-amber-500/30 text-xs text-[#ffe500] bg-[#1c1c1c]">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <p className="flex-1">
+                    <span className="font-medium">{duplicateMap.size}</span> possível(is) duplicado(s) detectado(s).
+                    {skipDuplicates.size > 0 && ` ${skipDuplicates.size} marcado(s) para ignorar.`}
+                    {updateDateDuplicates.size > 0 && ` ${updateDateDuplicates.size} marcado(s) para atualizar a data.`}
+                  </p>
+                </div>
+                {Array.from(duplicateMap.keys()).some((i) => !skipDuplicates.has(i)) && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => {
+                      const allDupIdx = Array.from(duplicateMap.keys());
+                      setSkipDuplicates(new Set(allDupIdx));
+                      setUpdateDateDuplicates(new Set());
+                      toast.success(`${allDupIdx.length} duplicado(s) marcados para exclusão da importação.`);
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Excluir duplicados ({Array.from(duplicateMap.keys()).filter((i) => !skipDuplicates.has(i)).length})
+                  </Button>
+                )}
               </div>
             )}
 
