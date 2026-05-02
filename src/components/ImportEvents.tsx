@@ -411,16 +411,6 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
               subcategory_image_index: ev.subcategory_image_index ?? null,
             };
           });
-              ...ev,
-              data: startDate,
-              data_fim: endDate && endDate !== startDate ? endDate : null,
-              horario: icsEvent?.time ?? jsonEvent?.time ?? ev.horario ?? null,
-              keywords: Array.isArray(ev.keywords)
-                ? ev.keywords.filter((k) => availableKeywords.some((ak) => ak.toLowerCase() === String(k).toLowerCase()))
-                : [],
-              detected_contacts: detected,
-            };
-          });
           allEvents.push(...normalized);
         }
       }
