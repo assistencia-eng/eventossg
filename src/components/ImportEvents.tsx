@@ -390,13 +390,34 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
         }
       }
 
-      if (allEvents.length === 0) {
-        setError("Nenhum evento encontrado nos arquivos enviados.");
+      // Filtra eventos passados: descarta apenas se data_fim (ou data, se não houver fim) já passou.
+      // Eventos multi-dia em andamento permanecem.
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayISO = today.toISOString().slice(0, 10);
+      const totalBefore = allEvents.length;
+      const futureEvents = allEvents.filter((ev) => {
+        const endRef = ev.data_fim || ev.data;
+        if (!endRef) return true; // sem data — mantém para o admin decidir
+        return endRef >= todayISO;
+      });
+      const droppedPast = totalBefore - futureEvents.length;
+
+      if (futureEvents.length === 0) {
+        setError(
+          totalBefore > 0
+            ? `Nenhum evento futuro encontrado (${totalBefore} evento(s) descartado(s) por já terem ocorrido).`
+            : "Nenhum evento encontrado nos arquivos enviados."
+        );
         setStep("upload");
         return;
       }
 
-      setExtractedEvents(allEvents);
+      if (droppedPast > 0) {
+        toast.info(`${droppedPast} evento(s) passado(s) descartado(s) automaticamente.`);
+      }
+
+      setExtractedEvents(futureEvents);
       setStep("preview");
     } catch (err) {
       console.error("Processing error:", err);
