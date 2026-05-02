@@ -37,6 +37,12 @@ interface ExtractedEvent {
   latitude: number;
   longitude: number;
   detected_contacts?: VenueContact[];
+  custom_contacts?: VenueContact[];
+  is_featured?: boolean;
+  image_source?: "auto" | "subcategory" | "keyword";
+  image_keyword?: string | null;
+  keyword_image_index?: number | null;
+  subcategory_image_index?: number | null;
 }
 
 interface ImportEventsProps {
