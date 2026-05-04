@@ -540,6 +540,7 @@ const Index = () => {
       <ImportEvents open={importOpen} onClose={() => setImportOpen(false)} onImported={fetchDbEvents} />
       <AddEventForm open={addOpen} onClose={() => setAddOpen(false)} onAdded={fetchDbEvents} />
       <OutdoorSettings open={outdoorSettingsOpen} onClose={() => setOutdoorSettingsOpen(false)} events={allEvents} onUpdated={fetchDbEvents} />
+      <DuplicateDetector open={duplicateDetectorOpen} onClose={() => setDuplicateDetectorOpen(false)} events={allEvents} onUpdated={fetchDbEvents} />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
