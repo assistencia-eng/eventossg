@@ -55,6 +55,7 @@ const ProfilePage = ({
   onOutdoorSettings,
   onDeleteAll,
   onDeleteFiltered,
+  onDetectDuplicates,
   availableCities,
   allEventsCount = 0,
 }: ProfilePageProps) => {
