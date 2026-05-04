@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2 } from "lucide-react";
+import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2, Search } from "lucide-react";
 import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
