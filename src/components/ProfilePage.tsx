@@ -35,6 +35,7 @@ interface ProfilePageProps {
   onOutdoorSettings?: () => void;
   onDeleteAll?: () => void;
   onDeleteFiltered?: () => void;
+  onDetectDuplicates?: () => void;
   availableCities?: string[];
   allEventsCount?: number;
 }
