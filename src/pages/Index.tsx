@@ -14,6 +14,7 @@ import EditEventForm from "@/components/EditEventForm";
 import OutdoorSettings from "@/components/OutdoorSettings";
 import BottomNav from "@/components/BottomNav";
 import ProfilePage from "@/components/ProfilePage";
+import DuplicateDetector from "@/components/DuplicateDetector";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ const Index = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<EventData | null>(null);
   const [outdoorSettingsOpen, setOutdoorSettingsOpen] = useState(false);
+  const [duplicateDetectorOpen, setDuplicateDetectorOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState<EventData[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<EventData | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
@@ -524,6 +526,7 @@ const Index = () => {
           onOutdoorSettings={() => setOutdoorSettingsOpen(true)}
           onDeleteAll={() => setDeleteAllOpen(true)}
           onDeleteFiltered={() => setDeleteFilteredOpen(true)}
+          onDetectDuplicates={() => setDuplicateDetectorOpen(true)}
           availableCities={availableCities}
           allEventsCount={allEvents.length}
         />
@@ -537,6 +540,7 @@ const Index = () => {
       <ImportEvents open={importOpen} onClose={() => setImportOpen(false)} onImported={fetchDbEvents} />
       <AddEventForm open={addOpen} onClose={() => setAddOpen(false)} onAdded={fetchDbEvents} />
       <OutdoorSettings open={outdoorSettingsOpen} onClose={() => setOutdoorSettingsOpen(false)} events={allEvents} onUpdated={fetchDbEvents} />
+      <DuplicateDetector open={duplicateDetectorOpen} onClose={() => setDuplicateDetectorOpen(false)} events={allEvents} onUpdated={fetchDbEvents} />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>

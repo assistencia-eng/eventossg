@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2 } from "lucide-react";
+import { Pencil, Check, X, Bell, Plus, Upload, Settings, Trash2, Search } from "lucide-react";
 import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
@@ -35,6 +35,7 @@ interface ProfilePageProps {
   onOutdoorSettings?: () => void;
   onDeleteAll?: () => void;
   onDeleteFiltered?: () => void;
+  onDetectDuplicates?: () => void;
   availableCities?: string[];
   allEventsCount?: number;
 }
@@ -54,6 +55,7 @@ const ProfilePage = ({
   onOutdoorSettings,
   onDeleteAll,
   onDeleteFiltered,
+  onDetectDuplicates,
   availableCities,
   allEventsCount = 0,
 }: ProfilePageProps) => {
@@ -169,6 +171,11 @@ const ProfilePage = ({
             {onOutdoorSettings && (
               <Button variant="outline" size="sm" onClick={onOutdoorSettings} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
                 <Settings className="w-4 h-4 mr-1.5" /> Outdoor
+              </Button>
+            )}
+            {onDetectDuplicates && allEventsCount > 0 && (
+              <Button variant="outline" size="sm" onClick={onDetectDuplicates} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
+                <Search className="w-4 h-4 mr-1.5" /> Detectar duplicatas
               </Button>
             )}
             {onDeleteFiltered && allEventsCount > 0 && (
