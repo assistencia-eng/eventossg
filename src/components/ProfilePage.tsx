@@ -173,6 +173,11 @@ const ProfilePage = ({
                 <Settings className="w-4 h-4 mr-1.5" /> Outdoor
               </Button>
             )}
+            {onDetectDuplicates && allEventsCount > 0 && (
+              <Button variant="outline" size="sm" onClick={onDetectDuplicates} className="bg-[#303030] text-white border-neutral-500 hover:bg-[#303030]/90">
+                <Search className="w-4 h-4 mr-1.5" /> Detectar duplicatas
+              </Button>
+            )}
             {onDeleteFiltered && allEventsCount > 0 && (
               <Button variant="outline" size="sm" onClick={onDeleteFiltered} className="text-destructive border-destructive/30 bg-[#303030]">
                 <Trash2 className="w-4 h-4 mr-1.5" /> Excluir por filtro
