@@ -48,6 +48,7 @@ const Index = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<EventData | null>(null);
   const [outdoorSettingsOpen, setOutdoorSettingsOpen] = useState(false);
+  const [duplicateDetectorOpen, setDuplicateDetectorOpen] = useState(false);
   const [dbEvents, setDbEvents] = useState<EventData[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<EventData | null>(null);
   const [activeTab, setActiveTab] = useState("upcoming");
