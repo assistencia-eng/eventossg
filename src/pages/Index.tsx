@@ -526,6 +526,7 @@ const Index = () => {
           onOutdoorSettings={() => setOutdoorSettingsOpen(true)}
           onDeleteAll={() => setDeleteAllOpen(true)}
           onDeleteFiltered={() => setDeleteFilteredOpen(true)}
+          onDetectDuplicates={() => setDuplicateDetectorOpen(true)}
           availableCities={availableCities}
           allEventsCount={allEvents.length}
         />
