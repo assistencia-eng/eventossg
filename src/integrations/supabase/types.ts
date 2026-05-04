@@ -164,6 +164,30 @@ export type Database = {
         }
         Relationships: []
       }
+      duplicate_exceptions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_a_id: string
+          event_b_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_a_id: string
+          event_b_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_a_id?: string
+          event_b_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           atracoes: string[]

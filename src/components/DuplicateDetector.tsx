@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { EventData } from "@/data/events";
 import { toast } from "sonner";
-import { Loader2, Search, Trash2, Check, X, Calendar, AlertTriangle } from "lucide-react";
+import { Loader2, Search, Trash2, Check, X, Calendar, AlertTriangle, ShieldCheck } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -25,18 +25,35 @@ const norm = (s: string | null | undefined) =>
     .trim();
 
 const STOPWORDS = new Set([
-  "show", "festa", "evento", "festival", "feira", "edicao", "edition",
+  "show", "festa", "evento", "festival", "feira", "edicao", "edition", "ed",
   "de", "da", "do", "das", "dos", "e", "a", "o", "as", "os", "no", "na",
-  "em", "para", "com", "ao", "the", "of", "and", "para", "por", "ano",
-  "sertanejo", "musica", "ao vivo", "vivo",
+  "em", "para", "com", "ao", "the", "of", "and", "por", "ano",
+  "sertanejo", "musica", "vivo",
 ]);
+
+// Strip ordinals like "37ª", "1º", "2a", years, "edição N"
+const stripVariants = (s: string) => {
+  let x = norm(s);
+  x = x.replace(/\b\d{1,3}\s*[aoº°ª]?\s*(edicao|edition)?\b/g, " ");
+  x = x.replace(/\b(19|20)\d{2}\b/g, " ");
+  x = x.replace(/\bedicao\b/g, " ");
+  return x.replace(/\s+/g, " ").trim();
+};
 
 const tokenize = (s: string) =>
   new Set(
-    norm(s)
+    stripVariants(s)
       .split(" ")
       .filter((t) => t.length >= 3 && !STOPWORDS.has(t))
   );
+
+// Tokens excluding the city name (so "37ª Feira de Inverno de Flores da Cunha" ~= "37ª Feira de Inverno 2026" when in Flores da Cunha)
+const tokenizeNoCity = (s: string, city: string) => {
+  const cityTokens = new Set(norm(city).split(" ").filter((t) => t.length >= 3));
+  const set = tokenize(s);
+  cityTokens.forEach((c) => set.delete(c));
+  return set;
+};
 
 const jaccard = (a: Set<string>, b: Set<string>) => {
   if (a.size === 0 && b.size === 0) return 1;
@@ -46,7 +63,15 @@ const jaccard = (a: Set<string>, b: Set<string>) => {
   return inter / (a.size + b.size - inter);
 };
 
-// Levenshtein-based ratio for short strings
+// Containment: how much of the smaller set is contained in the larger
+const containment = (a: Set<string>, b: Set<string>) => {
+  if (a.size === 0 || b.size === 0) return 0;
+  const [small, large] = a.size <= b.size ? [a, b] : [b, a];
+  let inter = 0;
+  small.forEach((t) => large.has(t) && inter++);
+  return inter / small.size;
+};
+
 const editRatio = (a: string, b: string) => {
   a = norm(a); b = norm(b);
   if (!a && !b) return 1;
@@ -59,13 +84,25 @@ const editRatio = (a: string, b: string) => {
     let prev = dp[0]; dp[0] = i;
     for (let j = 1; j <= n; j++) {
       const tmp = dp[j];
-      dp[j] = a[i - 1] === b[j - 1]
-        ? prev
-        : 1 + Math.min(prev, dp[j], dp[j - 1]);
+      dp[j] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[j], dp[j - 1]);
       prev = tmp;
     }
   }
   return 1 - dp[n] / Math.max(m, n);
+};
+
+const daysDiff = (a: string, b: string) => {
+  const da = new Date(a).getTime();
+  const db = new Date(b).getTime();
+  if (isNaN(da) || isNaN(db)) return Infinity;
+  return Math.abs(da - db) / 86400000;
+};
+
+const datesOverlap = (a: EventData, b: EventData) => {
+  const aStart = a.data, aEnd = a.data_fim || a.data;
+  const bStart = b.data, bEnd = b.data_fim || b.data;
+  if (!aStart || !bStart) return false;
+  return aStart <= bEnd && bStart <= aEnd;
 };
 
 interface DupGroup {
@@ -73,9 +110,12 @@ interface DupGroup {
   events: EventData[];
   reason: string;
   differentDates: boolean;
+  pairKey: string; // sorted "id1|id2|..." for exception tracking
 }
 
-const buildGroups = (events: EventData[]): DupGroup[] => {
+const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+
+const buildGroups = (events: EventData[], exceptions: Set<string>): DupGroup[] => {
   const groups: DupGroup[] = [];
   const assigned = new Set<string>();
 
@@ -84,36 +124,51 @@ const buildGroups = (events: EventData[]): DupGroup[] => {
     if (assigned.has(a.id)) continue;
     const matches: { ev: EventData; reason: string; diffDate: boolean }[] = [];
 
-    const aTokens = tokenize(a.nome);
+    const aNameClean = stripVariants(a.nome);
+    const aTokensNoCity = tokenizeNoCity(a.nome, a.cidade);
     const aDescTokens = tokenize(a.descricao || "");
     const aAttrTokens = tokenize((a.atracoes || []).join(" "));
 
     for (let j = i + 1; j < events.length; j++) {
       const b = events[j];
       if (assigned.has(b.id)) continue;
+      if (exceptions.has(pairKey(a.id, b.id))) continue;
 
       const sameDate = a.data === b.data && (a.data_fim || null) === (b.data_fim || null);
-      const sameLocal = norm(a.local) && norm(a.local) === norm(b.local);
-      const sameCity = norm(a.cidade) && norm(a.cidade) === norm(b.cidade);
+      const overlap = datesOverlap(a, b);
+      const dDiff = daysDiff(a.data, b.data);
+      const dateClose = overlap || dDiff <= 3;
+      const sameLocal = !!norm(a.local) && norm(a.local) === norm(b.local);
+      const sameCity = !!norm(a.cidade) && norm(a.cidade) === norm(b.cidade);
 
-      const nameSim = editRatio(a.nome, b.nome);
-      const nameTokenSim = jaccard(aTokens, tokenize(b.nome));
+      const bNameClean = stripVariants(b.nome);
+      const bTokensNoCity = tokenizeNoCity(b.nome, b.cidade);
+
+      const nameSimRaw = editRatio(a.nome, b.nome);
+      const nameSimClean = editRatio(aNameClean, bNameClean);
+      const nameSim = Math.max(nameSimRaw, nameSimClean);
+      const nameTokenSim = jaccard(aTokensNoCity, bTokensNoCity);
+      const nameContain = containment(aTokensNoCity, bTokensNoCity);
       const descSim = jaccard(aDescTokens, tokenize(b.descricao || ""));
       const attrSim = jaccard(aAttrTokens, tokenize((b.atracoes || []).join(" ")));
 
       let isDup = false;
       let reason = "";
 
-      if (sameDate && sameLocal && (nameSim >= 0.5 || nameTokenSim >= 0.4)) {
+      // Strongest signals first
+      if (sameDate && sameLocal && (nameSim >= 0.5 || nameTokenSim >= 0.4 || nameContain >= 0.7)) {
         isDup = true; reason = "Mesma data e local com nome similar";
-      } else if (sameDate && sameCity && (nameSim >= 0.7 || nameTokenSim >= 0.6)) {
-        isDup = true; reason = "Mesma data e cidade com nome muito similar";
-      } else if (sameDate && sameCity && attrSim >= 0.5 && (nameSim >= 0.4 || nameTokenSim >= 0.3)) {
-        isDup = true; reason = "Mesma data, cidade e atrações coincidem";
+      } else if (dateClose && sameCity && (nameSim >= 0.75 || nameTokenSim >= 0.6 || nameContain >= 0.8)) {
+        isDup = true; reason = dateClose && !sameDate ? "Mesma cidade, datas próximas e nome muito similar" : "Mesma data e cidade com nome muito similar";
+      } else if (dateClose && sameCity && attrSim >= 0.5 && (nameSim >= 0.4 || nameTokenSim >= 0.3)) {
+        isDup = true; reason = "Mesma cidade, datas próximas e atrações coincidem";
       } else if (nameSim >= 0.85) {
         isDup = true; reason = "Nome quase idêntico";
       } else if (sameLocal && sameCity && (nameSim >= 0.6 || nameTokenSim >= 0.5) && descSim >= 0.4) {
         isDup = true; reason = "Mesmo local com nome e descrição similares — datas diferentes";
+      } else if (sameCity && nameContain >= 0.85 && Math.min(aTokensNoCity.size, bTokensNoCity.size) >= 2) {
+        // e.g., "Feira de Inverno" contained in both, same city
+        isDup = true; reason = "Mesma cidade e título base coincidente (variação de edição/ano)";
       }
 
       if (isDup) {
@@ -124,11 +179,13 @@ const buildGroups = (events: EventData[]): DupGroup[] => {
     if (matches.length > 0) {
       const all = [a, ...matches.map((m) => m.ev)];
       all.forEach((e) => assigned.add(e.id));
+      const sortedIds = all.map((e) => e.id).sort();
       groups.push({
         id: a.id,
         events: all,
         reason: matches[0].reason,
         differentDates: matches.some((m) => m.diffDate),
+        pairKey: sortedIds.join("|"),
       });
     }
   }
@@ -145,6 +202,21 @@ export default function DuplicateDetector({ open, onClose, events, onUpdated }: 
   const [scanning, setScanning] = useState(false);
   const [groups, setGroups] = useState<DupGroup[] | null>(null);
   const [ignored, setIgnored] = useState<Set<string>>(new Set());
+  const [exceptions, setExceptions] = useState<Set<string>>(new Set());
+
+  // Load saved exceptions
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("duplicate_exceptions")
+        .select("event_a_id, event_b_id");
+      if (error) return;
+      const set = new Set<string>();
+      (data || []).forEach((row: any) => set.add(pairKey(row.event_a_id, row.event_b_id)));
+      setExceptions(set);
+    })();
+  }, [open]);
 
   const visibleGroups = useMemo(
     () => (groups || []).filter((g) => !ignored.has(g.id)),
@@ -156,7 +228,7 @@ export default function DuplicateDetector({ open, onClose, events, onUpdated }: 
     setIgnored(new Set());
     await new Promise((r) => setTimeout(r, 50));
     try {
-      const found = buildGroups(events);
+      const found = buildGroups(events, exceptions);
       setGroups(found);
       if (found.length === 0) toast.success("Nenhuma duplicata encontrada!");
       else toast.info(`${found.length} grupo(s) de possíveis duplicatas encontrado(s)`);
@@ -216,9 +288,38 @@ export default function DuplicateDetector({ open, onClose, events, onUpdated }: 
     setIgnored((prev) => new Set(prev).add(groupId));
   };
 
-  const handleIgnore = (groupId: string) => {
+  // Save group as "verified - not duplicates" (persisted)
+  const handleNotDuplicate = async (groupId: string) => {
+    const group = groups?.find((g) => g.id === groupId);
+    if (!group) return;
+    const ids = group.events.map((e) => e.id);
+    const rows: { event_a_id: string; event_b_id: string }[] = [];
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const [a, b] = ids[i] < ids[j] ? [ids[i], ids[j]] : [ids[j], ids[i]];
+        rows.push({ event_a_id: a, event_b_id: b });
+      }
+    }
+    const { error } = await supabase
+      .from("duplicate_exceptions")
+      .upsert(rows, { onConflict: "event_a_id,event_b_id", ignoreDuplicates: true });
+    if (error) {
+      toast.error("Erro ao salvar exceção");
+      return;
+    }
+    setExceptions((prev) => {
+      const next = new Set(prev);
+      rows.forEach((r) => next.add(pairKey(r.event_a_id, r.event_b_id)));
+      return next;
+    });
     setIgnored((prev) => new Set(prev).add(groupId));
-    toast.info("Grupo marcado como não duplicata");
+    toast.success("Marcado como verificado — não aparecerá mais");
+  };
+
+  // Just hide for this scan
+  const handleIgnoreOnce = (groupId: string) => {
+    setIgnored((prev) => new Set(prev).add(groupId));
+    toast.info("Ignorado nesta varredura");
   };
 
   return (
@@ -229,7 +330,7 @@ export default function DuplicateDetector({ open, onClose, events, onUpdated }: 
             <Search className="w-5 h-5" /> Detector de Duplicatas
           </DialogTitle>
           <DialogDescription className="text-neutral-400">
-            Verifica todos os eventos do banco e identifica possíveis duplicatas usando similaridade de nome, data, local e atrações.
+            Identifica eventos similares por nome, cidade, datas próximas e atrações. Pares marcados como "Não é duplicata" ficam salvos e não aparecem mais.
           </DialogDescription>
         </DialogHeader>
 
@@ -241,6 +342,7 @@ export default function DuplicateDetector({ open, onClose, events, onUpdated }: 
           {groups && (
             <span className="text-sm text-neutral-400">
               {visibleGroups.length} duplicata(s) | {events.length} eventos revisados
+              {exceptions.size > 0 && ` | ${exceptions.size} par(es) verificado(s)`}
             </span>
           )}
         </div>
@@ -263,13 +365,18 @@ export default function DuplicateDetector({ open, onClose, events, onUpdated }: 
                   </div>
                   {group.differentDates && (
                     <div className="text-xs text-orange-400 mt-1">
-                      ⚠️ Mesmo evento com datas diferentes. Pode ser uma nova edição ou erro.
+                      ⚠️ Datas diferentes — pode ser nova edição ou erro.
                     </div>
                   )}
                 </div>
-                <Button size="sm" variant="ghost" onClick={() => handleIgnore(group.id)} className="text-neutral-400 hover:text-white">
-                  <X className="w-4 h-4 mr-1" /> Não é duplicata
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                  <Button size="sm" variant="ghost" onClick={() => handleIgnoreOnce(group.id)} className="text-neutral-400 hover:text-white h-8">
+                    <X className="w-4 h-4 mr-1" /> Ignorar agora
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleNotDuplicate(group.id)} className="h-8 bg-[#303030] border-neutral-600 text-white hover:bg-[#404040]">
+                    <ShieldCheck className="w-4 h-4 mr-1" /> Não é duplicata (salvar)
+                  </Button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
