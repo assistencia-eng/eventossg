@@ -14,6 +14,7 @@ import EditEventForm from "@/components/EditEventForm";
 import OutdoorSettings from "@/components/OutdoorSettings";
 import BottomNav from "@/components/BottomNav";
 import ProfilePage from "@/components/ProfilePage";
+import DuplicateDetector from "@/components/DuplicateDetector";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
