@@ -222,30 +222,53 @@ const Index = () => {
   const monthStart = useMemo(() => startOfMonth(filterMonth), [filterMonth]);
   const monthEnd = useMemo(() => endOfMonth(filterMonth), [filterMonth]);
 
+  // City auto-detect from smart search field
+  const cityFromSearch = useMemo(() => {
+    const q = searchName.trim().toLowerCase();
+    if (!q) return "";
+    const match = availableCities.find((c) => c.toLowerCase() === q);
+    if (match) return match;
+    const partial = availableCities.find((c) => c.toLowerCase().includes(q) && q.length >= 3);
+    return partial || "";
+  }, [searchName, availableCities]);
+
+  const effectiveCity = searchCity.trim() || cityFromSearch;
+
   const filteredEvents = useMemo(() => {
     let results = [...eventsWithDistance];
 
-    if (selectedCategories.length > 0) {
+    // Subcategory has PRIORITY over category — when subs are selected,
+    // ignore category filter and only show events matching one of the subs.
+    if (selectedSubcategories.length > 0) {
+      results = results.filter(({ event }) =>
+        event.subcategorias?.some((s) => selectedSubcategories.includes(s))
+      );
+    } else if (selectedCategories.length > 0) {
       results = results.filter(({ event }) =>
         event.categorias?.some((c) => selectedCategories.includes(c)) ||
         selectedCategories.includes(event.categoria)
       );
     }
 
-    if (selectedSubcategories.length > 0) {
-      results = results.filter(({ event }) =>
-        event.subcategorias?.some((s) => selectedSubcategories.includes(s))
-      );
-    }
-
-    if (searchCity.trim()) {
-      const q = searchCity.trim().toLowerCase();
+    if (effectiveCity) {
+      const q = effectiveCity.toLowerCase();
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
     }
 
     if (searchName.trim()) {
       const q = searchName.trim().toLowerCase();
-      results = results.filter(({ event }) => event.nome.toLowerCase().includes(q));
+      const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const nq = norm(q);
+      results = results.filter(({ event }) => {
+        // If query matched a city, do not also require name match
+        if (cityFromSearch && cityFromSearch.toLowerCase() === q) return true;
+        return (
+          event.nome.toLowerCase().includes(q) ||
+          (event.descricao || "").toLowerCase().includes(q) ||
+          (event.keywords || []).some((k) => norm(k).includes(nq)) ||
+          event.cidade.toLowerCase().includes(q)
+        );
+      });
     }
 
     if (distanceKm < 155 && userLocation) {
@@ -255,7 +278,6 @@ const Index = () => {
       });
     }
 
-    // Only apply month filter if "all dates" is off
     if (!allDates) {
       results = results.filter(({ event }) => {
         const eventStart = parseISO(event.data);
@@ -266,7 +288,7 @@ const Index = () => {
 
     results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
     return results;
-  }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
+  }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, effectiveCity, searchName, cityFromSearch, allDates, monthStart, monthEnd]);
 
   const upcomingEvents = useMemo(() => {
     const list = filteredEvents.filter(({ event }) => {
