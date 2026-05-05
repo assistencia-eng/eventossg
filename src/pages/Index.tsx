@@ -424,7 +424,13 @@ const Index = () => {
       {/* User header bar */}
       <div className="sticky top-0 z-40 bg-[#7e0127]">
         <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
-          <h1 className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin">Serra Eventos</h1>
+          <button
+            type="button"
+            onClick={resetToInitial}
+            className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin hover:opacity-80 transition-opacity"
+          >
+            Serra Eventos
+          </button>
           <div className="flex items-center gap-3">
             {user ? (
               <>
