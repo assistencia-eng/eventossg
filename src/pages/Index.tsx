@@ -492,6 +492,8 @@ const Index = () => {
               onSearchNameChange={setSearchName}
               selectedSubcategories={selectedSubcategories}
               onToggleSubcategory={toggleFilterSubcategory}
+              onScrollToResults={handleScrollToResults}
+              onClearFilters={handleClearFilters}
             />
 
             {user && forYouEvents.length > 0 && (
