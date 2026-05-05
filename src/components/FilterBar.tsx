@@ -3,11 +3,12 @@ import { EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from
 import { categoryColors } from "@/data/categoryColors";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, SlidersHorizontal, ChevronDown, MapPin } from "lucide-react";
 import { format, addMonths, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryKeys } from "@/hooks/useCategoriesSync";
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 
@@ -29,6 +30,8 @@ interface FilterBarProps {
   onSearchNameChange: (val: string) => void;
   selectedSubcategories: string[];
   onToggleSubcategory: (sub: string) => void;
+  onScrollToResults?: () => void;
+  onClearFilters?: () => void;
 }
 
 const defaultCategories: EventCategory[] = [
@@ -53,13 +56,14 @@ const FilterBar = ({
   onSearchNameChange,
   selectedSubcategories,
   onToggleSubcategory,
+  onScrollToResults,
+  onClearFilters,
 }: FilterBarProps) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const cityRef = useRef<HTMLDivElement>(null);
   const distanceLabel = distanceKm >= 150 ? "150+ km" : `${distanceKm} km`;
 
-  // Re-render when categories or subcategories sync from DB
   const catsVersion = useCategoriesVersion();
   const subsVersion = useSubcategoriesVersion();
 
@@ -81,47 +85,32 @@ const FilterBar = ({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setShowSuggestions(false);
+      if (cityRef.current && !cityRef.current.contains(e.target as Node)) {
+        setShowCitySuggestions(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const activeFilterCount = selectedCategories.length + (distanceKm < 155 ? 1 : 0) + (searchCity.trim() ? 1 : 0) + (!allDates ? 1 : 0);
+  const activeFilterCount =
+    selectedCategories.length +
+    selectedSubcategories.length +
+    (distanceKm < 155 ? 1 : 0) +
+    (searchCity.trim() ? 1 : 0) +
+    (!allDates ? 1 : 0);
 
   return (
     <div className="space-y-3">
-      {/* Search bar always visible */}
-      <div ref={searchRef} className="relative">
+      {/* Smart search bar always visible */}
+      <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-neutral-400" />
         <Input
-          placeholder="Buscar por cidade..."
-          value={searchCity}
-          onChange={(e) => {
-            onSearchCityChange(e.target.value);
-            setShowSuggestions(true);
-          }}
-          onFocus={() => setShowSuggestions(true)}
-          className="pl-9 bg-[#1c1c1c] text-neutral-400 opacity-80 border-0"
+          placeholder="O que você procura?"
+          value={searchName}
+          onChange={(e) => onSearchNameChange(e.target.value)}
+          className="pl-9 bg-[#1c1c1c] text-neutral-200 border-0"
         />
-        {showSuggestions && citySuggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
-            {citySuggestions.map((city) => (
-              <button
-                key={city}
-                className="w-full text-left px-4 py-2.5 text-sm transition-colors border-0 font-sans font-medium bg-[#242424]"
-                onClick={() => {
-                  onSearchCityChange(city);
-                  setShowSuggestions(false);
-                }}
-              >
-                {city}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Collapsible filters */}
@@ -143,6 +132,42 @@ const FilterBar = ({
         <CollapsibleContent>
           <div className="mt-2 rounded-xl overflow-hidden" style={{ backgroundColor: "#1c1c1c" }}>
             <div className="p-5 md:p-6 space-y-6">
+              {/* City filter (moved here) */}
+              <div ref={cityRef}>
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 text-neutral-400">
+                  Cidade
+                </h3>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 z-10 text-neutral-400" />
+                  <Input
+                    placeholder="Buscar por cidade..."
+                    value={searchCity}
+                    onChange={(e) => {
+                      onSearchCityChange(e.target.value);
+                      setShowCitySuggestions(true);
+                    }}
+                    onFocus={() => setShowCitySuggestions(true)}
+                    className="pl-9 bg-[#262626] text-neutral-200 border-0"
+                  />
+                  {showCitySuggestions && citySuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+                      {citySuggestions.map((city) => (
+                        <button
+                          key={city}
+                          className="w-full text-left px-4 py-2.5 text-sm transition-colors border-0 font-sans font-medium bg-[#242424] hover:bg-[#303030] text-neutral-200"
+                          onClick={() => {
+                            onSearchCityChange(city);
+                            setShowCitySuggestions(false);
+                          }}
+                        >
+                          {city}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Categories - Interests */}
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 text-neutral-400">
@@ -170,7 +195,6 @@ const FilterBar = ({
                   })}
                 </div>
 
-                {/* Subcategories for selected categories */}
                 {selectedCategories.length > 0 && (
                   <div className="mt-3 space-y-2">
                     {selectedCategories.map((cat) => {
@@ -229,7 +253,7 @@ const FilterBar = ({
                 </div>
               </div>
 
-              {/* Month filter with "all dates" toggle */}
+              {/* Month filter */}
               <div>
                 <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 text-neutral-400">
                   Período
@@ -258,11 +282,33 @@ const FilterBar = ({
                   </div>
                 )}
               </div>
+
+              {/* Footer actions */}
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button
+                  type="button"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    setFiltersOpen(false);
+                    onScrollToResults?.();
+                  }}
+                >
+                  <Search className="w-4 h-4" />
+                  Buscar ({totalResults})
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => onClearFilters?.()}
+                >
+                  Limpar filtros
+                </Button>
+              </div>
             </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
-
     </div>
   );
 };
