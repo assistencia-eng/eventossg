@@ -12,6 +12,7 @@ import AIPromptManager from "@/components/AIPromptManager";
 import VenueManagement from "@/components/VenueManagement";
 import CityManagement from "@/components/CityManagement";
 import AdminSection from "@/components/AdminSection";
+import SubcategoryRanking from "@/components/SubcategoryRanking";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -306,6 +307,7 @@ const ProfilePage = ({
       {isAdmin && <AIPromptManager />}
       {isAdmin && <KeywordImageManager />}
       {isAdmin && <SubcategoryImageManager />}
+      {isAdmin && <SubcategoryRanking />}
       {isAdmin && <CategoryManagement />}
       {isAdmin && <AdminManagement />}
     </div>

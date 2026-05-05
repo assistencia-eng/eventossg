@@ -15,6 +15,7 @@ import OutdoorSettings from "@/components/OutdoorSettings";
 import BottomNav from "@/components/BottomNav";
 import ProfilePage from "@/components/ProfilePage";
 import DuplicateDetector from "@/components/DuplicateDetector";
+import ExplorePage from "@/components/ExplorePage";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
 import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,7 @@ const Index = () => {
   const [filterMonth, setFilterMonth] = useState(new Date());
   const [allDates, setAllDates] = useState(true);
   const [searchName, setSearchName] = useState("");
-  const [activeNav, setActiveNav] = useState<"events" | "profile" | "search">("events");
+  const [activeNav, setActiveNav] = useState<"events" | "profile" | "explore">("events");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const eventsRef = useRef<HTMLDivElement>(null);
 
@@ -158,13 +159,50 @@ const Index = () => {
     await toggleFavorite(id);
   }, [user, toggleFavorite]);
 
-  const handleNavChange = useCallback((tab: "events" | "profile" | "search") => {
+  const handleNavChange = useCallback((tab: "events" | "profile" | "explore") => {
     if (tab === "profile" && !user) {
       navigate("/auth");
       return;
     }
     setActiveNav(tab);
   }, [user, navigate]);
+
+  const resetToInitial = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
+    setDistanceKm(155);
+    setSearchCity("");
+    setSearchName("");
+    setAllDates(true);
+    setFilterMonth(new Date());
+    setActiveNav("events");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
+    setDistanceKm(155);
+    setSearchCity("");
+    setSearchName("");
+    setAllDates(true);
+    setFilterMonth(new Date());
+  }, []);
+
+  const handleScrollToResults = useCallback(() => {
+    eventsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const handleSelectExploreSubcategory = useCallback((cat: EventCategory, sub: string) => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([sub]);
+    setSearchName("");
+    setSearchCity("");
+    setDistanceKm(155);
+    setAllDates(true);
+    setActiveNav("events");
+    setTimeout(() => eventsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  }, []);
 
   const eventsWithDistance = useMemo(() => {
     return allEvents.map((event) => ({
@@ -185,30 +223,53 @@ const Index = () => {
   const monthStart = useMemo(() => startOfMonth(filterMonth), [filterMonth]);
   const monthEnd = useMemo(() => endOfMonth(filterMonth), [filterMonth]);
 
+  // City auto-detect from smart search field
+  const cityFromSearch = useMemo(() => {
+    const q = searchName.trim().toLowerCase();
+    if (!q) return "";
+    const match = availableCities.find((c) => c.toLowerCase() === q);
+    if (match) return match;
+    const partial = availableCities.find((c) => c.toLowerCase().includes(q) && q.length >= 3);
+    return partial || "";
+  }, [searchName, availableCities]);
+
+  const effectiveCity = searchCity.trim() || cityFromSearch;
+
   const filteredEvents = useMemo(() => {
     let results = [...eventsWithDistance];
 
-    if (selectedCategories.length > 0) {
+    // Subcategory has PRIORITY over category — when subs are selected,
+    // ignore category filter and only show events matching one of the subs.
+    if (selectedSubcategories.length > 0) {
+      results = results.filter(({ event }) =>
+        event.subcategorias?.some((s) => selectedSubcategories.includes(s))
+      );
+    } else if (selectedCategories.length > 0) {
       results = results.filter(({ event }) =>
         event.categorias?.some((c) => selectedCategories.includes(c)) ||
         selectedCategories.includes(event.categoria)
       );
     }
 
-    if (selectedSubcategories.length > 0) {
-      results = results.filter(({ event }) =>
-        event.subcategorias?.some((s) => selectedSubcategories.includes(s))
-      );
-    }
-
-    if (searchCity.trim()) {
-      const q = searchCity.trim().toLowerCase();
+    if (effectiveCity) {
+      const q = effectiveCity.toLowerCase();
       results = results.filter(({ event }) => event.cidade.toLowerCase().includes(q));
     }
 
     if (searchName.trim()) {
       const q = searchName.trim().toLowerCase();
-      results = results.filter(({ event }) => event.nome.toLowerCase().includes(q));
+      const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const nq = norm(q);
+      results = results.filter(({ event }) => {
+        // If query matched a city, do not also require name match
+        if (cityFromSearch && cityFromSearch.toLowerCase() === q) return true;
+        return (
+          event.nome.toLowerCase().includes(q) ||
+          (event.descricao || "").toLowerCase().includes(q) ||
+          (event.keywords || []).some((k) => norm(k).includes(nq)) ||
+          event.cidade.toLowerCase().includes(q)
+        );
+      });
     }
 
     if (distanceKm < 155 && userLocation) {
@@ -218,7 +279,6 @@ const Index = () => {
       });
     }
 
-    // Only apply month filter if "all dates" is off
     if (!allDates) {
       results = results.filter(({ event }) => {
         const eventStart = parseISO(event.data);
@@ -229,7 +289,7 @@ const Index = () => {
 
     results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
     return results;
-  }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, searchCity, searchName, allDates, monthStart, monthEnd]);
+  }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, effectiveCity, searchName, cityFromSearch, allDates, monthStart, monthEnd]);
 
   const upcomingEvents = useMemo(() => {
     const list = filteredEvents.filter(({ event }) => {
@@ -364,7 +424,13 @@ const Index = () => {
       {/* User header bar */}
       <div className="sticky top-0 z-40 bg-[#7e0127]">
         <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
-          <h1 className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin">Serra Eventos</h1>
+          <button
+            type="button"
+            onClick={resetToInitial}
+            className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin hover:opacity-80 transition-opacity"
+          >
+            Serra Eventos
+          </button>
           <div className="flex items-center gap-3">
             {user ? (
               <>
@@ -426,6 +492,8 @@ const Index = () => {
               onSearchNameChange={setSearchName}
               selectedSubcategories={selectedSubcategories}
               onToggleSubcategory={toggleFilterSubcategory}
+              onScrollToResults={handleScrollToResults}
+              onClearFilters={handleClearFilters}
             />
 
             {user && forYouEvents.length > 0 && (
@@ -473,45 +541,9 @@ const Index = () => {
             </div>
           </div>
         </>
-      ) : activeNav === "search" ? (
-        <div className="container mx-auto px-4 py-6 bg-[#151414]">
-          <h2 className="text-xl font-bold mb-4 text-neutral-400 font-sans">Buscar eventos</h2>
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome do evento..."
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              className="pl-9 h-12 text-neutral-400 bg-[#1c1c1c] font-sans font-normal opacity-90"
-              autoFocus
-            />
-          </div>
-          <p className="text-sm mb-4 text-neutral-400">
-            <span className="text-[#1DB954] font-bold">{searchResults.length}</span> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {searchResults.map((event, i) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onSelect={setSelectedEvent}
-                index={i}
-                isFavorite={isFavorite(event.id)}
-                onToggleFavorite={handleToggleFavorite}
-                isAdmin={isAdmin}
-                    subcategoryImages={subcategoryImages}
-                categoryImages={categoryImages}
-                keywordImages={keywordImages}
-              />
-            ))}
-          </div>
-          {searchResults.length === 0 && searchName.trim() && (
-            <div className="text-center py-20">
-              <p className="text-xl font-serif text-muted-foreground">Nenhum evento encontrado</p>
-              <p className="text-sm text-muted-foreground mt-2">Tente outro termo de busca.</p>
-            </div>
-          )}
-        </div>
+      ) : activeNav === "explore" ? (
+        <ExplorePage onSelectSubcategory={handleSelectExploreSubcategory} />
+      
       ) : (
         <ProfilePage
           interests={interests}

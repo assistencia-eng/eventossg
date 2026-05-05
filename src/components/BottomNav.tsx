@@ -1,8 +1,8 @@
-import { Calendar, User, Search } from "lucide-react";
+import { Calendar, User, Compass } from "lucide-react";
 
 interface BottomNavProps {
-  active: "events" | "profile" | "search";
-  onChange: (tab: "events" | "profile" | "search") => void;
+  active: "events" | "profile" | "explore";
+  onChange: (tab: "events" | "profile" | "explore") => void;
 }
 
 const BottomNav = ({ active, onChange }: BottomNavProps) => {
@@ -19,13 +19,13 @@ const BottomNav = ({ active, onChange }: BottomNavProps) => {
           <span className="text-xs font-medium">Eventos</span>
         </button>
         <button
-          onClick={() => onChange("search")}
+          onClick={() => onChange("explore")}
           className={`flex flex-col items-center gap-1 px-6 py-2 transition-colors ${
-            active === "search" ? "text-primary" : "text-muted-foreground"
+            active === "explore" ? "text-primary" : "text-muted-foreground"
           }`}
         >
-          <Search className="w-5 h-5" />
-          <span className="text-xs font-medium">Buscar</span>
+          <Compass className="w-5 h-5" />
+          <span className="text-xs font-medium">Explorar</span>
         </button>
         <button
           onClick={() => onChange("profile")}

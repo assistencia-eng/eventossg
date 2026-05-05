@@ -28,7 +28,10 @@ const defaultSubcategoriesSnapshot: Record<string, string[]> = {
   festas: ["ar livre", "festa de comunidade", "festa temática", "balada"],
 };
 
+import AdminSection from "@/components/AdminSection";
+
 const CategoryManagement = () => {
+  const [sectionOpen, setSectionOpen] = useState(false);
   useSubcategoriesVersion(); // re-render when subcategories sync
   useCategoriesVersion(); // re-render when categories sync
   const [expandedCat, setExpandedCat] = useState<EventCategory | null>(null);
@@ -230,14 +233,16 @@ const CategoryManagement = () => {
   };
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Tags className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-semibold font-sans text-neutral-400">Gerenciar Categorias</h2>
-      </div>
-
-      {/* Create new category */}
-      {!showNewCatForm ? (
+    <AdminSection
+      title="Gerenciar Categorias"
+      icon={<Tags className="w-5 h-5" />}
+      expanded={sectionOpen}
+      onToggle={() => setSectionOpen((v) => !v)}
+      count={displayCategories.length}
+    >
+      <div className="space-y-4">
+        {/* Create new category */}
+        {!showNewCatForm ? (
         <Button
           variant="outline"
           className="w-full gap-2 border-[#7d7d7d]"
@@ -460,8 +465,9 @@ const CategoryManagement = () => {
             </div>
           );
         })}
+        </div>
       </div>
-    </section>
+    </AdminSection>
   );
 };
 
