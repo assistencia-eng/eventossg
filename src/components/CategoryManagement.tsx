@@ -465,8 +465,9 @@ const CategoryManagement = () => {
             </div>
           );
         })}
+        </div>
       </div>
-    </section>
+    </AdminSection>
   );
 };
 
