@@ -532,45 +532,9 @@ const Index = () => {
             </div>
           </div>
         </>
-      ) : activeNav === "search" ? (
-        <div className="container mx-auto px-4 py-6 bg-[#151414]">
-          <h2 className="text-xl font-bold mb-4 text-neutral-400 font-sans">Buscar eventos</h2>
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome do evento..."
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              className="pl-9 h-12 text-neutral-400 bg-[#1c1c1c] font-sans font-normal opacity-90"
-              autoFocus
-            />
-          </div>
-          <p className="text-sm mb-4 text-neutral-400">
-            <span className="text-[#1DB954] font-bold">{searchResults.length}</span> evento{searchResults.length !== 1 && "s"} encontrado{searchResults.length !== 1 && "s"}
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {searchResults.map((event, i) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onSelect={setSelectedEvent}
-                index={i}
-                isFavorite={isFavorite(event.id)}
-                onToggleFavorite={handleToggleFavorite}
-                isAdmin={isAdmin}
-                    subcategoryImages={subcategoryImages}
-                categoryImages={categoryImages}
-                keywordImages={keywordImages}
-              />
-            ))}
-          </div>
-          {searchResults.length === 0 && searchName.trim() && (
-            <div className="text-center py-20">
-              <p className="text-xl font-serif text-muted-foreground">Nenhum evento encontrado</p>
-              <p className="text-sm text-muted-foreground mt-2">Tente outro termo de busca.</p>
-            </div>
-          )}
-        </div>
+      ) : activeNav === "explore" ? (
+        <ExplorePage onSelectSubcategory={handleSelectExploreSubcategory} />
+      
       ) : (
         <ProfilePage
           interests={interests}
