@@ -442,6 +442,33 @@ export type Database = {
         }
         Relationships: []
       }
+      subcategory_order: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          position: number
+          subcategoria: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          position?: number
+          subcategoria: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          position?: number
+          subcategoria?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       venue_contacts: {
         Row: {
           created_at: string
