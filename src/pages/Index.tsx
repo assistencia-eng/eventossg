@@ -62,7 +62,7 @@ const Index = () => {
   const [filterMonth, setFilterMonth] = useState(new Date());
   const [allDates, setAllDates] = useState(true);
   const [searchName, setSearchName] = useState("");
-  const [activeNav, setActiveNav] = useState<"events" | "profile" | "search">("events");
+  const [activeNav, setActiveNav] = useState<"events" | "profile" | "explore">("events");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const eventsRef = useRef<HTMLDivElement>(null);
 
@@ -158,13 +158,50 @@ const Index = () => {
     await toggleFavorite(id);
   }, [user, toggleFavorite]);
 
-  const handleNavChange = useCallback((tab: "events" | "profile" | "search") => {
+  const handleNavChange = useCallback((tab: "events" | "profile" | "explore") => {
     if (tab === "profile" && !user) {
       navigate("/auth");
       return;
     }
     setActiveNav(tab);
   }, [user, navigate]);
+
+  const resetToInitial = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
+    setDistanceKm(155);
+    setSearchCity("");
+    setSearchName("");
+    setAllDates(true);
+    setFilterMonth(new Date());
+    setActiveNav("events");
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+  }, []);
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([]);
+    setDistanceKm(155);
+    setSearchCity("");
+    setSearchName("");
+    setAllDates(true);
+    setFilterMonth(new Date());
+  }, []);
+
+  const handleScrollToResults = useCallback(() => {
+    eventsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const handleSelectExploreSubcategory = useCallback((cat: EventCategory, sub: string) => {
+    setSelectedCategories([]);
+    setSelectedSubcategories([sub]);
+    setSearchName("");
+    setSearchCity("");
+    setDistanceKm(155);
+    setAllDates(true);
+    setActiveNav("events");
+    setTimeout(() => eventsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+  }, []);
 
   const eventsWithDistance = useMemo(() => {
     return allEvents.map((event) => ({
