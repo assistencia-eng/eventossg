@@ -585,31 +585,8 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           const venueId = await getOrCreateVenue(ev.local, ev.cidade);
           venueIds.push(venueId);
 
-          // Se há contatos (custom ou detectados) e o venue ainda não tem nenhum, popula
-          const contactsForVenue = (ev.custom_contacts && ev.custom_contacts.length > 0)
-            ? ev.custom_contacts
-            : (ev.detected_contacts || []);
-          if (venueId && contactsForVenue.length > 0) {
-            const { count } = await supabase
-              .from("venue_contacts")
-              .select("id", { count: "exact", head: true })
-              .eq("venue_id", venueId);
-            if (!count) {
-              const rows = contactsForVenue
-                .filter((c) => c.nome || c.whatsapp || c.instagram || c.facebook)
-                .map((c) => ({
-                  venue_id: venueId,
-                  nome: c.nome?.trim() || null,
-                  whatsapp: c.whatsapp?.trim() || null,
-                  instagram: c.instagram?.trim() || null,
-                  facebook: c.facebook?.trim() || null,
-                }));
-              if (rows.length > 0) {
-                await supabase.from("venue_contacts").insert(rows);
-              }
-            }
-          }
-        }
+          // Regra: nunca popular contatos automaticamente na importação.
+          // O administrador deve adicionar os contatos manualmente após criar o evento.
 
         const { error: insertError } = await supabase.from("events").insert(
           toInsert.map((ev, i) => {
