@@ -194,16 +194,6 @@ const Index = () => {
     eventsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const handleSelectExploreSubcategory = useCallback((cat: EventCategory, sub: string) => {
-    setSelectedCategories([]);
-    setSelectedSubcategories([sub]);
-    setSearchName("");
-    setSearchCity("");
-    setDistanceKm(155);
-    setAllDates(true);
-    setActiveNav("events");
-    setTimeout(() => eventsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  }, []);
 
   const eventsWithDistance = useMemo(() => {
     return allEvents.map((event) => ({
