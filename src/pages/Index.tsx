@@ -17,7 +17,8 @@ import ProfilePage from "@/components/ProfilePage";
 import DuplicateDetector from "@/components/DuplicateDetector";
 import ExplorePage from "@/components/ExplorePage";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
-import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
+import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search, ChevronDown, User } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
