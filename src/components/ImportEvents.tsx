@@ -584,9 +584,9 @@ const ImportEvents = ({ open, onClose, onImported }: ImportEventsProps) => {
           }
           const venueId = await getOrCreateVenue(ev.local, ev.cidade);
           venueIds.push(venueId);
-
           // Regra: nunca popular contatos automaticamente na importação.
           // O administrador deve adicionar os contatos manualmente após criar o evento.
+        }
 
         const { error: insertError } = await supabase.from("events").insert(
           toInsert.map((ev, i) => {
