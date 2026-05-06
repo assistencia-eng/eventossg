@@ -17,7 +17,8 @@ import ProfilePage from "@/components/ProfilePage";
 import DuplicateDetector from "@/components/DuplicateDetector";
 import ExplorePage from "@/components/ExplorePage";
 import LoginRequiredModal from "@/components/LoginRequiredModal";
-import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search } from "lucide-react";
+import { Loader2, Upload, Plus, Trash2, Settings, Sparkles, LogOut, LogIn, Search, ChevronDown, User } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -193,16 +194,6 @@ const Index = () => {
     eventsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const handleSelectExploreSubcategory = useCallback((cat: EventCategory, sub: string) => {
-    setSelectedCategories([]);
-    setSelectedSubcategories([sub]);
-    setSearchName("");
-    setSearchCity("");
-    setDistanceKm(155);
-    setAllDates(true);
-    setActiveNav("events");
-    setTimeout(() => eventsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
-  }, []);
 
   const eventsWithDistance = useMemo(() => {
     return allEvents.map((event) => ({
@@ -433,22 +424,35 @@ const Index = () => {
           </button>
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={profile?.avatar_url || ""} />
-                    <AvatarFallback className="text-xs bg-primary text-primary-foreground">{userInitials}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium hidden sm:block">
-                    {profile?.full_name || user.email}
-                  </span>
-                </div>
-                <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1.5 group">
+                    <Avatar className="w-9 h-9 border border-amber-200/30">
+                      <AvatarImage src={profile?.avatar_url || ""} />
+                      <AvatarFallback className="text-sm bg-neutral-600 text-white font-medium">
+                        {userInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <ChevronDown className="w-4 h-4 text-amber-50/70 group-hover:text-amber-50 transition-colors" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onClick={() => setActiveNav("profile")}>
+                    <User className="w-4 h-4 mr-2" />
+                    Meu perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={signOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
-              <Button size="sm" onClick={() => navigate("/auth")} className="gap-2 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-white border-0 rounded-xl">
+              <Button
+                size="sm"
+                onClick={() => navigate("/auth")}
+                className="gap-2 bg-transparent hover:bg-amber-50/10 text-amber-50 border border-amber-200/60 rounded-full px-4"
+              >
                 <LogIn className="w-4 h-4" />
                 Entrar
               </Button>
@@ -542,7 +546,15 @@ const Index = () => {
           </div>
         </>
       ) : activeNav === "explore" ? (
-        <ExplorePage onSelectSubcategory={handleSelectExploreSubcategory} />
+        <ExplorePage
+          events={allEvents}
+          onSelectEvent={setSelectedEvent}
+          isFavorite={isFavorite}
+          onToggleFavorite={handleToggleFavorite}
+          isAdmin={isAdmin}
+          categoryImagesMap={categoryImages}
+          keywordImagesMap={keywordImages}
+        />
       
       ) : (
         <ProfilePage
