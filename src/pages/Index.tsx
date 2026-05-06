@@ -542,7 +542,15 @@ const Index = () => {
           </div>
         </>
       ) : activeNav === "explore" ? (
-        <ExplorePage onSelectSubcategory={handleSelectExploreSubcategory} />
+        <ExplorePage
+          events={allEvents}
+          onSelectEvent={setSelectedEvent}
+          isFavorite={isFavorite}
+          onToggleFavorite={handleToggleFavorite}
+          isAdmin={isAdmin}
+          categoryImagesMap={categoryImages}
+          keywordImagesMap={keywordImages}
+        />
       
       ) : (
         <ProfilePage
