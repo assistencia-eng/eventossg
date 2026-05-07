@@ -315,7 +315,7 @@ const Index = () => {
 
   const upcomingEvents = useMemo(() => {
     const list = filteredEvents.filter(({ event }) => {
-      const end = event.data_fim ? new Date(event.data_fim) : new Date(event.data);
+      const end = event.data_fim ? parseISO(event.data_fim) : parseISO(event.data);
       return end >= today;
     });
     // Collapse recurring groups to only the next upcoming occurrence per name.
@@ -335,7 +335,7 @@ const Index = () => {
 
   const pastEvents = useMemo(
     () => filteredEvents.filter(({ event }) => {
-      const end = event.data_fim ? new Date(event.data_fim) : new Date(event.data);
+      const end = event.data_fim ? parseISO(event.data_fim) : parseISO(event.data);
       return end < today;
     }),
     [filteredEvents, today]
