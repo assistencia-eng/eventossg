@@ -36,7 +36,7 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
   const { images: catImages } = useCategoryImages();
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
-  const [orderRows, setOrderRows] = useState<Array<{ tipo?: string; categoria: string; subcategoria: string; position: number }>>([]);
+  const [orderRows, setOrderRows] = useState<Array<{ tipo?: string; categoria: string; subcategoria: string; position: number; hidden?: boolean }>>([]);
   const [selected, setSelected] = useState<Item | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -44,7 +44,7 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
   useEffect(() => {
     (supabase as any)
       .from("subcategory_order")
-      .select("tipo, categoria, subcategoria, position")
+      .select("tipo, categoria, subcategoria, position, hidden")
       .then(({ data }: any) => {
         if (data) setOrderRows(data);
       });
@@ -84,21 +84,25 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
     });
 
     const orderMap = new Map<string, number>();
+    const hiddenSet = new Set<string>();
     orderRows.forEach((r) => {
       const tipo = r.tipo || "sub";
       const key = tipo === "kw" ? `kw::${r.subcategoria}` : `sub::${r.categoria}::${r.subcategoria}`;
       orderMap.set(key, r.position);
+      if (r.hidden) hiddenSet.add(key);
     });
     const keyOf = (it: Item) =>
       it.kind === "sub" ? `sub::${it.categoria}::${it.sub}` : `kw::${it.keyword}`;
-    return list.sort((a, b) => {
-      const pa = orderMap.has(keyOf(a)) ? orderMap.get(keyOf(a))! : 9999;
-      const pb = orderMap.has(keyOf(b)) ? orderMap.get(keyOf(b))! : 9999;
-      if (pa !== pb) return pa - pb;
-      const la = a.kind === "sub" ? a.sub : a.keyword;
-      const lb = b.kind === "sub" ? b.sub : b.keyword;
-      return la.localeCompare(lb);
-    });
+    return list
+      .filter((it) => !hiddenSet.has(keyOf(it)))
+      .sort((a, b) => {
+        const pa = orderMap.has(keyOf(a)) ? orderMap.get(keyOf(a))! : 9999;
+        const pb = orderMap.has(keyOf(b)) ? orderMap.get(keyOf(b))! : 9999;
+        if (pa !== pb) return pa - pb;
+        const la = a.kind === "sub" ? a.sub : a.keyword;
+        const lb = b.kind === "sub" ? b.sub : b.keyword;
+        return la.localeCompare(lb);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, subVersion, orderRows, keywordImagesMap]);
 
