@@ -1,10 +1,16 @@
-const ImagePositioner = ({
-  event,
-  onChange,
-}: {
+import { useState, useRef } from "react";
+import { EventData } from "@/types/event";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface OutdoorSettingsProps {
   event: EventData;
-  onChange: (field: string, value: number) => void;
-}) => {
+  onChange: (field: string, value: any) => void;
+}
+
+export const OutdoorSettings = ({ event, onChange }: OutdoorSettingsProps) => {
   const [px, setPx] = useState(event.outdoor_image_position_x ?? 50);
   const [py, setPy] = useState(event.outdoor_image_position_y ?? 50);
   const [zoom, setZoom] = useState(event.outdoor_image_zoom ?? 1);
@@ -17,6 +23,7 @@ const ImagePositioner = ({
     w: number;
     h: number;
   } | null>(null);
+
   const boxRef = useRef<HTMLDivElement>(null);
 
   const commit = (field: string, value: number) => {
@@ -60,100 +67,104 @@ const ImagePositioner = ({
     dragRef.current = null;
   };
 
-  // Reset to center
   const resetPosition = () => {
-    setPx(50);
-    setPy(50);
-    setZoom(1);
-    commit("outdoor_image_position_x", 50);
-    commit("outdoor_image_position_y", 50);
-    commit("outdoor_image_zoom", 1);
+    const defaults = { px: 50, py: 50, zoom: 1 };
+    setPx(defaults.px);
+    setPy(defaults.py);
+    setZoom(defaults.zoom);
+    commit("outdoor_image_position_x", defaults.px);
+    commit("outdoor_image_position_y", defaults.py);
+    commit("outdoor_image_zoom", defaults.zoom);
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">Arraste para reposicionar • Zoom com slider</p>
-        <Button variant="ghost" size="sm" onClick={resetPosition}>
-          Resetar
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Posicionamento da Imagem no Outdoor</CardTitle>
+        <p className="text-sm text-muted-foreground">Arraste a imagem para reposicionar • Use o slider para zoom</p>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Preview Interativo */}
+        <div
+          ref={boxRef}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={onPointerUp}
+          className="relative aspect-video w-full rounded-xl overflow-hidden bg-zinc-950 border border-border cursor-grab active:cursor-grabbing"
+        >
+          {event.imagem ? (
+            <img
+              src={event.imagem}
+              alt="Preview Outdoor"
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+              style={{
+                objectPosition: `${px}% ${py}%`,
+                transform: `scale(${zoom})`,
+                transformOrigin: `${px}% ${py}%`,
+              }}
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+              Nenhuma imagem carregada para preview
+            </div>
+          )}
+        </div>
+
+        <Button variant="outline" onClick={resetPosition} className="w-full">
+          Resetar para Centro
         </Button>
-      </div>
 
-      {/* Preview Area */}
-      <div
-        ref={boxRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        className="relative w-full aspect-video rounded-xl overflow-hidden bg-zinc-900 border border-border cursor-grab active:cursor-grabbing touch-none"
-      >
-        {event.imagem ? (
-          <img
-            src={event.imagem}
-            alt="Preview Outdoor"
-            draggable={false}
-            className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
-            style={{
-              objectPosition: `${px}% ${py}%`,
-              transform: `scale(${zoom})`,
-              transformOrigin: `${px}% ${py}%`,
-            }}
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-            Nenhuma imagem carregada
-          </div>
-        )}
-      </div>
-
-      {/* Controls */}
-      <div className="space-y-4">
-        <div>
-          <div className="flex justify-between text-xs mb-1.5">
-            <Label>Zoom</Label>
-            <span className="font-mono text-primary">{zoom.toFixed(2)}x</span>
-          </div>
-          <Slider
-            value={[zoom]}
-            min={0.6}
-            max={3}
-            step={0.01}
-            onValueChange={(v) => setZoom(v[0])}
-            onValueCommit={(v) => commit("outdoor_image_zoom", v[0])}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+        {/* Controles */}
+        <div className="space-y-5">
           <div>
-            <Label className="text-xs">Posição Horizontal (X)</Label>
+            <div className="flex justify-between mb-2">
+              <Label>Zoom da Imagem</Label>
+              <span className="font-mono text-sm text-primary">{zoom.toFixed(2)}x</span>
+            </div>
             <Slider
-              value={[px]}
-              min={0}
-              max={100}
-              step={0.5}
-              onValueChange={(v) => setPx(v[0])}
-              onValueCommit={(v) => commit("outdoor_image_position_x", v[0])}
+              value={[zoom]}
+              min={0.5}
+              max={3}
+              step={0.01}
+              onValueChange={(v) => setZoom(v[0])}
+              onValueCommit={(v) => commit("outdoor_image_zoom", v[0])}
             />
-            <div className="text-right text-[10px] text-muted-foreground mt-0.5">{px.toFixed(0)}%</div>
           </div>
 
-          <div>
-            <Label className="text-xs">Posição Vertical (Y)</Label>
-            <Slider
-              value={[py]}
-              min={0}
-              max={100}
-              step={0.5}
-              onValueChange={(v) => setPy(v[0])}
-              onValueCommit={(v) => commit("outdoor_image_position_y", v[0])}
-            />
-            <div className="text-right text-[10px] text-muted-foreground mt-0.5">{py.toFixed(0)}%</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm">Posição Horizontal (X)</Label>
+              <Slider
+                value={[px]}
+                min={0}
+                max={100}
+                step={0.5}
+                onValueChange={(v) => setPx(v[0])}
+                onValueCommit={(v) => commit("outdoor_image_position_x", v[0])}
+              />
+              <div className="text-right text-xs text-muted-foreground mt-1">{px.toFixed(0)}%</div>
+            </div>
+
+            <div>
+              <Label className="text-sm">Posição Vertical (Y)</Label>
+              <Slider
+                value={[py]}
+                min={0}
+                max={100}
+                step={0.5}
+                onValueChange={(v) => setPy(v[0])}
+                onValueCommit={(v) => commit("outdoor_image_position_y", v[0])}
+              />
+              <div className="text-right text-xs text-muted-foreground mt-1">{py.toFixed(0)}%</div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
+export default OutdoorSettings;
 export default OutdoorSettings;
