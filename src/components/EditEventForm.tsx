@@ -76,6 +76,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     image_keyword: null as string | null,
     keyword_image_index: null as number | null,
     custom_contacts: [] as VenueContact[],
+    outdoor_image_position_x: 50,
+    outdoor_image_position_y: 50,
+    outdoor_image_zoom: 1,
   });
   const [venueContactsPreview, setVenueContactsPreview] = useState<VenueContact[]>([]);
   const [syncContactsToVenueFlag, setSyncContactsToVenueFlag] = useState(true);
