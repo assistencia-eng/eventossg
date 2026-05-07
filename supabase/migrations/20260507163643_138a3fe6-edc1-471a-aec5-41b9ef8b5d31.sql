@@ -1,0 +1,1 @@
+ALTER TABLE public.subcategory_order ADD COLUMN IF NOT EXISTS hidden boolean NOT NULL DEFAULT false;
