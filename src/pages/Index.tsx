@@ -165,8 +165,23 @@ const Index = () => {
       navigate("/auth");
       return;
     }
+    if (tab === "events" && activeNav === "events") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setActiveNav(tab);
-  }, [user, navigate]);
+    if (tab === "events") {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+    }
+  }, [user, navigate, activeNav]);
+
+  const handleCreate = useCallback(() => {
+    if (!isAdmin) {
+      toast.info("Somente administradores podem criar eventos.");
+      return;
+    }
+    setAddOpen(true);
+  }, [isAdmin]);
 
   const resetToInitial = useCallback(() => {
     setSelectedCategories([]);
