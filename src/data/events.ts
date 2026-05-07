@@ -33,6 +33,9 @@ export interface EventData {
   keyword_image_index?: number | null;
   venue_id?: string | null;
   custom_contacts?: import("@/types/contact").VenueContact[];
+  outdoor_image_position_x?: number;
+  outdoor_image_position_y?: number;
+  outdoor_image_zoom?: number;
 }
 
 export const categoryLabels: Record<EventCategory, string> = {
