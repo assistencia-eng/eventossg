@@ -214,6 +214,9 @@ export type Database = {
           longitude: number
           nome: string
           outdoor_duration: number
+          outdoor_image_position_x: number
+          outdoor_image_position_y: number
+          outdoor_image_zoom: number
           outdoor_show_description: boolean
           outdoor_text_align: string
           outdoor_text_position: string
@@ -249,6 +252,9 @@ export type Database = {
           longitude?: number
           nome: string
           outdoor_duration?: number
+          outdoor_image_position_x?: number
+          outdoor_image_position_y?: number
+          outdoor_image_zoom?: number
           outdoor_show_description?: boolean
           outdoor_text_align?: string
           outdoor_text_position?: string
@@ -284,6 +290,9 @@ export type Database = {
           longitude?: number
           nome?: string
           outdoor_duration?: number
+          outdoor_image_position_x?: number
+          outdoor_image_position_y?: number
+          outdoor_image_zoom?: number
           outdoor_show_description?: boolean
           outdoor_text_align?: string
           outdoor_text_position?: string

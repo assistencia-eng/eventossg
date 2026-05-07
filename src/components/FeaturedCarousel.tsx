@@ -90,11 +90,19 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
             if (categoryImages[cat]) { imgSrc = categoryImages[cat]; break; }
           }
         }
+        const px = event.outdoor_image_position_x ?? 50;
+        const py = event.outdoor_image_position_y ?? 50;
+        const zoom = event.outdoor_image_zoom ?? 1;
         return imgSrc ? (
           <img
             src={imgSrc}
             alt={event.nome}
             className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+            style={{
+              objectPosition: `${px}% ${py}%`,
+              transform: `scale(${zoom})`,
+              transformOrigin: `${px}% ${py}%`,
+            }}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />

@@ -118,6 +118,9 @@ const Index = () => {
           keyword_image_index: (e as any).keyword_image_index ?? null,
           venue_id: (e as any).venue_id ?? null,
           custom_contacts: Array.isArray((e as any).custom_contacts) ? (e as any).custom_contacts : [],
+          outdoor_image_position_x: (e as any).outdoor_image_position_x ?? 50,
+          outdoor_image_position_y: (e as any).outdoor_image_position_y ?? 50,
+          outdoor_image_zoom: (e as any).outdoor_image_zoom ?? 1,
         }))
       );
     }
@@ -165,8 +168,23 @@ const Index = () => {
       navigate("/auth");
       return;
     }
+    if (tab === "events" && activeNav === "events") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setActiveNav(tab);
-  }, [user, navigate]);
+    if (tab === "events") {
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+    }
+  }, [user, navigate, activeNav]);
+
+  const handleCreate = useCallback(() => {
+    if (!isAdmin) {
+      toast.info("Somente administradores podem criar eventos.");
+      return;
+    }
+    setAddOpen(true);
+  }, [isAdmin]);
 
   const resetToInitial = useCallback(() => {
     setSelectedCategories([]);
@@ -278,7 +296,14 @@ const Index = () => {
       });
     }
 
-    results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
+    results.sort((a, b) => {
+      const dt = new Date(a.event.data).getTime() - new Date(b.event.data).getTime();
+      if (dt !== 0) return dt;
+      // Non-recurring first when same date
+      const ar = a.event.is_recurring ? 1 : 0;
+      const br = b.event.is_recurring ? 1 : 0;
+      return ar - br;
+    });
     return results;
   }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, effectiveCity, searchName, cityFromSearch, allDates, monthStart, monthEnd]);
 
@@ -576,7 +601,7 @@ const Index = () => {
         />
       )}
 
-      <BottomNav active={activeNav} onChange={handleNavChange} />
+      <BottomNav active={activeNav} onChange={handleNavChange} onCreate={handleCreate} />
       <LoginRequiredModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
       <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} onEdit={setEditEvent} onDelete={setDeleteTarget} isAdmin={isAdmin} />

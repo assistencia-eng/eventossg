@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { EventData } from "@/data/events";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,83 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Settings, Trash2, Type } from "lucide-react";
+
+const ImagePositioner = ({ event, onChange }: { event: EventData; onChange: (field: string, value: number) => void }) => {
+  const [px, setPx] = useState(event.outdoor_image_position_x ?? 50);
+  const [py, setPy] = useState(event.outdoor_image_position_y ?? 50);
+  const [zoom, setZoom] = useState(event.outdoor_image_zoom ?? 1);
+  const dragRef = useRef<{ startX: number; startY: number; startPx: number; startPy: number; w: number; h: number } | null>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+
+  const commit = (field: string, value: number) => onChange(field, value);
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!boxRef.current) return;
+    const r = boxRef.current.getBoundingClientRect();
+    dragRef.current = { startX: e.clientX, startY: e.clientY, startPx: px, startPy: py, w: r.width, h: r.height };
+    (e.target as Element).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragRef.current) return;
+    const d = dragRef.current;
+    const dx = ((e.clientX - d.startX) / d.w) * 100;
+    const dy = ((e.clientY - d.startY) / d.h) * 100;
+    setPx(Math.max(0, Math.min(100, d.startPx - dx)));
+    setPy(Math.max(0, Math.min(100, d.startPy - dy)));
+  };
+  const onPointerUp = () => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    commit("outdoor_image_position_x", px);
+    commit("outdoor_image_position_y", py);
+  };
+
+  const imgSrc = event.imagem;
+  return (
+    <div className="space-y-2">
+      <p className="text-[11px] text-muted-foreground">Arraste a imagem para reposicionar. Use o slider para zoom.</p>
+      <div
+        ref={boxRef}
+        onPointerDown={imgSrc ? onPointerDown : undefined}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        className="relative w-full h-32 rounded-md overflow-hidden bg-muted touch-none cursor-grab active:cursor-grabbing select-none"
+      >
+        {imgSrc ? (
+          <img
+            src={imgSrc}
+            alt=""
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            style={{ objectPosition: `${px}% ${py}%`, transform: `scale(${zoom})`, transformOrigin: `${px}% ${py}%` }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">Sem imagem</div>
+        )}
+      </div>
+      <Label className="text-xs font-medium">Zoom: {zoom.toFixed(2)}x</Label>
+      <Slider
+        value={[zoom]}
+        min={1}
+        max={3}
+        step={0.05}
+        onValueChange={(v) => setZoom(v[0])}
+        onValueCommit={(v) => commit("outdoor_image_zoom", v[0])}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs">X: {px.toFixed(0)}%</Label>
+          <Slider value={[px]} min={0} max={100} step={1} onValueChange={(v) => setPx(v[0])} onValueCommit={(v) => commit("outdoor_image_position_x", v[0])} />
+        </div>
+        <div>
+          <Label className="text-xs">Y: {py.toFixed(0)}%</Label>
+          <Slider value={[py]} min={0} max={100} step={1} onValueChange={(v) => setPy(v[0])} onValueCommit={(v) => commit("outdoor_image_position_y", v[0])} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface OutdoorSettingsProps {
   open: boolean;
@@ -165,6 +242,12 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
                       checked={event.outdoor_show_description ?? true}
                       onCheckedChange={(v) => updateTextSettings(event.id, "outdoor_show_description", v)}
                     />
+                  </div>
+
+                  {/* Image positioning */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <Label className="text-xs font-semibold text-primary">Posicionamento da imagem</Label>
+                    <ImagePositioner event={event} onChange={(field, value) => updateTextSettings(event.id, field, value)} />
                   </div>
                 </div>
               )}
