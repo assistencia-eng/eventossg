@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { EventData } from "@/types/event";
+import { EventData } from "@/types"; // Ajuste o caminho se necessário
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -81,7 +81,9 @@ export const OutdoorSettings = ({ event, onChange }: OutdoorSettingsProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Posicionamento da Imagem no Outdoor</CardTitle>
-        <p className="text-sm text-muted-foreground">Arraste a imagem para reposicionar • Use o slider para zoom</p>
+        <p className="text-sm text-muted-foreground">
+          Arraste a imagem para reposicionar • Use o slider para zoom
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Preview Interativo */}
@@ -107,7 +109,7 @@ export const OutdoorSettings = ({ event, onChange }: OutdoorSettingsProps) => {
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-              Nenhuma imagem carregada para preview
+              Nenhuma imagem carregada
             </div>
           )}
         </div>
@@ -117,54 +119,4 @@ export const OutdoorSettings = ({ event, onChange }: OutdoorSettingsProps) => {
         </Button>
 
         {/* Controles */}
-        <div className="space-y-5">
-          <div>
-            <div className="flex justify-between mb-2">
-              <Label>Zoom da Imagem</Label>
-              <span className="font-mono text-sm text-primary">{zoom.toFixed(2)}x</span>
-            </div>
-            <Slider
-              value={[zoom]}
-              min={0.5}
-              max={3}
-              step={0.01}
-              onValueChange={(v) => setZoom(v[0])}
-              onValueCommit={(v) => commit("outdoor_image_zoom", v[0])}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm">Posição Horizontal (X)</Label>
-              <Slider
-                value={[px]}
-                min={0}
-                max={100}
-                step={0.5}
-                onValueChange={(v) => setPx(v[0])}
-                onValueCommit={(v) => commit("outdoor_image_position_x", v[0])}
-              />
-              <div className="text-right text-xs text-muted-foreground mt-1">{px.toFixed(0)}%</div>
-            </div>
-
-            <div>
-              <Label className="text-sm">Posição Vertical (Y)</Label>
-              <Slider
-                value={[py]}
-                min={0}
-                max={100}
-                step={0.5}
-                onValueChange={(v) => setPy(v[0])}
-                onValueCommit={(v) => commit("outdoor_image_position_y", v[0])}
-              />
-              <div className="text-right text-xs text-muted-foreground mt-1">{py.toFixed(0)}%</div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default OutdoorSettings;
-export default OutdoorSettings;
+        <div className
