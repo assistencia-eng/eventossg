@@ -242,6 +242,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         keyword_image_index: form.image_source === "keyword" ? form.keyword_image_index : null,
         venue_id: venueId,
         custom_contacts: sanitizedContacts,
+        outdoor_image_position_x: form.outdoor_image_position_x,
+        outdoor_image_position_y: form.outdoor_image_position_y,
+        outdoor_image_zoom: form.outdoor_image_zoom,
       } as any).eq("id", event.id);
 
       if (updateError) throw updateError;
