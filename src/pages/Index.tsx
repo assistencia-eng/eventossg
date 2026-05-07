@@ -118,6 +118,9 @@ const Index = () => {
           keyword_image_index: (e as any).keyword_image_index ?? null,
           venue_id: (e as any).venue_id ?? null,
           custom_contacts: Array.isArray((e as any).custom_contacts) ? (e as any).custom_contacts : [],
+          outdoor_image_position_x: (e as any).outdoor_image_position_x ?? 50,
+          outdoor_image_position_y: (e as any).outdoor_image_position_y ?? 50,
+          outdoor_image_zoom: (e as any).outdoor_image_zoom ?? 1,
         }))
       );
     }
