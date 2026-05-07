@@ -282,30 +282,35 @@ const ProfilePage = ({
         </div>
       </section>
 
-      {/* Favorites */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-neutral-400 font-sans">
-          Favoritos ({favoriteEvents.length})
-        </h2>
-        {favoriteEvents.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-8 text-center">
-            Nenhum evento favoritado ainda. Toque na ⭐ nos eventos para adicioná-los aqui.
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {favoriteEvents.map((event, i) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onSelect={onSelectEvent}
-                index={i}
-                isFavorite={isFavorite(event.id)}
-                onToggleFavorite={onToggleFavorite}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+      {/* Favorites (collapsible) */}
+      <Collapsible defaultOpen className="space-y-4">
+        <CollapsibleTrigger className="group w-full flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-neutral-400 font-sans">
+            Favoritos ({favoriteEvents.length})
+          </h2>
+          <ChevronDown className="w-5 h-5 text-neutral-400 transition-transform group-data-[state=open]:rotate-180" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+          {favoriteEvents.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              Nenhum evento favoritado ainda. Toque na ⭐ nos eventos para adicioná-los aqui.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {favoriteEvents.map((event, i) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onSelect={onSelectEvent}
+                  index={i}
+                  isFavorite={isFavorite(event.id)}
+                  onToggleFavorite={onToggleFavorite}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Admin sections */}
       {isAdmin && <CityManagement />}
