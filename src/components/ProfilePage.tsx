@@ -194,66 +194,71 @@ const ProfilePage = ({
         </section>
       )}
 
-      {/* Interests */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-neutral-400 font-sans">Meus Interesses</h2>
-        <div>
-          <h3 className="text-sm font-semibold text-neutral-400 font-sans uppercase tracking-wider mb-3">Categorias</h3>
-          <div className="flex flex-wrap gap-2">
-            {allCategories.map((cat) => {
-              const isActive = interests.categories.includes(cat);
-              return (
-                <button
-                  key={cat}
-                  onClick={() => onToggleCategory(cat)}
-                  className="px-4 py-2 rounded-[22px] text-sm font-medium transition-all duration-200 cursor-pointer select-none inline-flex items-center gap-1.5"
-                  style={{
-                    backgroundColor: isActive ? categoryColors[cat].vibrant : categoryColors[cat].muted,
-                    color: isActive ? "#fff" : categoryColors[cat].vibrant,
-                    border: `1px solid ${isActive ? categoryColors[cat].vibrant : "transparent"}`,
-                  }}
-                >
-                  <span>{categoryIcons[cat]}</span>
-                  {categoryLabels[cat]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {interests.categories.length > 0 && (
+      {/* Interests (collapsible) */}
+      <Collapsible defaultOpen className="space-y-4">
+        <CollapsibleTrigger className="group w-full flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-neutral-400 font-sans">Meus Interesses</h2>
+          <ChevronDown className="w-5 h-5 text-neutral-400 transition-transform group-data-[state=open]:rotate-180" />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
           <div>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Subcategorias</h3>
-            <div className="space-y-3">
-              {interests.categories.map((cat) => (
-                <div key={cat}>
-                  <p className="text-xs font-medium text-muted-foreground mb-1.5">
-                    {categoryIcons[cat]} {categoryLabels[cat]}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {subcategoryOptions[cat]?.map((sub) => {
-                      const isActive = interests.subcategories.includes(sub);
-                      return (
-                        <button
-                          key={sub}
-                          onClick={() => onToggleSubcategory(sub)}
-                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                            isActive
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-[#1c1c1c] text-neutral-300 border-border hover:border-primary/30"
-                          }`}
-                        >
-                          {sub}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            <h3 className="text-sm font-semibold text-neutral-400 font-sans uppercase tracking-wider mb-3">Categorias</h3>
+            <div className="flex flex-wrap gap-2">
+              {allCategories.map((cat) => {
+                const isActive = interests.categories.includes(cat);
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => onToggleCategory(cat)}
+                    className="px-4 py-2 rounded-[22px] text-sm font-medium transition-all duration-200 cursor-pointer select-none inline-flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: isActive ? categoryColors[cat].vibrant : categoryColors[cat].muted,
+                      color: isActive ? "#fff" : categoryColors[cat].vibrant,
+                      border: `1px solid ${isActive ? categoryColors[cat].vibrant : "transparent"}`,
+                    }}
+                  >
+                    <span>{categoryIcons[cat]}</span>
+                    {categoryLabels[cat]}
+                  </button>
+                );
+              })}
             </div>
           </div>
-        )}
-      </section>
+
+          {interests.categories.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Subcategorias</h3>
+              <div className="space-y-3">
+                {interests.categories.map((cat) => (
+                  <div key={cat}>
+                    <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                      {categoryIcons[cat]} {categoryLabels[cat]}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {subcategoryOptions[cat]?.map((sub) => {
+                        const isActive = interests.subcategories.includes(sub);
+                        return (
+                          <button
+                            key={sub}
+                            onClick={() => onToggleSubcategory(sub)}
+                            className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                              isActive
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-[#1c1c1c] text-neutral-300 border-border hover:border-primary/30"
+                            }`}
+                          >
+                            {sub}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Notifications */}
       <section className="space-y-3">
