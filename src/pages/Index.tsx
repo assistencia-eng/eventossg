@@ -297,13 +297,19 @@ const Index = () => {
     }
 
     const todayTime = today.getTime();
-    const startsToday = (e: EventData) => new Date(e.data).getTime() === todayTime;
+    // Priority: 0 = starts today, 1 = already in progress (started before, still ongoing), 2 = future
+    const priority = (e: EventData) => {
+      const startTime = parseISO(e.data).getTime();
+      if (startTime === todayTime) return 0;
+      const endTime = e.data_fim ? parseISO(e.data_fim).getTime() : startTime;
+      if (startTime < todayTime && endTime >= todayTime) return 1;
+      return 2;
+    };
     results.sort((a, b) => {
-      // Events starting exactly today have top priority
-      const at = startsToday(a.event) ? 0 : 1;
-      const bt = startsToday(b.event) ? 0 : 1;
-      if (at !== bt) return at - bt;
-      const dt = new Date(a.event.data).getTime() - new Date(b.event.data).getTime();
+      const pa = priority(a.event);
+      const pb = priority(b.event);
+      if (pa !== pb) return pa - pb;
+      const dt = parseISO(a.event.data).getTime() - parseISO(b.event.data).getTime();
       if (dt !== 0) return dt;
       // Non-recurring first when same date
       const ar = a.event.is_recurring ? 1 : 0;
