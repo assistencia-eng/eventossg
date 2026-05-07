@@ -438,12 +438,18 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-[#151414] pb-20">
       {/* User header bar */}
-      <div className="sticky top-0 z-40 bg-[#7e0127]">
-        <div className="container mx-auto px-4 flex items-center justify-between h-14 bg-[#7e0127]">
+      <header
+        className="sticky top-0 z-40 bg-[#5a0d1f] border-b border-[#c9a84c]/60 shadow-md"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0,0,0,0.25) 0%, transparent 60%)",
+        }}
+      >
+        <div className="container mx-auto px-4 flex items-center justify-between h-14">
           <button
             type="button"
             onClick={resetToInitial}
-            className="text-amber-50 text-2xl md:text-3xl font-sans text-left font-thin hover:opacity-80 transition-opacity"
+            className="font-serif italic text-2xl md:text-3xl text-[#f0d78c] tracking-wide hover:opacity-80 transition-opacity drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]"
           >
             Serra Eventos
           </button>
@@ -452,13 +458,13 @@ const Index = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-1.5 group">
-                    <Avatar className="w-9 h-9 border border-amber-200/30">
+                    <Avatar className="w-9 h-9 border border-[#c9a84c]/50">
                       <AvatarImage src={profile?.avatar_url || ""} />
                       <AvatarFallback className="text-sm bg-neutral-600 text-white font-medium">
                         {userInitials}
                       </AvatarFallback>
                     </Avatar>
-                    <ChevronDown className="w-4 h-4 text-amber-50/70 group-hover:text-amber-50 transition-colors" />
+                    <ChevronDown className="w-4 h-4 text-[#f0d78c]/80 group-hover:text-[#f0d78c] transition-colors" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
@@ -476,7 +482,7 @@ const Index = () => {
               <Button
                 size="sm"
                 onClick={() => navigate("/auth")}
-                className="gap-2 bg-transparent hover:bg-amber-50/10 text-amber-50 border border-amber-200/60 rounded-full px-4"
+                className="gap-2 bg-transparent hover:bg-[#c9a84c]/10 text-[#f0d78c] border border-[#c9a84c]/70 rounded-full px-4"
               >
                 <LogIn className="w-4 h-4" />
                 Entrar
@@ -484,7 +490,7 @@ const Index = () => {
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {activeNav === "events" ? (
         <>
