@@ -296,7 +296,13 @@ const Index = () => {
       });
     }
 
+    const todayTime = today.getTime();
+    const startsToday = (e: EventData) => new Date(e.data).getTime() === todayTime;
     results.sort((a, b) => {
+      // Events starting exactly today have top priority
+      const at = startsToday(a.event) ? 0 : 1;
+      const bt = startsToday(b.event) ? 0 : 1;
+      if (at !== bt) return at - bt;
       const dt = new Date(a.event.data).getTime() - new Date(b.event.data).getTime();
       if (dt !== 0) return dt;
       // Non-recurring first when same date
