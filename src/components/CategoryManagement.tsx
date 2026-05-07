@@ -207,6 +207,28 @@ const CategoryManagement = () => {
     setSavingSub(false);
   };
 
+  const handleRenameSubcategory = async (cat: EventCategory, oldSub: string) => {
+    const input = prompt(`Renomear subcategoria "${oldSub}":`, oldSub);
+    if (!input) return;
+    const newSub = input.trim();
+    if (!newSub || newSub === oldSub) return;
+    if ((subcategoryOptions[cat] || []).includes(newSub)) {
+      toast.error("Já existe uma subcategoria com esse nome.");
+      return;
+    }
+    const { error } = await (supabase as any).rpc("rename_subcategory", {
+      p_categoria: cat,
+      p_old: oldSub,
+      p_new: newSub,
+    });
+    if (error) {
+      toast.error("Erro ao renomear: " + error.message);
+      return;
+    }
+    await refreshSubcategories();
+    toast.success(`Renomeada para "${newSub}". Eventos atualizados.`);
+  };
+
   const handleRemoveSubcategory = async (cat: EventCategory, sub: string) => {
     const wasDefault = (defaultSubcategoriesSnapshot[cat] || []).includes(sub);
     if (wasDefault) {
@@ -429,8 +451,16 @@ const CategoryManagement = () => {
                       >
                         <span>{sub}</span>
                         <button
+                          onClick={() => handleRenameSubcategory(cat, sub)}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          title="Renomear"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
                           onClick={() => handleRemoveSubcategory(cat, sub)}
                           className="text-muted-foreground hover:text-destructive transition-colors"
+                          title="Remover"
                         >
                           <X className="w-3 h-3" />
                         </button>
