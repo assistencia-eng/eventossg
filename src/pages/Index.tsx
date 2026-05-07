@@ -604,7 +604,19 @@ const Index = () => {
       <BottomNav active={activeNav} onChange={handleNavChange} onCreate={handleCreate} />
       <LoginRequiredModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
-      <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} onEdit={setEditEvent} onDelete={setDeleteTarget} isAdmin={isAdmin} />
+      <EventDetailModal
+        event={selectedEvent}
+        open={!!selectedEvent}
+        onClose={() => setSelectedEvent(null)}
+        onEdit={setEditEvent}
+        onDelete={setDeleteTarget}
+        isAdmin={isAdmin}
+        isFavorite={selectedEvent ? isFavorite(selectedEvent.id) : false}
+        onToggleFavorite={handleToggleFavorite}
+        subcategoryImages={subcategoryImages}
+        categoryImages={categoryImages}
+        keywordImages={keywordImages}
+      />
       <EditEventForm event={editEvent} open={!!editEvent} onClose={() => setEditEvent(null)} onUpdated={fetchDbEvents} />
       <ImportEvents open={importOpen} onClose={() => setImportOpen(false)} onImported={fetchDbEvents} />
       <AddEventForm open={addOpen} onClose={() => setAddOpen(false)} onAdded={fetchDbEvents} />

@@ -1,13 +1,17 @@
+import { useMemo } from "react";
 import { EventData, categoryLabels, categoryIcons } from "@/data/events";
 import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2, ArrowLeft, MapPin, CalendarDays } from "lucide-react";
+import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2, ArrowLeft, MapPin, Heart } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ShareButton from "@/components/ShareButton";
 import ContactsDisplay from "@/components/ContactsDisplay";
 import { useEventContacts } from "@/hooks/useEventContacts";
+import { SubcategoryImageMap, subImgKey } from "@/hooks/useSubcategoryImages";
+import { CategoryImageMap } from "@/hooks/useCategoryImages";
+import { KeywordImageMap, pickKeywordImage, pickImageByEventKeywords } from "@/hooks/useKeywordImages";
 
 interface EventDetailModalProps {
   event: EventData | null;
@@ -16,10 +20,48 @@ interface EventDetailModalProps {
   onEdit?: (event: EventData) => void;
   onDelete?: (event: EventData) => void;
   isAdmin?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
+  subcategoryImages?: SubcategoryImageMap;
+  categoryImages?: CategoryImageMap;
+  keywordImages?: KeywordImageMap;
 }
 
-const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: EventDetailModalProps) => {
+function pickSubImg(event: EventData, map?: SubcategoryImageMap): string | undefined {
+  if (!map || !event.subcategorias?.length) return undefined;
+  const cats = event.categorias?.length ? event.categorias : [event.categoria];
+  for (const sub of event.subcategorias) {
+    let imgs: (string | undefined)[] | undefined;
+    for (const cat of cats) {
+      const c = map[subImgKey(cat, sub)];
+      if (c && c.length > 0) { imgs = c; break; }
+    }
+    if (imgs && imgs.length > 0) {
+      const manualIdx = event.subcategory_image_index;
+      if (manualIdx && manualIdx >= 1 && manualIdx <= imgs.length && imgs[manualIdx - 1]) return imgs[manualIdx - 1];
+      let hash = 0;
+      for (let i = 0; i < event.id.length; i++) hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
+      const filtered = imgs.filter(Boolean) as string[];
+      if (filtered.length) return filtered[Math.abs(hash) % filtered.length];
+    }
+  }
+  return undefined;
+}
+
+const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isFavorite, onToggleFavorite, subcategoryImages, categoryImages, keywordImages }: EventDetailModalProps) => {
   const { contacts } = useEventContacts(event?.id, event?.venue_id, event?.custom_contacts);
+
+  const fallbackImg = useMemo(() => {
+    if (!event) return undefined;
+    const subImg = pickSubImg(event, subcategoryImages);
+    const kwTagImg = pickImageByEventKeywords(event.keywords, keywordImages, event.id);
+    const kwImg = pickKeywordImage(event.nome, keywordImages, event.id);
+    const cats = event.categorias?.length ? event.categorias : [event.categoria];
+    let catImg: string | undefined;
+    if (categoryImages) for (const c of cats) if (categoryImages[c]) { catImg = categoryImages[c]; break; }
+    return kwTagImg || kwImg || subImg || catImg;
+  }, [event, subcategoryImages, categoryImages, keywordImages]);
+
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const formattedEndDate = event.data_fim ? format(parseISO(event.data_fim), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : null;
@@ -27,6 +69,7 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
   const subs = event.subcategorias && event.subcategorias.length > 0 ? event.subcategorias : [];
   const mainCat = cats[0];
   const catColor = categoryColors[mainCat]?.vibrant || '#444';
+  const heroImg = event.imagem || fallbackImg;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
@@ -39,15 +82,13 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
 
         {/* Hero image with overlays */}
         <div className="relative w-full h-56">
-          {event.imagem ? (
-            <img src={event.imagem} alt={event.nome} className="w-full h-full object-cover" />
+          {heroImg ? (
+            <img src={heroImg} alt={event.nome} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${catColor}, #1a1a1a)` }} />
           )}
-          {/* Dark overlay for contrast */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/30" />
 
-          {/* Top buttons */}
           <button
             onClick={onClose}
             aria-label="Voltar"
@@ -55,11 +96,17 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white">
-            <CalendarDays className="w-5 h-5" />
-          </div>
+          <button
+            onClick={() => onToggleFavorite?.(event.id)}
+            aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}
+            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 active:scale-90 transition-all duration-200"
+          >
+            <Heart
+              className={`w-5 h-5 transition-colors ${isFavorite ? "text-red-500" : "text-white"}`}
+              fill={isFavorite ? "currentColor" : "none"}
+            />
+          </button>
 
-          {/* Title overlaying image */}
           <div className="absolute bottom-3 left-4 right-4">
             <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-lg font-sans">
               {event.nome}
@@ -89,7 +136,6 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
             </div>
           )}
 
-          {/* Category chips (when no subs) */}
           {subs.length === 0 && (
             <div className="flex flex-wrap gap-1.5">
               {cats.map((cat) => {
@@ -110,42 +156,41 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
             </div>
           )}
 
-          {/* Info cards */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="rounded-2xl bg-[#2a2a2a] p-3">
-              <div className="flex items-center gap-1.5 text-white text-sm font-semibold mb-0.5">
-                <Calendar className="w-4 h-4" style={{ color: catColor }} />
-                <span className="capitalize">{formattedDate}</span>
+          {/* Info cards — vertical, full-width, expandable */}
+          <div className="flex flex-col gap-2.5">
+            <div className="rounded-2xl bg-[#2a2a2a] p-3 w-full">
+              <div className="flex items-start gap-2 text-white text-sm font-semibold">
+                <Calendar className="w-4 h-4 shrink-0 mt-0.5" style={{ color: catColor }} />
+                <span className="capitalize break-words">{formattedDate}</span>
               </div>
               {formattedEndDate && (
-                <p className="text-xs text-neutral-400 capitalize">até {formattedEndDate}</p>
+                <p className="text-xs text-neutral-400 capitalize mt-1 break-words pl-6">até {formattedEndDate}</p>
               )}
               {event.horario && (
-                <p className="text-xs text-neutral-300 mt-0.5 flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> {event.horario}
+                <p className="text-xs text-neutral-300 mt-1 flex items-start gap-1 pl-6 break-words">
+                  <Clock className="w-3 h-3 shrink-0 mt-0.5" /> <span>{event.horario}</span>
+                </p>
+              )}
+              {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
+                <p className="text-xs text-neutral-300 mt-1 flex items-start gap-1 pl-6 break-words">
+                  <Repeat className="w-3 h-3 shrink-0 mt-0.5" style={{ color: catColor }} />
+                  <span>Recorrente: {formatRecurringDays(event.recurring_days)}</span>
                 </p>
               )}
             </div>
-            <div className="rounded-2xl bg-[#2a2a2a] p-3">
-              <div className="flex items-start gap-1.5 text-white text-sm font-semibold mb-0.5">
+            <div className="rounded-2xl bg-[#2a2a2a] p-3 w-full">
+              <div className="flex items-start gap-2 text-white text-sm font-semibold">
                 <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: catColor }} />
-                <span className="leading-tight line-clamp-2">
+                <span className="leading-snug break-words">
                   {event.local !== "Não informado" ? event.local : event.cidade}
                 </span>
               </div>
-              <p className="text-xs text-neutral-400 line-clamp-2">
+              <p className="text-xs text-neutral-400 mt-1 pl-6 break-words">
                 {event.endereco !== "Não informado" && `${event.endereco}, `}
                 {event.cidade}
               </p>
             </div>
           </div>
-
-          {event.is_recurring && event.recurring_days && event.recurring_days.length > 0 && (
-            <div className="flex items-center gap-2 text-sm text-neutral-300">
-              <Repeat className="w-4 h-4" style={{ color: catColor }} />
-              <span>Recorrente: {formatRecurringDays(event.recurring_days)}</span>
-            </div>
-          )}
 
           {/* About section */}
           <div>
@@ -184,7 +229,6 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
 
           {contacts.length > 0 && <ContactsDisplay contacts={contacts} />}
 
-          {/* Disclaimer */}
           <div className="rounded-xl bg-black/30 border border-white/5 p-3 flex items-start gap-2">
             <AlertTriangle className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
             <p className="text-xs text-neutral-400 leading-relaxed">
@@ -192,7 +236,6 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
             </p>
           </div>
 
-          {/* Admin actions */}
           {isAdmin && (onEdit || onDelete) && (
             <div className="flex items-center gap-2 pt-2 border-t border-white/10">
               {onEdit && (
@@ -217,7 +260,6 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
             </div>
           )}
 
-          {/* Share */}
           <div className="pt-2 border-t border-white/10">
             <ShareButton
               title={event.nome}
