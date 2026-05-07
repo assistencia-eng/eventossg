@@ -70,7 +70,7 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
   });
 
   const resetForm = () => {
-    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [], keywords: [] });
+    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [], keywords: [], outdoor_image_position_x: 50, outdoor_image_position_y: 50, outdoor_image_zoom: 1 });
     setImageFile(null);
     setImagePreview(null);
   };
