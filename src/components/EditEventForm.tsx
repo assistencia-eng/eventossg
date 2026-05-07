@@ -440,6 +440,16 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
                 </div>
               )}
             </label>
+            {imagePreview && (
+              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50">
+                <Label className="text-xs font-semibold mb-2 block">Reposicionar imagem (outdoor)</Label>
+                <ImagePositioner
+                  imageSrc={imagePreview}
+                  value={{ x: form.outdoor_image_position_x, y: form.outdoor_image_position_y, zoom: form.outdoor_image_zoom }}
+                  onChange={(v) => setForm({ ...form, outdoor_image_position_x: v.x, outdoor_image_position_y: v.y, outdoor_image_zoom: v.zoom })}
+                />
+              </div>
+            )}
           </div>
 
           {/* Image source selector - shown when no custom image is uploaded */}
