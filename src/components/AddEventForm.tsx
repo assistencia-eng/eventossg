@@ -15,6 +15,7 @@ import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryK
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
+import ImagePositioner from "@/components/ImagePositioner";
 import { getOrCreateVenue } from "@/hooks/useVenues";
 import { useMemo } from "react";
 
