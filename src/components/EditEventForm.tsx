@@ -106,6 +106,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         image_keyword: event.image_keyword ?? null,
         keyword_image_index: event.keyword_image_index ?? null,
         custom_contacts: Array.isArray(event.custom_contacts) ? event.custom_contacts : [],
+        outdoor_image_position_x: event.outdoor_image_position_x ?? 50,
+        outdoor_image_position_y: event.outdoor_image_position_y ?? 50,
+        outdoor_image_zoom: event.outdoor_image_zoom ?? 1,
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
