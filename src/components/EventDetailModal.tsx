@@ -59,7 +59,21 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
     const cats = event.categorias?.length ? event.categorias : [event.categoria];
     let catImg: string | undefined;
     if (categoryImages) for (const c of cats) if (categoryImages[c]) { catImg = categoryImages[c]; break; }
-    return kwTagImg || kwImg || subImg || catImg;
+
+    // Manual override matching EventCard logic
+    let manualImg: string | undefined;
+    if (event.image_source === "subcategory") {
+      manualImg = subImg;
+    } else if (event.image_source === "keyword") {
+      const kw = event.image_keyword?.toLowerCase().trim();
+      if (kw && keywordImages?.[kw]?.length) {
+        const imgs = keywordImages[kw];
+        const idx = event.keyword_image_index;
+        manualImg = idx && idx >= 1 && idx <= imgs.length ? imgs[idx - 1] : imgs[0];
+      }
+    }
+
+    return manualImg || kwTagImg || kwImg || subImg || catImg;
   }, [event, subcategoryImages, categoryImages, keywordImages]);
 
   if (!event) return null;
