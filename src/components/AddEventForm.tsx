@@ -162,6 +162,9 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         keywords: form.keywords,
         venue_id: venueId,
         custom_contacts: [],
+        outdoor_image_position_x: form.outdoor_image_position_x,
+        outdoor_image_position_y: form.outdoor_image_position_y,
+        outdoor_image_zoom: form.outdoor_image_zoom,
       } as any);
 
       if (insertError) throw insertError;
