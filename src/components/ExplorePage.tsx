@@ -249,11 +249,6 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
                 />
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/0" />
-              {it.kind === "kw" && (
-                <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/55 text-white/90 backdrop-blur">
-                  🏷️ tag
-                </span>
-              )}
               <div className="absolute inset-0 flex flex-col justify-end p-3">
                 <span className="text-base font-bold capitalize text-white drop-shadow leading-tight">
                   {label}

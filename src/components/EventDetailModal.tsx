@@ -3,7 +3,7 @@ import { EventData, categoryLabels, categoryIcons } from "@/data/events";
 import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2, ArrowLeft, MapPin, Heart } from "lucide-react";
+import { Calendar, Star, Clock, Repeat, AlertTriangle, Pencil, Trash2, ArrowLeft, MapPin } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import ShareButton from "@/components/ShareButton";
@@ -96,16 +96,17 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => onToggleFavorite?.(event.id)}
-            aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}
-            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 active:scale-90 transition-all duration-200"
-          >
-            <Heart
-              className={`w-5 h-5 transition-colors ${isFavorite ? "text-red-500" : "text-white"}`}
-              fill={isFavorite ? "currentColor" : "none"}
-            />
-          </button>
+          {onToggleFavorite && (
+            <button
+              onClick={() => onToggleFavorite(event.id)}
+              aria-label={isFavorite ? "Remover dos favoritos" : "Favoritar"}
+              className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center hover:bg-black/70 active:scale-90 transition-all duration-200 ${
+                isFavorite ? "text-amber-500 hover:text-amber-600" : "text-white hover:text-amber-400"
+              }`}
+            >
+              <Star className="w-5 h-5" fill={isFavorite ? "currentColor" : "none"} />
+            </button>
+          )}
 
           <div className="absolute bottom-3 left-4 right-4">
             <h2 className="text-2xl font-bold text-white leading-tight drop-shadow-lg font-sans">
