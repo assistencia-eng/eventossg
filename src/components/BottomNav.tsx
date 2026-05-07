@@ -31,12 +31,10 @@ const BottomNav = ({ active, onChange, onCreate }: BottomNavProps) => {
         <button
           onClick={() => onCreate?.()}
           aria-label="Criar evento"
-          className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground"
+          className="flex flex-col items-center gap-1 px-4 py-2 text-muted-foreground transition-colors hover:text-foreground"
         >
-          <span className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center -mt-1 shadow-lg">
-            <Plus className="w-5 h-5" />
-          </span>
-          <span className="text-[10px] font-medium">Criar</span>
+          <Plus className="w-5 h-5" />
+          <span className="text-xs font-medium">Criar</span>
         </button>
         <button
           onClick={() => onChange("profile")}
