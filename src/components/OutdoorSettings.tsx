@@ -187,7 +187,7 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
                   {/* Image positioning */}
                   <div className="space-y-3 pt-2 border-t border-border">
                     <Label className="text-xs font-semibold text-primary">Posicionamento da imagem</Label>
-                    <ImagePositioner event={event} onChange={(field, value) => updateTextSettings(event.id, field, value)} />
+                    <EventImagePositioner event={event} onChange={(field, value) => { void updateTextSettings(event.id, field, value); }} />
                   </div>
                 </div>
               )}
