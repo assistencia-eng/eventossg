@@ -64,6 +64,9 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
     is_recurring: false,
     recurring_days: [] as string[],
     keywords: [] as string[],
+    outdoor_image_position_x: 50,
+    outdoor_image_position_y: 50,
+    outdoor_image_zoom: 1,
   });
 
   const resetForm = () => {
