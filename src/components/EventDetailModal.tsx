@@ -134,14 +134,26 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
           {subs.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {subs.slice(0, 3).map((sub) => {
-                const color = categoryColors[mainCat]?.vibrant || '#6366f1';
+                // Find which category this subcategory belongs to.
+                // Prefer event's own categories, then fall back to global subcategoryOptions map.
+                const subLower = sub.toLowerCase();
+                let owningCat: EventCategory | undefined = cats.find((c) =>
+                  (subcategoryOptions[c] || []).some((s) => s.toLowerCase() === subLower)
+                );
+                if (!owningCat) {
+                  owningCat = (Object.keys(subcategoryOptions) as EventCategory[]).find((c) =>
+                    (subcategoryOptions[c] || []).some((s) => s.toLowerCase() === subLower)
+                  );
+                }
+                const catKey = owningCat || mainCat;
+                const color = categoryColors[catKey]?.vibrant || '#6366f1';
                 return (
                   <div
                     key={sub}
                     className="rounded-2xl p-3 flex flex-col items-center justify-center text-center aspect-square"
                     style={{ backgroundColor: color }}
                   >
-                    <span className="text-2xl mb-1">{categoryIcons[mainCat]}</span>
+                    <span className="text-2xl mb-1">{categoryIcons[catKey]}</span>
                     <span className="text-xs font-semibold text-white capitalize leading-tight line-clamp-2">
                       {sub}
                     </span>
