@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { EventData, categoryLabels, categoryIcons } from "@/data/events";
+import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
 import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
