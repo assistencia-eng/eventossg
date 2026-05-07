@@ -451,8 +451,16 @@ const CategoryManagement = () => {
                       >
                         <span>{sub}</span>
                         <button
+                          onClick={() => handleRenameSubcategory(cat, sub)}
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          title="Renomear"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button
                           onClick={() => handleRemoveSubcategory(cat, sub)}
                           className="text-muted-foreground hover:text-destructive transition-colors"
+                          title="Remover"
                         >
                           <X className="w-3 h-3" />
                         </button>
