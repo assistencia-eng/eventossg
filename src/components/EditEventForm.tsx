@@ -17,6 +17,7 @@ import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryK
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
+import ImagePositioner from "@/components/ImagePositioner";
 import ContactsEditor from "@/components/ContactsEditor";
 import type { VenueContact } from "@/types/contact";
 import { getOrCreateVenue } from "@/hooks/useVenues";
