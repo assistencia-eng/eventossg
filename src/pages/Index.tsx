@@ -598,7 +598,7 @@ const Index = () => {
         />
       )}
 
-      <BottomNav active={activeNav} onChange={handleNavChange} />
+      <BottomNav active={activeNav} onChange={handleNavChange} onCreate={handleCreate} />
       <LoginRequiredModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
       <EventDetailModal event={selectedEvent} open={!!selectedEvent} onClose={() => setSelectedEvent(null)} onEdit={setEditEvent} onDelete={setDeleteTarget} isAdmin={isAdmin} />
