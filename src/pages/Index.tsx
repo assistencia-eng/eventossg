@@ -278,7 +278,14 @@ const Index = () => {
       });
     }
 
-    results.sort((a, b) => new Date(a.event.data).getTime() - new Date(b.event.data).getTime());
+    results.sort((a, b) => {
+      const dt = new Date(a.event.data).getTime() - new Date(b.event.data).getTime();
+      if (dt !== 0) return dt;
+      // Non-recurring first when same date
+      const ar = a.event.is_recurring ? 1 : 0;
+      const br = b.event.is_recurring ? 1 : 0;
+      return ar - br;
+    });
     return results;
   }, [eventsWithDistance, selectedCategories, selectedSubcategories, distanceKm, userLocation, effectiveCity, searchName, cityFromSearch, allDates, monthStart, monthEnd]);
 
