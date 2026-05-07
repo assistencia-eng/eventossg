@@ -150,7 +150,22 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin }: E
           {/* About section */}
           <div>
             <h4 className="font-semibold text-white mb-1.5 font-sans">Sobre o evento</h4>
-            <p className="text-sm text-neutral-300 leading-relaxed">{event.descricao}</p>
+            {(() => {
+              const len = event.descricao?.length || 0;
+              const fontClass =
+                len > 1500 ? "text-[11px] leading-snug"
+                : len > 900 ? "text-xs leading-snug"
+                : len > 500 ? "text-[13px] leading-relaxed"
+                : "text-sm leading-relaxed";
+              return (
+                <div
+                  className={`text-neutral-300 whitespace-pre-wrap break-words ${fontClass}`}
+                  style={{ fontFamily: 'inherit' }}
+                >
+                  {event.descricao}
+                </div>
+              );
+            })()}
           </div>
 
           {event.atracoes.length > 0 && (
