@@ -17,6 +17,7 @@ import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryK
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
+import ImagePositioner from "@/components/ImagePositioner";
 import ContactsEditor from "@/components/ContactsEditor";
 import type { VenueContact } from "@/types/contact";
 import { getOrCreateVenue } from "@/hooks/useVenues";
@@ -76,6 +77,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     image_keyword: null as string | null,
     keyword_image_index: null as number | null,
     custom_contacts: [] as VenueContact[],
+    outdoor_image_position_x: 50,
+    outdoor_image_position_y: 50,
+    outdoor_image_zoom: 1,
   });
   const [venueContactsPreview, setVenueContactsPreview] = useState<VenueContact[]>([]);
   const [syncContactsToVenueFlag, setSyncContactsToVenueFlag] = useState(true);
@@ -103,6 +107,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         image_keyword: event.image_keyword ?? null,
         keyword_image_index: event.keyword_image_index ?? null,
         custom_contacts: Array.isArray(event.custom_contacts) ? event.custom_contacts : [],
+        outdoor_image_position_x: event.outdoor_image_position_x ?? 50,
+        outdoor_image_position_y: event.outdoor_image_position_y ?? 50,
+        outdoor_image_zoom: event.outdoor_image_zoom ?? 1,
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
@@ -236,6 +243,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         keyword_image_index: form.image_source === "keyword" ? form.keyword_image_index : null,
         venue_id: venueId,
         custom_contacts: sanitizedContacts,
+        outdoor_image_position_x: form.outdoor_image_position_x,
+        outdoor_image_position_y: form.outdoor_image_position_y,
+        outdoor_image_zoom: form.outdoor_image_zoom,
       } as any).eq("id", event.id);
 
       if (updateError) throw updateError;
@@ -430,6 +440,16 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
                 </div>
               )}
             </label>
+            {imagePreview && (
+              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50">
+                <Label className="text-xs font-semibold mb-2 block">Reposicionar imagem (outdoor)</Label>
+                <ImagePositioner
+                  imageSrc={imagePreview}
+                  value={{ x: form.outdoor_image_position_x, y: form.outdoor_image_position_y, zoom: form.outdoor_image_zoom }}
+                  onChange={(v) => setForm({ ...form, outdoor_image_position_x: v.x, outdoor_image_position_y: v.y, outdoor_image_zoom: v.zoom })}
+                />
+              </div>
+            )}
           </div>
 
           {/* Image source selector - shown when no custom image is uploaded */}

@@ -15,6 +15,7 @@ import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryK
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import { useKeywordImages } from "@/hooks/useKeywordImages";
 import KeywordsInput from "@/components/KeywordsInput";
+import ImagePositioner from "@/components/ImagePositioner";
 import { getOrCreateVenue } from "@/hooks/useVenues";
 import { useMemo } from "react";
 
@@ -63,10 +64,13 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
     is_recurring: false,
     recurring_days: [] as string[],
     keywords: [] as string[],
+    outdoor_image_position_x: 50,
+    outdoor_image_position_y: 50,
+    outdoor_image_zoom: 1,
   });
 
   const resetForm = () => {
-    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [], keywords: [] });
+    setForm({ nome: "", categorias: [], subcategorias: [], data: "", data_fim: "", horario: "", cidade: "", local: "", endereco: "", descricao: "", atracoes: "", is_featured: false, is_recurring: false, recurring_days: [], keywords: [], outdoor_image_position_x: 50, outdoor_image_position_y: 50, outdoor_image_zoom: 1 });
     setImageFile(null);
     setImagePreview(null);
   };
@@ -158,6 +162,9 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
         keywords: form.keywords,
         venue_id: venueId,
         custom_contacts: [],
+        outdoor_image_position_x: form.outdoor_image_position_x,
+        outdoor_image_position_y: form.outdoor_image_position_y,
+        outdoor_image_zoom: form.outdoor_image_zoom,
       } as any);
 
       if (insertError) throw insertError;
@@ -340,6 +347,16 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
                 </div>
               )}
             </label>
+            {imagePreview && (
+              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50">
+                <Label className="text-xs font-semibold mb-2 block">Reposicionar imagem (outdoor)</Label>
+                <ImagePositioner
+                  imageSrc={imagePreview}
+                  value={{ x: form.outdoor_image_position_x, y: form.outdoor_image_position_y, zoom: form.outdoor_image_zoom }}
+                  onChange={(v) => setForm({ ...form, outdoor_image_position_x: v.x, outdoor_image_position_y: v.y, outdoor_image_zoom: v.zoom })}
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-2">
