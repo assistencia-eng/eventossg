@@ -458,6 +458,7 @@ export type Database = {
           id: string
           position: number
           subcategoria: string
+          tipo: string
           updated_at: string
         }
         Insert: {
@@ -466,6 +467,7 @@ export type Database = {
           id?: string
           position?: number
           subcategoria: string
+          tipo?: string
           updated_at?: string
         }
         Update: {
@@ -474,6 +476,7 @@ export type Database = {
           id?: string
           position?: number
           subcategoria?: string
+          tipo?: string
           updated_at?: string
         }
         Relationships: []
@@ -549,6 +552,10 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      rename_subcategory: {
+        Args: { p_categoria: string; p_new: string; p_old: string }
+        Returns: undefined
+      }
     }
     Enums: {
       event_category:
