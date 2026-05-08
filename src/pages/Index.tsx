@@ -181,20 +181,18 @@ const Index = () => {
       navigate("/auth");
       return;
     }
-    if (tab === "events" && activeNav === "events") {
+
+    // Re-clicking the same tab: smooth scroll to top
+    if (tab === activeNav) {
       window.scrollTo({ top: 0, behavior: "smooth" });
+      if (tab === "explore") setExploreResetSignal((n) => n + 1);
       return;
     }
-    if (tab === "explore" && activeNav === "explore") {
-      // Reset explore page (clear filter / go back to grid)
-      setExploreResetSignal((n) => n + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+
+    // Changing tabs: reset scroll position instantly
     setActiveNav(tab);
-    if (tab === "events") {
-      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
-    }
+    window.scrollTo({ top: 0, behavior: "auto" });
+
     if (tab === "explore") {
       // Always start fresh when entering explore from another tab
       setExploreResetSignal((n) => n + 1);
