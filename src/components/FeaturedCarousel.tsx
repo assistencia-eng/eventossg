@@ -89,7 +89,8 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
 
   if (events.length === 0) return null;
 
-  const event = events[current];
+  const event = events[current] ?? events[0];
+  if (!event) return null;
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR }).toUpperCase();
   const imgSrc = resolveImage(event, subcategoryImages, categoryImages, keywordImages);
   const px = event.outdoor_image_position_x ?? 50;
