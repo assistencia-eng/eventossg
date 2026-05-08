@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Settings, Trash2, Type } from "lucide-react";
 import ImagePositioner from "./ImagePositioner";
+import { useAppSetting } from "@/hooks/useAppSetting";
 
 const EventImagePositioner = ({ event, onChange }: { event: EventData; onChange: (field: string, value: number) => void }) => (
   <ImagePositioner
