@@ -91,9 +91,9 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col justify-center px-5 md:px-12 max-w-3xl">
-        <div className="inline-flex items-center gap-2 self-start bg-[#5a0d1f]/80 backdrop-blur-sm border border-[#c9a84c]/40 rounded-full px-3 py-1.5 mb-4">
-          <Calendar className="w-3.5 h-3.5 text-[#f0d78c]" />
-          <span className="text-[11px] md:text-xs font-semibold tracking-wider text-[#f0d78c]">{formattedDate}</span>
+        <div className="inline-flex items-center gap-2 self-start bg-gradient-to-b from-[#7a1228] to-[#3d0814] rounded-full px-4 py-2 mb-4 shadow-lg shadow-black/40 ring-1 ring-white/10">
+          <Calendar className="w-3.5 h-3.5 text-white" />
+          <span className="text-[11px] md:text-xs font-bold tracking-[0.14em] text-white uppercase">{formattedDate}</span>
         </div>
 
         <h2 className="font-sans font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] leading-[1.05] tracking-tight text-3xl md:text-5xl lg:text-6xl mb-4 md:mb-5">
