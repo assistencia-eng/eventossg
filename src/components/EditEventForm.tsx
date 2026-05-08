@@ -114,6 +114,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
+      setImageRemoved(false);
       // Pré-visualiza contatos do venue (somente leitura, se evento não tem custom)
       (async () => {
         if (event.venue_id && (!event.custom_contacts || event.custom_contacts.length === 0)) {
