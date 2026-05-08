@@ -186,6 +186,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     setSaving(true);
     try {
       let imagemUrl = event.imagem || null;
+      if (imageRemoved) imagemUrl = null;
 
       if (imageFile) {
         const ext = imageFile.name.split(".").pop();
