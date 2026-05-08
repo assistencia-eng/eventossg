@@ -75,6 +75,7 @@ const Index = () => {
   const { images: subcategoryImages } = useSubcategoryImages();
   const { images: categoryImages } = useCategoryImages();
   const { images: keywordImages } = useKeywordImages();
+  const { value: outdoorShowInfo } = useAppSetting<boolean>("outdoor_show_info", true);
 
   useEffect(() => {
     getUserLocation()
