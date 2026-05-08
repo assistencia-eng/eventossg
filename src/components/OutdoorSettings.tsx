@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Settings, Trash2, Type } from "lucide-react";
 import ImagePositioner from "./ImagePositioner";
+import { useAppSetting } from "@/hooks/useAppSetting";
 
 const EventImagePositioner = ({ event, onChange }: { event: EventData; onChange: (field: string, value: number) => void }) => (
   <ImagePositioner
@@ -39,6 +40,7 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
   const featuredEvents = events.filter((e) => e.is_featured);
   const [saving, setSaving] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { value: showInfo, setValue: setShowInfo } = useAppSetting<boolean>("outdoor_show_info", true);
 
   const toggleFeatured = async (event: EventData) => {
     setSaving(event.id);
@@ -84,6 +86,14 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+            <div>
+              <Label className="text-sm font-medium">Exibir informações no outdoor</Label>
+              <p className="text-xs text-muted-foreground">Mostra nome, data, local e degradê.</p>
+            </div>
+            <Switch checked={!!showInfo} onCheckedChange={(v) => setShowInfo(v)} />
+          </div>
+
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Eventos em destaque ({featuredEvents.length})
           </h3>

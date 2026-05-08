@@ -4,6 +4,7 @@ import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocat
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
+import { useAppSetting } from "@/hooks/useAppSetting";
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
 import ForYouCarousel from "@/components/ForYouCarousel";
@@ -74,6 +75,7 @@ const Index = () => {
   const { images: subcategoryImages } = useSubcategoryImages();
   const { images: categoryImages } = useCategoryImages();
   const { images: keywordImages } = useKeywordImages();
+  const { value: outdoorShowInfo } = useAppSetting<boolean>("outdoor_show_info", true);
 
   useEffect(() => {
     getUserLocation()
@@ -527,7 +529,7 @@ const Index = () => {
 
       {activeNav === "events" ? (
         <>
-          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} />
+          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} showInfo={outdoorShowInfo} />
 
           <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
