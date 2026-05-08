@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Shield, Trash2, Plus, Loader2 } from "lucide-react";
+import { Shield, Trash2, Plus, Loader2, ChevronDown } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 interface AdminEntry {
   id: string;
@@ -17,6 +22,7 @@ const AdminManagement = () => {
   const [loading, setLoading] = useState(true);
   const [newEmail, setNewEmail] = useState("");
   const [adding, setAdding] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const fetchAdmins = async () => {
     setLoading(true);
@@ -77,50 +83,63 @@ const AdminManagement = () => {
   };
 
   return (
-    <section className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Shield className="w-5 h-5 text-primary" />
-        <h2 className="text-lg font-semibold font-sans text-neutral-400">Gerenciar Administradores</h2>
-      </div>
-
-      {loading ? (
-        <div className="flex justify-center py-6">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    <Collapsible
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      className="space-y-2"
+    >
+      <CollapsibleTrigger asChild>
+        <div className="flex items-center justify-between w-full p-1 cursor-pointer group">
+          <div className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-primary" />
+            <h2 className="text-lg font-semibold font-sans text-neutral-400 group-hover:text-neutral-200 transition-colors">Gerenciar Administradores</h2>
+          </div>
+          <ChevronDown 
+            className={`w-5 h-5 text-neutral-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} 
+          />
         </div>
-      ) : (
-        <div className="space-y-2">
-          {admins.map((admin) => (
-            <div key={admin.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
-              <div>
-                <p className="text-sm font-medium">{admin.email}</p>
-                <p className="text-xs text-muted-foreground">Admin</p>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent className="space-y-4 pt-2">
+        {loading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {admins.map((admin) => (
+              <div key={admin.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
+                <div>
+                  <p className="text-sm font-medium">{admin.email}</p>
+                  <p className="text-xs text-muted-foreground">Admin</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemove(admin)}
+                  className="text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleRemove(admin)}
-                className="text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
 
-      <div className="flex gap-2">
-        <Input
-          placeholder="E-mail do novo admin"
-          value={newEmail}
-          onChange={(e) => setNewEmail(e.target.value)}
-          className="flex-1"
-        />
-        <Button onClick={handleAdd} disabled={adding || !newEmail.trim()} size="sm" className="gap-1.5">
-          {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-          Adicionar
-        </Button>
-      </div>
-    </section>
+        <div className="flex gap-2">
+          <Input
+            placeholder="E-mail do novo admin"
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            className="flex-1"
+          />
+          <Button onClick={handleAdd} disabled={adding || !newEmail.trim()} size="sm" className="gap-1.5">
+            {adding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Adicionar
+          </Button>
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };
 
