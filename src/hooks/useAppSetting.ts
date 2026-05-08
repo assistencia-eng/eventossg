@@ -16,12 +16,12 @@ export const useAppSetting = <T = any>(key: string, defaultValue: T) => {
     })();
 
     const channel = supabase
-      .channel(`app_settings_${key}`)
+      .channel(`app_settings_${key}_${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "app_settings", filter: `key=eq.${key}` }, (payload) => {
         const newVal = (payload.new as any)?.value;
         if (newVal !== undefined) setValue(newVal as T);
-      })
-      .subscribe();
+      });
+    channel.subscribe();
 
     return () => {
       active = false;
