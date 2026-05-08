@@ -231,7 +231,7 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
     <div className="container mx-auto px-4 py-6 bg-[#151414]">
       <h2 className="text-xl font-bold mb-4 text-neutral-200 font-sans">Explorar</h2>
       <p className="text-sm text-neutral-400 mb-5">
-        Navegue por subcategorias e palavras-chave e descubra eventos.
+        Descubra novas experiências
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {items.map((it) => {
