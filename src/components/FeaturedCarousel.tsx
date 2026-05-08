@@ -96,7 +96,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
   const event = events[current] ?? events[0];
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR }).toUpperCase();
-  const imgSrc = resolveImage(event, subcategoryImages, categoryImages, keywordImages);
+  const imgSrc = resolveOutdoorImage(event, subcategoryImages, categoryImages, keywordImages);
   const px = event.outdoor_image_position_x ?? 50;
   const py = event.outdoor_image_position_y ?? 50;
   const zoom = event.outdoor_image_zoom ?? 1;
