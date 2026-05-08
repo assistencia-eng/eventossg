@@ -112,6 +112,7 @@ const Index = () => {
           outdoor_text_position: (e as any).outdoor_text_position ?? 'bottom',
           outdoor_title_size: (e as any).outdoor_title_size ?? 28,
           outdoor_show_description: (e as any).outdoor_show_description ?? true,
+          outdoor_show_info: (e as any).outdoor_show_info ?? true,
           is_recurring: (e as any).is_recurring ?? false,
           recurring_days: (e as any).recurring_days ?? [],
           subcategory_image_index: (e as any).subcategory_image_index ?? null,
