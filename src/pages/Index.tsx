@@ -66,6 +66,7 @@ const Index = () => {
   const [searchName, setSearchName] = useState("");
   const [activeNav, setActiveNav] = useState<"events" | "profile" | "explore">("events");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [exploreResetSignal, setExploreResetSignal] = useState(0);
   const eventsRef = useRef<HTMLDivElement>(null);
 
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
