@@ -86,6 +86,14 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg bg-muted/50 p-3">
+            <div>
+              <Label className="text-sm font-medium">Exibir informações no outdoor</Label>
+              <p className="text-xs text-muted-foreground">Mostra nome, data, local e degradê.</p>
+            </div>
+            <Switch checked={!!showInfo} onCheckedChange={(v) => setShowInfo(v)} />
+          </div>
+
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
             Eventos em destaque ({featuredEvents.length})
           </h3>
