@@ -112,7 +112,7 @@ const AIPromptManager = () => {
       </button>
 
       {open && (
-        <div className="space-y-3 p-4 rounded-lg bg-[#1c1c1c]">
+        <div className="space-y-3 p-4 rounded-xl bg-[#1a1a1a] border border-border">
           <p className="text-xs text-muted-foreground">
             Edite as instruções que a IA usa para extrair eventos de arquivos importados.
             Use <code className="px-1 rounded bg-background text-primary">{`{{CATEGORIES}}`}</code>,{" "}
@@ -132,7 +132,7 @@ const AIPromptManager = () => {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={18}
-                className="flex min-h-[80px] w-full rounded-md border px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono text-xs border-border bg-[#1c1c1c] text-neutral-50"
+                className="flex min-h-[80px] w-full rounded-md border px-3 py-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 font-mono text-xs border-border bg-[#151515] text-neutral-50"
                 placeholder="Instruções para a IA..."
               />
             )}

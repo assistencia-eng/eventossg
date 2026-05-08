@@ -113,7 +113,7 @@ const VenueManagement = ({ expanded: expandedProp, onToggle }: VenueManagementPr
         ) : (
           <div className="space-y-2">
             {venues.map((v) => (
-              <div key={v.id} className="flex items-center justify-between p-3 rounded-lg bg-[#1c1c1c] border border-border">
+              <div key={v.id} className="flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-border">
                 <div className="min-w-0 flex-1">
                   <p className="font-medium text-neutral-200 truncate">{v.nome}</p>
                   <p className="text-xs text-muted-foreground">
@@ -122,10 +122,10 @@ const VenueManagement = ({ expanded: expandedProp, onToggle }: VenueManagementPr
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(v)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => openEdit(v)}>
                     <Pencil className="w-4 h-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(v)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" onClick={() => handleDelete(v)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>

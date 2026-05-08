@@ -108,16 +108,16 @@ const AdminManagement = () => {
         ) : (
           <div className="space-y-2">
             {admins.map((admin) => (
-              <div key={admin.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-xl">
+              <div key={admin.id} className="flex items-center justify-between p-3 bg-[#1a1a1a] border border-border rounded-xl">
                 <div>
-                  <p className="text-sm font-medium">{admin.email}</p>
+                  <p className="text-sm font-medium text-neutral-200">{admin.email}</p>
                   <p className="text-xs text-muted-foreground">Admin</p>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => handleRemove(admin)}
-                  className="text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:bg-destructive/10 h-8 w-8"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>

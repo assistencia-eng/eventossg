@@ -50,7 +50,7 @@ const SortableRow = ({ item, onToggleHidden }: { item: Item; onToggleHidden: (id
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#1c1c1c] border border-border"
+      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#1a1a1a] border border-border"
     >
       <button
         {...attributes}
@@ -245,7 +245,7 @@ const SubcategoryRanking = () => {
       </p>
 
       {/* Add panel */}
-      <div className="mb-3 p-3 rounded-lg bg-[#161616] border border-border space-y-2">
+      <div className="mb-3 p-3 rounded-xl bg-[#1a1a1a] border border-border space-y-2">
         <div className="flex gap-1.5 text-xs">
           <button
             onClick={() => setAddType("sub")}

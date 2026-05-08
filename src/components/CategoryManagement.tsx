@@ -338,16 +338,16 @@ const CategoryManagement = () => {
         </div>
       )}
 
-      <div className="space-y-2 bg-[#1a1a1a]">
+      <div className="space-y-2">
         {displayCategories.map((cat) => {
           const isExpanded = expandedCat === cat;
           const isEditing = editingCat === cat;
           const colors = categoryColors[cat];
 
           return (
-            <div key={cat} className="rounded-xl border border-border overflow-hidden">
-              {/* Category header */}
-              <div className="flex items-center justify-between p-3 bg-secondary/50">
+              <div key={cat} className="rounded-xl border border-border overflow-hidden bg-[#1a1a1a]">
+                {/* Category header */}
+                <div className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <span className="text-lg">{categoryIcons[cat]}</span>
                   {isEditing ? (
@@ -447,7 +447,7 @@ const CategoryManagement = () => {
                     {(subcategoryOptions[cat] || []).map((sub) => (
                       <div
                         key={sub}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary text-sm border border-border"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#2a2a2a] text-sm border border-border"
                       >
                         <span>{sub}</span>
                         <button

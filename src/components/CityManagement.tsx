@@ -103,15 +103,15 @@ const CityManagement = ({ expanded: expandedProp, onToggle }: CityManagementProp
         ) : (
           <div className="space-y-2">
             {cities.map((c) => (
-              <div key={c.cidade} className="flex items-center justify-between p-3 rounded-lg bg-[#1c1c1c] border border-border">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-neutral-200 truncate">{c.cidade}</p>
-                  <p className="text-xs text-muted-foreground">{c.count} evento{c.count === 1 ? "" : "s"}</p>
+                <div key={c.cidade} className="flex items-center justify-between p-3 rounded-xl bg-[#1a1a1a] border border-border">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-neutral-200 truncate">{c.cidade}</p>
+                    <p className="text-xs text-muted-foreground">{c.count} evento{c.count === 1 ? "" : "s"}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:bg-primary/10" onClick={() => openEdit(c.cidade)}>
+                    <Pencil className="w-4 h-4" />
+                  </Button>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c.cidade)}>
-                  <Pencil className="w-4 h-4" />
-                </Button>
-              </div>
             ))}
           </div>
         )}
