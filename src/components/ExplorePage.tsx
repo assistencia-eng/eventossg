@@ -32,7 +32,7 @@ const defaultCategories: EventCategory[] = [
 const norm = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAdmin, categoryImagesMap, keywordImagesMap }: ExplorePageProps) => {
+const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAdmin, categoryImagesMap, keywordImagesMap, resetSignal }: ExplorePageProps) => {
   const { images: subImages } = useSubcategoryImages();
   const { images: catImages } = useCategoryImages();
   const catVersion = useCategoriesVersion();
