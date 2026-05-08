@@ -54,6 +54,10 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
   const prev = useCallback(() => setCurrent((p) => (p - 1 + events.length) % events.length), [events.length]);
 
   useEffect(() => {
+    if (current >= events.length) setCurrent(0);
+  }, [events.length, current]);
+
+  useEffect(() => {
     if (events.length === 0) return;
     const duration = (events[current]?.outdoor_duration || 7) * 1000;
     const timer = setInterval(next, duration);
@@ -89,7 +93,8 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
 
   if (events.length === 0) return null;
 
-  const event = events[current];
+  const event = events[current] ?? events[0];
+  if (!event) return null;
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR }).toUpperCase();
   const imgSrc = resolveImage(event, subcategoryImages, categoryImages, keywordImages);
   const px = event.outdoor_image_position_x ?? 50;
