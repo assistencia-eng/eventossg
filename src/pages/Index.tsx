@@ -4,7 +4,7 @@ import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocat
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
-import { useAppSetting } from "@/hooks/useAppSetting";
+
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
 import ForYouCarousel from "@/components/ForYouCarousel";
@@ -75,7 +75,7 @@ const Index = () => {
   const { images: subcategoryImages } = useSubcategoryImages();
   const { images: categoryImages } = useCategoryImages();
   const { images: keywordImages } = useKeywordImages();
-  const { value: outdoorShowInfo } = useAppSetting<boolean>("outdoor_show_info", true);
+  
 
   useEffect(() => {
     getUserLocation()
@@ -112,6 +112,7 @@ const Index = () => {
           outdoor_text_position: (e as any).outdoor_text_position ?? 'bottom',
           outdoor_title_size: (e as any).outdoor_title_size ?? 28,
           outdoor_show_description: (e as any).outdoor_show_description ?? true,
+          outdoor_show_info: (e as any).outdoor_show_info ?? true,
           is_recurring: (e as any).is_recurring ?? false,
           recurring_days: (e as any).recurring_days ?? [],
           subcategory_image_index: (e as any).subcategory_image_index ?? null,
@@ -529,7 +530,7 @@ const Index = () => {
 
       {activeNav === "events" ? (
         <>
-          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} showInfo={outdoorShowInfo} />
+          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} />
 
           <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">

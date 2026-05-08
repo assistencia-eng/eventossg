@@ -24,6 +24,7 @@ export interface EventData {
   outdoor_text_position?: string;
   outdoor_title_size?: number;
   outdoor_show_description?: boolean;
+  outdoor_show_info?: boolean;
   is_recurring?: boolean;
   recurring_days?: string[];
   subcategory_image_index?: number | null;

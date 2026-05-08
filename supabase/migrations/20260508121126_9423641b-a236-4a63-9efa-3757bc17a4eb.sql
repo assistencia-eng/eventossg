@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS outdoor_show_info boolean NOT NULL DEFAULT true;

@@ -16,7 +16,7 @@ interface FeaturedCarouselProps {
   showInfo?: boolean;
 }
 
-const resolveImage = (
+export const resolveOutdoorImage = (
   event: EventData,
   subcategoryImages?: SubcategoryImageMap,
   categoryImages?: CategoryImageMap,
@@ -96,7 +96,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
   const event = events[current] ?? events[0];
   if (!event) return null;
   const formattedDate = format(parseISO(event.data), "dd 'de' MMMM, yyyy", { locale: ptBR }).toUpperCase();
-  const imgSrc = resolveImage(event, subcategoryImages, categoryImages, keywordImages);
+  const imgSrc = resolveOutdoorImage(event, subcategoryImages, categoryImages, keywordImages);
   const px = event.outdoor_image_position_x ?? 50;
   const py = event.outdoor_image_position_y ?? 50;
   const zoom = event.outdoor_image_zoom ?? 1;
@@ -134,7 +134,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
           <div className="absolute inset-0 bg-gradient-to-br from-[#5a0d1f] to-[#1a0a10]" />
         )}
 
-        {showInfo && (
+        {(event.outdoor_show_info ?? showInfo) && (
           <>
             {/* Bottom gradient for legibility */}
             <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />

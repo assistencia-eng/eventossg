@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { EventData, EventCategory, categoryLabels, categoryIcons, subcategoryOptions } from "@/data/events";
+import { EventData, EventCategory, categoryIcons, subcategoryOptions } from "@/data/events";
 import { formatRecurringDays } from "@/lib/recurrence";
 import { categoryColors } from "@/data/categoryColors";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -147,8 +147,8 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
         </div>
 
         <div className="p-5 space-y-5 bg-[#1f1f1f]">
-          {/* Subcategory cards */}
-          {subs.length > 0 && (
+          {/* Subcategory cards (or category fallback if no subs) */}
+          {subs.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
               {subs.slice(0, 3).map((sub) => {
                 // Find which category this subcategory belongs to.
@@ -178,23 +178,21 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
                 );
               })}
             </div>
-          )}
-
-          {subs.length === 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {cats.map((cat) => {
-                const colors = categoryColors[cat];
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {cats.slice(0, 3).map((cat) => {
+                const color = categoryColors[cat]?.vibrant || '#6366f1';
                 return (
-                  <span
+                  <div
                     key={cat}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: colors?.muted || '#2a2a2a',
-                      color: colors?.vibrant || '#ccc',
-                    }}
+                    className="rounded-2xl p-3 flex flex-col items-center justify-center text-center aspect-square"
+                    style={{ backgroundColor: color }}
                   >
-                    {categoryIcons[cat]} {categoryLabels[cat]}
-                  </span>
+                    <span className="text-2xl mb-1">{categoryIcons[cat]}</span>
+                    <span className="text-xs font-semibold text-white capitalize leading-tight line-clamp-2">
+                      {cat}
+                    </span>
+                  </div>
                 );
               })}
             </div>
