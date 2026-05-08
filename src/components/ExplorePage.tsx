@@ -18,6 +18,7 @@ interface ExplorePageProps {
   isAdmin?: boolean;
   categoryImagesMap?: Record<string, string>;
   keywordImagesMap?: Record<string, (string | undefined)[]>;
+  resetSignal?: number;
 }
 
 type SubItem = { kind: "sub"; categoria: EventCategory; sub: string };
