@@ -134,7 +134,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
           <div className="absolute inset-0 bg-gradient-to-br from-[#5a0d1f] to-[#1a0a10]" />
         )}
 
-        {showInfo && (
+        {(event.outdoor_show_info ?? showInfo) && (
           <>
             {/* Bottom gradient for legibility */}
             <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black via-black/70 to-transparent pointer-events-none" />
