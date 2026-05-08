@@ -147,8 +147,8 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
         </div>
 
         <div className="p-5 space-y-5 bg-[#1f1f1f]">
-          {/* Subcategory cards */}
-          {subs.length > 0 && (
+          {/* Subcategory cards (or category fallback if no subs) */}
+          {subs.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
               {subs.slice(0, 3).map((sub) => {
                 // Find which category this subcategory belongs to.
@@ -178,6 +178,25 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
                 );
               })}
             </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {cats.slice(0, 3).map((cat) => {
+                const color = categoryColors[cat]?.vibrant || '#6366f1';
+                return (
+                  <div
+                    key={cat}
+                    className="rounded-2xl p-3 flex flex-col items-center justify-center text-center aspect-square"
+                    style={{ backgroundColor: color }}
+                  >
+                    <span className="text-2xl mb-1">{categoryIcons[cat]}</span>
+                    <span className="text-xs font-semibold text-white capitalize leading-tight line-clamp-2">
+                      {cat}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
           )}
 
           {subs.length === 0 && (
