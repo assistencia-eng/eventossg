@@ -618,6 +618,7 @@ const Index = () => {
           isAdmin={isAdmin}
           categoryImagesMap={categoryImages}
           keywordImagesMap={keywordImages}
+          resetSignal={exploreResetSignal}
         />
       
       ) : (
