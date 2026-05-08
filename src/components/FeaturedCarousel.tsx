@@ -109,10 +109,10 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
 
         <button
           onClick={() => onSelect(event)}
-          className="self-start inline-flex items-center gap-2 bg-[#5a0d1f] hover:bg-[#7a1228] text-[#f0d78c] font-bold tracking-wider text-sm md:text-base px-6 md:px-8 py-3 md:py-3.5 rounded-full border border-[#c9a84c]/50 shadow-lg shadow-black/40 transition-colors"
+          className="self-start inline-flex items-center gap-3 bg-gradient-to-b from-[#7a1228] to-[#3d0814] hover:from-[#8d1530] hover:to-[#4d0a18] text-white font-bold tracking-[0.18em] uppercase text-sm md:text-base pl-7 pr-5 md:pl-9 md:pr-6 py-3 md:py-3.5 rounded-full ring-1 ring-white/10 shadow-lg shadow-black/50 transition-colors"
         >
-          SAIBA MAIS
-          <ArrowRight className="w-4 h-4" />
+          Saiba mais
+          <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
         </button>
       </div>
 
