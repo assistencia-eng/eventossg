@@ -530,7 +530,7 @@ const Index = () => {
 
       {activeNav === "events" ? (
         <>
-          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} showInfo={outdoorShowInfo} />
+          <FeaturedCarousel events={featuredEvents} onSelect={setSelectedEvent} subcategoryImages={subcategoryImages} categoryImages={categoryImages} keywordImages={keywordImages} />
 
           <div ref={eventsRef} className="container mx-auto px-4 py-6 text-gray-100 bg-[#151414]">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
