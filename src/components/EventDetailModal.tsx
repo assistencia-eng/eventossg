@@ -197,27 +197,6 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
               })}
             </div>
           )}
-          )}
-
-          {subs.length === 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {cats.map((cat) => {
-                const colors = categoryColors[cat];
-                return (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium"
-                    style={{
-                      backgroundColor: colors?.muted || '#2a2a2a',
-                      color: colors?.vibrant || '#ccc',
-                    }}
-                  >
-                    {categoryIcons[cat]} {categoryLabels[cat]}
-                  </span>
-                );
-              })}
-            </div>
-          )}
 
           {/* Info cards — vertical, full-width, expandable */}
           <div className="flex flex-col gap-2.5">
