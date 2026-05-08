@@ -4,6 +4,7 @@ import { getUserLocation, calculateDistance, UserLocation } from "@/lib/geolocat
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import FeaturedCarousel from "@/components/FeaturedCarousel";
+import { useAppSetting } from "@/hooks/useAppSetting";
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
 import ForYouCarousel from "@/components/ForYouCarousel";
