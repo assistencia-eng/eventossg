@@ -236,6 +236,7 @@ export type Database = {
           outdoor_image_position_y: number
           outdoor_image_zoom: number
           outdoor_show_description: boolean
+          outdoor_show_info: boolean
           outdoor_text_align: string
           outdoor_text_position: string
           outdoor_title_size: number
@@ -274,6 +275,7 @@ export type Database = {
           outdoor_image_position_y?: number
           outdoor_image_zoom?: number
           outdoor_show_description?: boolean
+          outdoor_show_info?: boolean
           outdoor_text_align?: string
           outdoor_text_position?: string
           outdoor_title_size?: number
@@ -312,6 +314,7 @@ export type Database = {
           outdoor_image_position_y?: number
           outdoor_image_zoom?: number
           outdoor_show_description?: boolean
+          outdoor_show_info?: boolean
           outdoor_text_align?: string
           outdoor_text_position?: string
           outdoor_title_size?: number
