@@ -56,6 +56,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     categorias: [] as EventCategory[],
