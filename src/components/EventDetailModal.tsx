@@ -97,7 +97,24 @@ const EventDetailModal = ({ event, open, onClose, onEdit, onDelete, isAdmin, isF
         {/* Hero image with overlays */}
         <div className="relative w-full h-56">
           {heroImg ? (
-            <img src={heroImg} alt={event.nome} className="w-full h-full object-cover" />
+            (() => {
+              const isCustom = !!event.imagem;
+              const px = isCustom ? (event.outdoor_image_position_x ?? 50) : 50;
+              const py = isCustom ? (event.outdoor_image_position_y ?? 50) : 50;
+              const zoom = isCustom ? (event.outdoor_image_zoom ?? 1) : 1;
+              return (
+                <img
+                  src={heroImg}
+                  alt={event.nome}
+                  className="w-full h-full object-cover"
+                  style={{
+                    objectPosition: `${px}% ${py}%`,
+                    transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+                    transformOrigin: `${px}% ${py}%`,
+                  }}
+                />
+              );
+            })()
           ) : (
             <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${catColor}, #1a1a1a)` }} />
           )}

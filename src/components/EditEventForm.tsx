@@ -56,6 +56,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
   const [geocoding, setGeocoding] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageRemoved, setImageRemoved] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     categorias: [] as EventCategory[],
@@ -113,6 +114,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
       });
       setImagePreview(event.imagem || null);
       setImageFile(null);
+      setImageRemoved(false);
       // Pré-visualiza contatos do venue (somente leitura, se evento não tem custom)
       (async () => {
         if (event.venue_id && (!event.custom_contacts || event.custom_contacts.length === 0)) {
@@ -184,6 +186,7 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
     setSaving(true);
     try {
       let imagemUrl = event.imagem || null;
+      if (imageRemoved) imagemUrl = null;
 
       if (imageFile) {
         const ext = imageFile.name.split(".").pop();
@@ -236,9 +239,9 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
         is_featured: form.is_featured,
         is_recurring: form.is_recurring,
         recurring_days: form.recurring_days,
-        subcategory_image_index: imageFile || event.imagem ? null : form.subcategory_image_index,
+        subcategory_image_index: (imageFile || (event.imagem && !imageRemoved)) ? null : form.subcategory_image_index,
         keywords: form.keywords,
-        image_source: (imageFile || event.imagem) ? "auto" : form.image_source,
+        image_source: (imageFile || (event.imagem && !imageRemoved)) ? "auto" : form.image_source,
         image_keyword: form.image_source === "keyword" ? form.image_keyword : null,
         keyword_image_index: form.image_source === "keyword" ? form.keyword_image_index : null,
         venue_id: venueId,
@@ -441,12 +444,18 @@ const EditEventForm = ({ event, open, onClose, onUpdated }: EditEventFormProps) 
               )}
             </label>
             {imagePreview && (
-              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50">
-                <Label className="text-xs font-semibold mb-2 block">Reposicionar imagem (outdoor)</Label>
+              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50 space-y-3">
+                <Label className="text-xs font-semibold block">Ajustar enquadramento da imagem</Label>
                 <ImagePositioner
                   imageSrc={imagePreview}
                   value={{ x: form.outdoor_image_position_x, y: form.outdoor_image_position_y, zoom: form.outdoor_image_zoom }}
                   onChange={(v) => setForm({ ...form, outdoor_image_position_x: v.x, outdoor_image_position_y: v.y, outdoor_image_zoom: v.zoom })}
+                  onRemove={() => {
+                    setImageFile(null);
+                    setImagePreview(null);
+                    setImageRemoved(true);
+                    setForm({ ...form, outdoor_image_position_x: 50, outdoor_image_position_y: 50, outdoor_image_zoom: 1 });
+                  }}
                 />
               </div>
             )}

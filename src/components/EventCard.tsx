@@ -113,12 +113,25 @@ const EventCard = ({ event, onSelect, index, selected, onToggleSelect, isFavorit
     >
       {/* Image section */}
       <div className="relative w-full h-[120px] overflow-hidden">
-        <img
-          src={imgSrc}
-          alt={event.nome}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        {(() => {
+          const isCustom = !!event.imagem;
+          const px = isCustom ? (event.outdoor_image_position_x ?? 50) : 50;
+          const py = isCustom ? (event.outdoor_image_position_y ?? 50) : 50;
+          const zoom = isCustom ? (event.outdoor_image_zoom ?? 1) : 1;
+          return (
+            <img
+              src={imgSrc}
+              alt={event.nome}
+              className="w-full h-full object-cover"
+              loading="lazy"
+              style={{
+                objectPosition: `${px}% ${py}%`,
+                transform: zoom !== 1 ? `scale(${zoom})` : undefined,
+                transformOrigin: `${px}% ${py}%`,
+              }}
+            />
+          );
+        })()}
         <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-[#1c1c1c] to-transparent" />
 
         {/* Category chips top-right */}
