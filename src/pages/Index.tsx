@@ -183,9 +183,19 @@ const Index = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    if (tab === "explore" && activeNav === "explore") {
+      // Reset explore page (clear filter / go back to grid)
+      setExploreResetSignal((n) => n + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setActiveNav(tab);
     if (tab === "events") {
       setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+    }
+    if (tab === "explore") {
+      // Always start fresh when entering explore from another tab
+      setExploreResetSignal((n) => n + 1);
     }
   }, [user, navigate, activeNav]);
 
