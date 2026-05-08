@@ -96,7 +96,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
           <span className="text-[11px] md:text-xs font-bold tracking-[0.14em] text-white uppercase">{formattedDate}</span>
         </div>
 
-        <h2 className="font-sans font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] leading-[1.05] tracking-tight text-3xl md:text-5xl lg:text-6xl mb-4 md:mb-5">
+        <h2 className="font-sans font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] leading-[1.05] tracking-tight md:text-5xl lg:text-6xl mb-4 md:mb-5 text-2xl">
           {event.nome}
         </h2>
 
