@@ -40,6 +40,7 @@ const OutdoorSettings = ({ open, onClose, events, onUpdated }: OutdoorSettingsPr
   const featuredEvents = events.filter((e) => e.is_featured);
   const [saving, setSaving] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { value: showInfo, setValue: setShowInfo } = useAppSetting<boolean>("outdoor_show_info", true);
 
   const toggleFeatured = async (event: EventData) => {
     setSaving(event.id);
