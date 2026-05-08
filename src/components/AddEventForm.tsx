@@ -348,12 +348,17 @@ const AddEventForm = ({ open, onClose, onAdded }: AddEventFormProps) => {
               )}
             </label>
             {imagePreview && (
-              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50">
-                <Label className="text-xs font-semibold mb-2 block">Reposicionar imagem (outdoor)</Label>
+              <div className="mt-3 p-3 rounded-xl border border-border bg-card/50 space-y-3">
+                <Label className="text-xs font-semibold block">Ajustar enquadramento da imagem</Label>
                 <ImagePositioner
                   imageSrc={imagePreview}
                   value={{ x: form.outdoor_image_position_x, y: form.outdoor_image_position_y, zoom: form.outdoor_image_zoom }}
                   onChange={(v) => setForm({ ...form, outdoor_image_position_x: v.x, outdoor_image_position_y: v.y, outdoor_image_zoom: v.zoom })}
+                  onRemove={() => {
+                    setImageFile(null);
+                    setImagePreview(null);
+                    setForm({ ...form, outdoor_image_position_x: 50, outdoor_image_position_y: 50, outdoor_image_zoom: 1 });
+                  }}
                 />
               </div>
             )}
