@@ -66,6 +66,7 @@ const Index = () => {
   const [searchName, setSearchName] = useState("");
   const [activeNav, setActiveNav] = useState<"events" | "profile" | "explore">("events");
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [exploreResetSignal, setExploreResetSignal] = useState(0);
   const eventsRef = useRef<HTMLDivElement>(null);
 
   const { favoriteIds, toggleFavorite, isFavorite } = useFavorites();
@@ -129,7 +130,17 @@ const Index = () => {
   useEffect(() => { fetchDbEvents(); }, [fetchDbEvents]);
 
   const allEvents = useMemo(() => dbEvents, [dbEvents]);
-  const featuredEvents = useMemo(() => allEvents.filter((e) => e.is_featured), [allEvents]);
+  const featuredEvents = useMemo(() => {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    return allEvents.filter((e) => {
+      if (!e.is_featured) return false;
+      // Recurring events stay featured while flagged
+      if (e.is_recurring) return true;
+      const end = e.data_fim ? parseISO(e.data_fim) : parseISO(e.data);
+      // Keep visible during the full day of its end date; remove only the next day
+      return end >= t;
+    });
+  }, [allEvents]);
   const recurrenceMap = useMemo(() => buildRecurrenceMap(allEvents), [allEvents]);
 
   const availableCities = useMemo(() => {
@@ -172,9 +183,19 @@ const Index = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    if (tab === "explore" && activeNav === "explore") {
+      // Reset explore page (clear filter / go back to grid)
+      setExploreResetSignal((n) => n + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setActiveNav(tab);
     if (tab === "events") {
       setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+    }
+    if (tab === "explore") {
+      // Always start fresh when entering explore from another tab
+      setExploreResetSignal((n) => n + 1);
     }
   }, [user, navigate, activeNav]);
 
@@ -597,6 +618,7 @@ const Index = () => {
           isAdmin={isAdmin}
           categoryImagesMap={categoryImages}
           keywordImagesMap={keywordImages}
+          resetSignal={exploreResetSignal}
         />
       
       ) : (

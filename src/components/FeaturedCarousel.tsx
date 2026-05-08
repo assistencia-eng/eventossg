@@ -69,7 +69,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
   const zoom = event.outdoor_image_zoom ?? 1;
 
   return (
-    <div className="relative w-full h-[55vh] min-h-[360px] md:min-h-[440px] overflow-hidden bg-[#1a0a10]">
+    <div className="relative w-full aspect-video md:aspect-auto md:h-[55vh] md:min-h-[440px] overflow-hidden bg-[#1a0a10]">
       {imgSrc ? (
         <img
           src={imgSrc}
@@ -91,9 +91,9 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
 
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col justify-center px-5 md:px-12 max-w-3xl">
-        <div className="inline-flex items-center gap-2 self-start bg-[#5a0d1f]/80 backdrop-blur-sm border border-[#c9a84c]/40 rounded-full px-3 py-1.5 mb-4">
-          <Calendar className="w-3.5 h-3.5 text-[#f0d78c]" />
-          <span className="text-[11px] md:text-xs font-semibold tracking-wider text-[#f0d78c]">{formattedDate}</span>
+        <div className="inline-flex items-center gap-2 self-start bg-gradient-to-b from-[#7a1228] to-[#3d0814] rounded-full px-4 py-2 mb-4 shadow-lg shadow-black/40 ring-1 ring-white/10">
+          <Calendar className="w-3.5 h-3.5 text-white" />
+          <span className="text-[11px] md:text-xs font-bold tracking-[0.14em] text-white uppercase">{formattedDate}</span>
         </div>
 
         <h2 className="font-sans font-extrabold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] leading-[1.05] tracking-tight text-3xl md:text-5xl lg:text-6xl mb-4 md:mb-5">
@@ -109,10 +109,10 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
 
         <button
           onClick={() => onSelect(event)}
-          className="self-start inline-flex items-center gap-2 bg-[#5a0d1f] hover:bg-[#7a1228] text-[#f0d78c] font-bold tracking-wider text-sm md:text-base px-6 md:px-8 py-3 md:py-3.5 rounded-full border border-[#c9a84c]/50 shadow-lg shadow-black/40 transition-colors"
+          className="self-start inline-flex items-center gap-3 bg-gradient-to-b from-[#7a1228] to-[#3d0814] hover:from-[#8d1530] hover:to-[#4d0a18] text-white font-bold tracking-[0.18em] uppercase text-sm md:text-base pl-7 pr-5 md:pl-9 md:pr-6 py-3 md:py-3.5 rounded-full ring-1 ring-white/10 shadow-lg shadow-black/50 transition-colors"
         >
-          SAIBA MAIS
-          <ArrowRight className="w-4 h-4" />
+          Saiba mais
+          <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
         </button>
       </div>
 

@@ -18,6 +18,7 @@ interface ExplorePageProps {
   isAdmin?: boolean;
   categoryImagesMap?: Record<string, string>;
   keywordImagesMap?: Record<string, (string | undefined)[]>;
+  resetSignal?: number;
 }
 
 type SubItem = { kind: "sub"; categoria: EventCategory; sub: string };
@@ -31,7 +32,7 @@ const defaultCategories: EventCategory[] = [
 const norm = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAdmin, categoryImagesMap, keywordImagesMap }: ExplorePageProps) => {
+const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAdmin, categoryImagesMap, keywordImagesMap, resetSignal }: ExplorePageProps) => {
   const { images: subImages } = useSubcategoryImages();
   const { images: catImages } = useCategoryImages();
   const catVersion = useCategoriesVersion();
@@ -49,6 +50,12 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
         if (data) setOrderRows(data);
       });
   }, []);
+
+  // External reset (e.g., user taps "Explorar" tab again in bottom nav)
+  useEffect(() => {
+    if (resetSignal === undefined) return;
+    setSelected(null);
+  }, [resetSignal]);
 
   const categories = useMemo<EventCategory[]>(() => {
     const customs = getCustomCategoryKeys();
