@@ -7,7 +7,6 @@ import FeaturedCarousel from "@/components/FeaturedCarousel";
 
 import FilterBar from "@/components/FilterBar";
 import EventCard from "@/components/EventCard";
-import ForYouCarousel from "@/components/ForYouCarousel";
 import EventDetailModal from "@/components/EventDetailModal";
 import ImportEvents from "@/components/ImportEvents";
 import AddEventForm from "@/components/AddEventForm";
@@ -371,17 +370,6 @@ const Index = () => {
     [filteredEvents, today]
   );
 
-  const forYouEvents = useMemo(() => {
-    if (interests.categories.length === 0 && interests.subcategories.length === 0) return [];
-    return allEvents.filter((event) => {
-      const end = event.data_fim ? new Date(event.data_fim) : new Date(event.data);
-      if (end < today) return false;
-      const matchesCat = event.categorias?.some((c) => interests.categories.includes(c)) ||
-        interests.categories.includes(event.categoria);
-      const matchesSub = event.subcategorias?.some((s) => interests.subcategories.includes(s));
-      return matchesCat || matchesSub;
-    }).sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
-  }, [allEvents, interests, today]);
 
   const displayedEvents = activeTab === "upcoming" ? upcomingEvents : activeTab === "past" ? pastEvents : [];
 
@@ -567,18 +555,6 @@ const Index = () => {
               onClearFilters={handleClearFilters}
             />
 
-            {user && forYouEvents.length > 0 && (
-              <ForYouCarousel
-                events={forYouEvents.slice(0, 8)}
-                onSelect={setSelectedEvent}
-                isFavorite={isFavorite}
-                onToggleFavorite={handleToggleFavorite}
-                isAdmin={isAdmin}
-                subcategoryImages={subcategoryImages}
-                categoryImages={categoryImages}
-                keywordImages={keywordImages}
-              />
-            )}
 
             <div className="mt-6">
               <p className="text-sm mb-4 text-neutral-400">
@@ -622,6 +598,9 @@ const Index = () => {
           categoryImagesMap={categoryImages}
           keywordImagesMap={keywordImages}
           resetSignal={exploreResetSignal}
+          interests={interests}
+          favoriteIds={favoriteIds}
+          user={user}
         />
       
       ) : (

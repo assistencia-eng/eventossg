@@ -22,29 +22,51 @@ export const resolveOutdoorImage = (
   categoryImages?: CategoryImageMap,
   keywordImages?: KeywordImageMap,
 ) => {
+  // 1. Imagem própria do evento
   let imgSrc = event.imagem;
+  if (imgSrc) return imgSrc;
+
   const cats = event.categorias?.length ? event.categorias : [event.categoria];
-  if (!imgSrc) {
-    const kw = pickKeywordImage(event.nome, keywordImages, event.id);
-    if (kw) imgSrc = kw;
-  }
-  if (!imgSrc && subcategoryImages && event.subcategorias?.length) {
-    outer: for (const sub of event.subcategorias) {
+  
+  // 2. Imagem da palavra-chave (se o admin definiu uma keyword específica ou se detectamos no nome)
+  const kw = event.image_keyword || event.nome;
+  const kwImg = pickKeywordImage(kw, keywordImages, event.id);
+  if (kwImg) return kwImg;
+
+  // 3. Imagem da subcategoria
+  if (subcategoryImages && event.subcategorias?.length) {
+    for (const sub of event.subcategorias) {
       for (const cat of cats) {
         const imgs = subcategoryImages[subImgKey(cat, sub)];
         if (imgs && imgs.length > 0) {
           let hash = 0;
           for (let i = 0; i < event.id.length; i++) hash = ((hash << 5) - hash + event.id.charCodeAt(i)) | 0;
-          imgSrc = imgs[Math.abs(hash) % imgs.length];
-          break outer;
+          return imgs[Math.abs(hash) % imgs.length];
         }
       }
     }
   }
-  if (!imgSrc && categoryImages) {
-    for (const cat of cats) if (categoryImages[cat]) { imgSrc = categoryImages[cat]; break; }
+
+  // 4. Imagem da categoria
+  if (categoryImages) {
+    for (const cat of cats) {
+      if (categoryImages[cat]) return categoryImages[cat];
+    }
   }
-  return imgSrc;
+
+  // 5. Fallback final (imagem utilizada no card do evento / placeholder)
+  const mainCat = event.categorias?.[0] || event.categoria;
+  const placeholders: Record<string, string> = {
+    musica: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&h=400&fit=crop",
+    esporte: "https://images.unsplash.com/photo-1461896836934-bd45ba24e308?w=800&h=400&fit=crop",
+    alimentacao: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=400&fit=crop",
+    entretenimento: "https://images.unsplash.com/photo-1503095396549-807759245b35?w=800&h=400&fit=crop",
+    palestras: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=400&fit=crop",
+    feiras: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=400&fit=crop",
+    festas: "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&h=400&fit=crop",
+  };
+
+  return placeholders[mainCat] || placeholders.entretenimento;
 };
 
 const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages, keywordImages, showInfo = true }: FeaturedCarouselProps) => {

@@ -9,6 +9,8 @@ import { useCategoriesVersion, getCustomCategoryKeys, getRemovedDefaultCategoryK
 import { useSubcategoriesVersion } from "@/hooks/useSubcategoriesSync";
 import EventCard from "@/components/EventCard";
 import { parseISO } from "date-fns";
+import { getRecommendedEvents, UserInterests } from "@/lib/discovery";
+import { User } from "@supabase/supabase-js";
 
 interface ExplorePageProps {
   events: EventData[];
@@ -19,6 +21,9 @@ interface ExplorePageProps {
   categoryImagesMap?: Record<string, string>;
   keywordImagesMap?: Record<string, (string | undefined)[]>;
   resetSignal?: number;
+  interests?: UserInterests;
+  favoriteIds?: Set<string>;
+  user?: User | null;
 }
 
 type SubItem = { kind: "sub"; categoria: EventCategory; sub: string };
@@ -32,13 +37,26 @@ const defaultCategories: EventCategory[] = [
 const norm = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAdmin, categoryImagesMap, keywordImagesMap, resetSignal }: ExplorePageProps) => {
+const ExplorePage = ({ 
+  events, 
+  onSelectEvent, 
+  isFavorite, 
+  onToggleFavorite, 
+  isAdmin, 
+  categoryImagesMap, 
+  keywordImagesMap, 
+  resetSignal,
+  interests,
+  favoriteIds,
+  user
+}: ExplorePageProps) => {
   const { images: subImages } = useSubcategoryImages();
   const { images: catImages } = useCategoryImages();
   const catVersion = useCategoriesVersion();
   const subVersion = useSubcategoriesVersion();
   const [orderRows, setOrderRows] = useState<Array<{ tipo?: string; categoria: string; subcategoria: string; position: number; hidden?: boolean }>>([]);
   const [selected, setSelected] = useState<Item | null>(null);
+  const [activeTab, setActiveTab] = useState<"for-you" | "discover">("discover");
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -55,6 +73,8 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
   useEffect(() => {
     if (resetSignal === undefined) return;
     setSelected(null);
+    // If user clicks the main tab again while in discover, we don't necessarily want to force "discover"
+    // but if they were in a subcategory, we clear it.
   }, [resetSignal]);
 
   const categories = useMemo<EventCategory[]>(() => {
@@ -64,11 +84,8 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
       ...defaultCategories.filter((c) => !removed.has(c)),
       ...customs.filter((c) => !defaultCategories.includes(c)),
     ];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [catVersion]);
 
-  // Build subcategory items + keyword items (only keywords with at least one image
-  // OR explicitly declared by admin in keyword_images — already represented in keywordImagesMap)
   const items = useMemo<Item[]>(() => {
     const list: Item[] = [];
     const subSeen = new Set<string>();
@@ -79,9 +96,6 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
       });
     });
 
-    // Keyword cards — exclude any keyword that already exists as a subcategory name
-    // (subcategories already auto-derive their images via useKeywordImages, so the
-    // sub card already represents that keyword visually).
     const kwMap = keywordImagesMap || {};
     Object.keys(kwMap).forEach((kw) => {
       const imgs = (kwMap[kw] || []).filter(Boolean);
@@ -110,8 +124,11 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
         const lb = b.kind === "sub" ? b.sub : b.keyword;
         return la.localeCompare(lb);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, subVersion, orderRows, keywordImagesMap]);
+
+  const recommendedEvents = useMemo(() => {
+    return getRecommendedEvents(events, interests || { categories: [], subcategories: [] }, favoriteIds || new Set());
+  }, [events, interests, favoriteIds]);
 
   const getSubImage = (cat: EventCategory, sub: string): string | undefined => {
     const arr = subImages[subImgKey(cat, sub)];
@@ -147,7 +164,7 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
     if (dx > 80 && Math.abs(dy) < 60) handleBack();
   };
 
-  // Selected state — list events
+  // Selected state — list events for a subcategory or keyword
   if (selected) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const filtered = events
@@ -226,52 +243,110 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
     );
   }
 
-  // Grid state
   return (
-    <div className="container mx-auto px-4 py-6 bg-[#151414]">
-      <h2 className="text-xl font-bold mb-4 text-neutral-200 font-sans">Explorar</h2>
-      <p className="text-sm text-neutral-400 mb-5">
-        Descubra novas experiências
-      </p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {items.map((it) => {
-          const key = it.kind === "sub" ? `sub::${it.categoria}::${it.sub}` : `kw::${it.keyword}`;
-          const label = it.kind === "sub" ? it.sub : it.keyword;
-          const img = it.kind === "sub" ? getSubImage(it.categoria, it.sub) : getKwImage(it.keyword);
-          const color =
-            it.kind === "sub"
-              ? categoryColors[it.categoria]?.vibrant || "#6366f1"
-              : "#6366f1";
-          return (
-            <button
-              key={key}
-              onClick={() => setSelected(it)}
-              className="group relative aspect-square rounded-2xl overflow-hidden bg-[#1c1c1c] text-left"
-              style={{
-                backgroundImage: img ? `url(${img})` : undefined,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            >
-              {!img && (
-                <div
-                  className="absolute inset-0"
-                  style={{ background: `linear-gradient(135deg, ${color}55, #1c1c1c)` }}
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/0" />
-              <div className="absolute inset-0 flex flex-col justify-end p-3">
-                <span className="text-base font-bold capitalize text-white drop-shadow leading-tight">
-                  {label}
-                </span>
-              </div>
-            </button>
-          );
-        })}
+    <div className="bg-[#151414] min-h-screen">
+      {/* Sub-tab Switcher (Twitter Style) */}
+      <div className="sticky top-0 z-30 bg-[#151414]/80 backdrop-blur-md border-b border-white/5">
+        <div className="flex w-full">
+          <button 
+            onClick={() => { setActiveTab("discover"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className={`flex-1 py-4 text-sm font-bold relative transition-colors ${activeTab === "discover" ? "text-white" : "text-neutral-500 hover:text-neutral-300"}`}
+          >
+            Explorar
+            {activeTab === "discover" && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[4px] bg-primary rounded-full" />
+            )}
+          </button>
+          <button 
+            onClick={() => { setActiveTab("for-you"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            className={`flex-1 py-4 text-sm font-bold relative transition-colors ${activeTab === "for-you" ? "text-white" : "text-neutral-500 hover:text-neutral-300"}`}
+          >
+            Para você
+            {activeTab === "for-you" && (
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-[4px] bg-primary rounded-full" />
+            )}
+          </button>
+        </div>
       </div>
-      {items.length === 0 && (
-        <p className="text-center text-sm text-neutral-500 py-12">Nenhum item disponível.</p>
-      )}
+
+      <div className="container mx-auto px-4 py-6">
+        {activeTab === "for-you" ? (
+          <div className="space-y-6">
+            <div className="mb-2">
+              <h2 className="text-xl font-bold text-neutral-100 font-sans">Recomendados</h2>
+              <p className="text-xs text-neutral-500 mt-1">Sugestões baseadas no seu perfil e interesses.</p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {recommendedEvents.map((event, i) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  onSelect={onSelectEvent}
+                  index={i}
+                  isFavorite={isFavorite(event.id)}
+                  onToggleFavorite={onToggleFavorite}
+                  isAdmin={isAdmin}
+                  subcategoryImages={subImages}
+                  categoryImages={categoryImagesMap || {}}
+                  keywordImages={keywordImagesMap || {}}
+                />
+              ))}
+            </div>
+
+            {recommendedEvents.length === 0 && (
+              <p className="text-center text-sm text-neutral-500 py-12">Nenhuma recomendação encontrada.</p>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="mb-2">
+              <h2 className="text-xl font-bold text-neutral-100 font-sans">Descoberta</h2>
+              <p className="text-xs text-neutral-500 mt-1">Navegue por subcategorias e palavras-chave.</p>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {items.map((it) => {
+                const key = it.kind === "sub" ? `sub::${it.categoria}::${it.sub}` : `kw::${it.keyword}`;
+                const label = it.kind === "sub" ? it.sub : it.keyword;
+                const img = it.kind === "sub" ? getSubImage(it.categoria, it.sub) : getKwImage(it.keyword);
+                const color =
+                  it.kind === "sub"
+                    ? categoryColors[it.categoria]?.vibrant || "#6366f1"
+                    : "#6366f1";
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelected(it)}
+                    className="group relative aspect-square rounded-2xl overflow-hidden bg-[#1c1c1c] text-left transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-black/20"
+                    style={{
+                      backgroundImage: img ? `url(${img})` : undefined,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    {!img && (
+                      <div
+                        className="absolute inset-0"
+                        style={{ background: `linear-gradient(135deg, ${color}55, #1c1c1c)` }}
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/0" />
+                    <div className="absolute inset-0 flex flex-col justify-end p-3">
+                      <span className="text-sm font-bold capitalize text-white drop-shadow leading-tight line-clamp-2">
+                        {label}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {items.length === 0 && (
+              <p className="text-center text-sm text-neutral-500 py-12">Nenhum item disponível.</p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
