@@ -16,7 +16,7 @@ interface FeaturedCarouselProps {
   showInfo?: boolean;
 }
 
-const resolveImage = (
+export const resolveOutdoorImage = (
   event: EventData,
   subcategoryImages?: SubcategoryImageMap,
   categoryImages?: CategoryImageMap,
