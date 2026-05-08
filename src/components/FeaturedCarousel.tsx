@@ -69,7 +69,7 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
   const zoom = event.outdoor_image_zoom ?? 1;
 
   return (
-    <div className="relative w-full aspect-video md:aspect-auto md:h-[55vh] md:min-h-[440px] overflow-hidden bg-[#1a0a10]">
+    <div className="relative w-full aspect-[12/16] md:aspect-auto md:h-[55vh] md:min-h-[440px] overflow-hidden bg-[#1a0a10]">
       {imgSrc ? (
         <img
           src={imgSrc}
