@@ -51,6 +51,12 @@ const ExplorePage = ({ events, onSelectEvent, isFavorite, onToggleFavorite, isAd
       });
   }, []);
 
+  // External reset (e.g., user taps "Explorar" tab again in bottom nav)
+  useEffect(() => {
+    if (resetSignal === undefined) return;
+    setSelected(null);
+  }, [resetSignal]);
+
   const categories = useMemo<EventCategory[]>(() => {
     const customs = getCustomCategoryKeys();
     const removed = new Set(getRemovedDefaultCategoryKeys());
