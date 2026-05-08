@@ -54,6 +54,10 @@ const FeaturedCarousel = ({ events, onSelect, subcategoryImages, categoryImages,
   const prev = useCallback(() => setCurrent((p) => (p - 1 + events.length) % events.length), [events.length]);
 
   useEffect(() => {
+    if (current >= events.length) setCurrent(0);
+  }, [events.length, current]);
+
+  useEffect(() => {
     if (events.length === 0) return;
     const duration = (events[current]?.outdoor_duration || 7) * 1000;
     const timer = setInterval(next, duration);
